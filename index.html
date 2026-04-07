@@ -410,29 +410,43 @@ function renderTimeline(meals) {
 
     var dayMeals = byDate[dateKey];
 
-    // 당일 시간 범위 계산 (최소 2시간 보장)
-    var minTs = dayMeals.reduce(function(a,b){ return Math.min(a, b.ts); }, Infinity);
-    var maxTs = dayMeals.reduce(function(a,b){ return Math.max(a, b.ts); }, -Infinity);
-    var range = Math.max(maxTs - minTs, 2 * 60 * 60 * 1000); // 최소 2시간
+    var CARD_H = 172;  // 카드 높이 근사값
+    var MIN_GAP = 180; // 사진 간 최소 간격 (겹침 방지)
+    var PAD = 20;
 
-    // 시간 비례 컨테이너
-    var CARD_H  = 172; // 카드 높이(px) 근사값
-    var MIN_H   = 60;  // 점 사이 최소 간격
-    var DAY_H   = Math.max(dayMeals.length * CARD_H, 400); // 하루 영역 높이
+    // 1) 시간 비례 위치 먼저 계산
+    var minTs = dayMeals.reduce(function(a,b){ return Math.min(a,b.ts); }, Infinity);
+    var maxTs = dayMeals.reduce(function(a,b){ return Math.max(a,b.ts); }, -Infinity);
+    var range = Math.max(maxTs - minTs, 2 * 60 * 60 * 1000);
+
+    // 전체 높이: 비례 배치에 필요한 최소 높이 vs 장수 기반 최소 높이 중 큰 값
+    var DAY_H = Math.max(dayMeals.length * MIN_GAP + PAD * 2, 400);
+
+    // 비례 위치 계산
+    var positions = dayMeals.map(function(m) {
+      var ratio = (m.ts - minTs) / range;
+      return PAD + ratio * (DAY_H - CARD_H - PAD * 2);
+    });
+
+    // 2) 겹침 방지: 위에서부터 순서대로 최소 간격 보장
+    for (var i = 1; i < positions.length; i++) {
+      if (positions[i] < positions[i-1] + MIN_GAP) {
+        positions[i] = positions[i-1] + MIN_GAP;
+      }
+    }
+
+    // 3) 아래로 밀린 만큼 전체 높이 늘리기
+    var lastBottom = positions[positions.length - 1] + CARD_H + PAD;
+    if (lastBottom > DAY_H) DAY_H = lastBottom;
 
     var wrap = document.createElement('div');
     wrap.style.cssText = 'position:relative; height:' + DAY_H + 'px;';
     tl.appendChild(wrap);
 
-    dayMeals.forEach(function(m) {
-      // 0~1 사이 비율
-      var ratio = range > 0 ? (m.ts - minTs) / range : 0;
-      // px 위치 (상단 여백 20px ~ 하단 여백 20px)
-      var topPx = 20 + ratio * (DAY_H - CARD_H - 40);
-
+    dayMeals.forEach(function(m, i) {
       var row = document.createElement('div');
       row.className = 'mrow ' + (m.side === 'left' ? 'ml' : 'mr');
-      row.style.cssText = 'position:absolute; top:' + topPx + 'px; width:100%; animation:pop .3s ease forwards; opacity:0;';
+      row.style.cssText = 'position:absolute; top:' + positions[i] + 'px; width:100%; animation:pop .3s ease forwards; opacity:0;';
 
       var card   = '<div class="mcrd"><img src="' + m.url + '" loading="lazy"></div>';
       var center = '<div class="mrow-center"><div class="tdot"></div></div>';
