@@ -183,6 +183,27 @@ input[type=text]:focus { border-color:var(--left); }
   transition:transform .2s; z-index:30; white-space:nowrap;
 }
 .fab:active { transform:translateX(-50%) scale(.95); }
+/* 말풍선 경고 */
+.fab-bubble {
+  position:fixed; left:50%; transform:translateX(-50%);
+  bottom:88px;
+  background:var(--surface);
+  border:1.5px solid var(--left);
+  border-radius:14px; padding:9px 16px;
+  font-family:'Gowun Dodum',sans-serif; font-size:12px;
+  color:var(--text); white-space:nowrap; z-index:30;
+  animation:bubblePop .25s ease;
+  pointer-events:none;
+}
+.fab-bubble::after {
+  content:''; position:absolute;
+  bottom:-8px; left:50%; transform:translateX(-50%);
+  border-left:7px solid transparent; border-right:7px solid transparent;
+  border-top:8px solid var(--left);
+}
+.fab-bubble[data-side='right']::after { border-top-color:var(--right); }
+.fab-bubble[data-side='right'] { border-color:var(--right); color:var(--text); }
+@keyframes bubblePop { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
 /* ══ 업로드 MODAL ══ */
 .backdrop { position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:50; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s; }
@@ -344,7 +365,7 @@ input[type=text]:focus { border-color:var(--left); }
 <div class="backdrop" id="backdrop">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">뭐 드셨어요? 🍽</div>
+    <div class="modal-title">뭐 먹어요? 🍽</div>
     <div class="prev-box" id="prevbox" onclick="triggerFile()">
       <span id="prev-icon">📷</span>
       <input type="file" id="fileinput" accept="image/*" capture="environment" style="display:none">
@@ -547,7 +568,15 @@ function doLogout() { localStorage.removeItem(SAVE_KEY); location.reload(); }
 /* ══ INIT ══ */
 function initApp(sleepTime, wakeTime) {
   var fab = document.getElementById('fab-btn');
-  if (mySide==='right') { fab.style.background='var(--right)'; fab.style.boxShadow='0 8px 28px rgba(53,201,255,.4)'; }
+  if (mySide==='right') {
+    fab.style.background='var(--right)';
+    fab.style.boxShadow='0 8px 28px rgba(53,201,255,.4)';
+  }
+  /* 올리기 버튼 색상 side별 적용 */
+  var postBtn = document.getElementById('postbtn');
+  if (postBtn) {
+    postBtn.style.background = mySide==='right' ? 'var(--right)' : 'var(--left)';
+  }
 
   db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
   db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime:sleepTime, wakeTime:wakeTime});
@@ -891,6 +920,9 @@ function openModal() {
   var pb = document.getElementById('prevbox');
   pb.innerHTML='<span id="prev-icon">📷</span><input type="file" id="fileinput" accept="image/*" capture="environment" style="display:none">';
   document.getElementById('fileinput').onchange = fileChosen;
+  /* 올리기 버튼 side 색상 */
+  var btn = document.getElementById('postbtn');
+  if (btn) btn.style.background = mySide==='right' ? 'var(--right)' : 'var(--left)';
   document.getElementById('backdrop').classList.add('open');
 }
 function closeModal() { document.getElementById('backdrop').classList.remove('open'); }
@@ -1008,71 +1040,117 @@ function openCoinPanel() {
 function closeCoinPanel() { document.getElementById('coin-panel').classList.remove('open'); }
 document.getElementById('coin-panel').addEventListener('click',function(e){ if(e.target===this) closeCoinPanel(); });
 
-/* [FIX 7] 달력: 월 제목 + 요일 헤더(월~일) + 빈칸 채우기 */
+/* 달력: 날짜 전체를 먼저 동기로 생성 후 Firebase로 클래스만 업데이트 */
 function buildCalendar() {
-  var cal  = document.getElementById('cp-calendar');
-  var now  = new Date();
-  var y    = now.getFullYear();
-  var mo   = now.getMonth();   /* 0-indexed */
+  var cal   = document.getElementById('cp-calendar');
+  var now   = new Date();
+  var y     = now.getFullYear();
+  var mo    = now.getMonth();
   var today = now.getDate();
   var days  = new Date(y, mo+1, 0).getDate();
 
-  /* 월 제목 */
   var monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   document.getElementById('cp-cal-month').textContent = y+'년 '+monthNames[mo];
 
+  /* 전체 DOM 한 번에 구성 */
   cal.innerHTML = '';
 
-  /* 요일 헤더: 월화수목금토일 */
-  var dowLabels = ['월','화','수','목','금','토','일'];
-  dowLabels.forEach(function(d, i) {
+  /* 요일 헤더 */
+  ['월','화','수','목','금','토','일'].forEach(function(d, i) {
     var el = document.createElement('div');
     el.className = 'cal-dow' + (i===6?' sun':'');
     el.textContent = d;
     cal.appendChild(el);
   });
 
-  /* 1일의 요일 (0=일, 1=월 ... 6=토) → 월요일 시작 기준 offset */
-  var firstDow = new Date(y, mo, 1).getDay(); /* 0=일 */
-  var offset   = (firstDow === 0) ? 6 : firstDow - 1; /* 월=0, 화=1 ... 일=6 */
-
-  /* 앞 빈칸 */
-  for (var i=0; i<offset; i++) {
+  /* 1일 앞 빈칸 */
+  var firstDow = new Date(y, mo, 1).getDay();
+  var offset   = (firstDow === 0) ? 6 : firstDow - 1;
+  for (var b=0; b<offset; b++) {
     var blank = document.createElement('div');
     blank.className = 'cal-day empty';
     cal.appendChild(blank);
   }
 
+  /* 날짜 칸 전부 먼저 동기 생성 */
+  for (var d=1; d<=days; d++) {
+    var el = document.createElement('div');
+    el.className = 'cal-day future';
+    el.textContent = d;
+    el.id = 'cal-d-' + d;
+    if (d === today) el.classList.add('today');
+    cal.appendChild(el);
+  }
+
+  /* Firebase 응답 오면 클래스만 업데이트 */
   db.ref('rooms/'+roomId+'/cleanDays/'+mySide).once('value', function(snap) {
     var data = snap.val()||{};
     for (var d=1; d<=days; d++) {
+      if (d > today) continue;
       var key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-      var el  = document.createElement('div');
-      el.className = 'cal-day';
-      el.textContent = d;
-      if (d === today)        el.classList.add('today');
-      if (d > today)          el.classList.add('future');
-      else if (data[key]===true)  el.classList.add('clean');
+      var el  = document.getElementById('cal-d-'+d);
+      if (!el) continue;
+      el.classList.remove('future');
+      if (data[key]===true)       el.classList.add('clean');
       else if (data[key]===false) el.classList.add('dirty');
       else                        el.classList.add('future');
-      cal.appendChild(el);
     }
   });
 }
 
-/* ══ 시간 경고 ══ */
+/* ══ 시간 경고 말풍선 ══ */
 function timeToMinutes(str){ var p=(str||'24:00').split(':'); return parseInt(p[0])*60+parseInt(p[1]||0); }
+
+var _warnSleepTime='24:00', _warnWakeTime='07:30';
+
 function checkTimeWarning(sleepTime,wakeTime){
-  var warnKey='diet_warn_'+new Date().toISOString().slice(0,10);
-  if(localStorage.getItem(warnKey)) return;
-  var now=new Date(), nm=now.getHours()*60+now.getMinutes();
-  var sm=timeToMinutes(sleepTime), wm=timeToMinutes(wakeTime), dm=sm-240;
-  var msg=null;
-  if(nm>=dm&&nm<sm) msg='🍽 잠들기 4시간 전부터는 먹지 마세요!';
-  if(sm>=1440&&nm<wm) msg='😴 잘 시간이에요, 자러 가세요!';
-  if(sm<1440&&(nm>=sm||nm<wm)) msg='😴 잘 시간이에요, 자러 가세요!';
-  if(msg){ localStorage.setItem(warnKey,'1'); showToast(msg); }
+  _warnSleepTime = sleepTime;
+  _warnWakeTime  = wakeTime;
+  updateFabBubble();
+  /* 1분마다 재체크 */
+  setInterval(updateFabBubble, 60000);
 }
+
+function updateFabBubble(){
+  var existing = document.getElementById('fab-bubble');
+  var now = new Date(), nm = now.getHours()*60+now.getMinutes();
+  var sm  = timeToMinutes(_warnSleepTime);
+  var wm  = timeToMinutes(_warnWakeTime);
+  var dm  = sm - 240;
+  var sideColor = mySide==='right' ? 'var(--right)' : 'var(--left)';
+
+  var isSleepTime;
+  if(sm>=1440){
+    isSleepTime = (nm >= 1440) || (nm < wm);
+  } else {
+    isSleepTime = (nm >= sm) || (nm < wm);
+  }
+  var isNightSnack = !isSleepTime && nm >= dm && nm < Math.min(sm, 1440);
+
+  var msg = null;
+  if(isSleepTime)   msg = '😴 지금 자야 할 시간이에요';
+  else if(isNightSnack) msg = '🍽 잠들기 4시간 전! 야식 참아요';
+
+  if(!msg){
+    if(existing) existing.remove();
+    return;
+  }
+
+  if(!existing){
+    existing = document.createElement('div');
+    existing.id = 'fab-bubble';
+    existing.className = 'fab-bubble';
+    document.body.appendChild(existing);
+  }
+  existing.textContent = msg;
+  existing.style.borderColor = sideColor;
+  existing.style.setProperty('--bubble-color', sideColor);
+  /* ::after 꼬리 색상 — CSS 변수로 제어 */
+  existing.style.cssText += ';border-color:'+sideColor;
+  /* 꼬리 색은 인라인 스타일로 직접 제어 불가능하므로 data-color 클래스 활용 */
+  existing.setAttribute('data-side', mySide);
+}
+
 function showToast(msg){
   var el=document.createElement('div'); el.className='time-toast'; el.textContent=msg;
   el.onclick=function(){ if(el.parentNode) document.body.removeChild(el); };
@@ -1090,8 +1168,11 @@ function showNotifToast(msg){
 function judgeYesterday(){
   var yest=new Date(); yest.setDate(yest.getDate()-1);
   var dk=yest.toISOString().slice(0,10);
+  /* 같은 기기에서 이미 처리했으면 스킵 (중복 방지) */
+  var judgeKey='diet_judge_'+roomId+'_'+mySide+'_'+dk;
+  if(localStorage.getItem(judgeKey)) return;
   db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).once('value',function(snap){
-    if(snap.val()!==null) return;
+    if(snap.val()!==null){ localStorage.setItem(judgeKey,'1'); return; }
     db.ref('rooms/'+roomId+'/settings/'+mySide).once('value',function(snap2){
       var st=(snap2.val()||{}).sleepTime||'24:00';
       var sm=timeToMinutes(st), cm=sm-240;
@@ -1102,6 +1183,7 @@ function judgeYesterday(){
         var late=Object.values(meals).some(function(m){ return m.side===mySide&&m.ts>=cTs.getTime()&&m.ts<=dEnd.getTime(); });
         var isClean=!late;
         db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(isClean);
+        localStorage.setItem(judgeKey,'1');
         if(isClean) addCoin(dk);
         else db.ref('rooms/'+roomId+'/streaks/'+mySide).set(0);
       });
@@ -1114,12 +1196,21 @@ function addCoin(dk){
     db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snap2){
       var ns=(snap2.val()||0)+1;
       var bonus=ns===3?1:ns===7?3:0, earned=1+bonus;
+      /* 자기 코인 저장 */
       db.ref('rooms/'+roomId+'/coins/'+mySide).set(cur+earned);
       db.ref('rooms/'+roomId+'/streaks/'+mySide).set(ns);
       var other=mySide==='left'?'right':'left';
       db.ref('rooms/'+roomId+'/cleanDays/'+other+'/'+dk).once('value',function(snap3){
-        if(snap3.val()===true) db.ref('rooms/'+roomId+'/coins/'+mySide).set(cur+earned+1);
-        updateCoinDisplay();
+        if(snap3.val()===true){
+          /* 커플 동시 클린: cur+earned에 +1 추가 (덮어쓰기 안전 — 자기 사이드만 건드림) */
+          db.ref('rooms/'+roomId+'/coins/'+mySide).once('value',function(snapNow){
+            var now=snapNow.val()||0;
+            db.ref('rooms/'+roomId+'/coins/'+mySide).set(now+1);
+            updateCoinDisplay();
+          });
+        } else {
+          updateCoinDisplay();
+        }
       });
     });
   });
