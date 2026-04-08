@@ -895,21 +895,25 @@ function renderTimeline(meals) {
 
 
 function escStr(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
-
 /* ══ 이미지 뷰어 ══ */
 function openViewer(url, mealKey) {
   document.getElementById('iv-img').src = url;
   currentMealKey = mealKey;
-  var rb = document.getElementById('iv-reactions');
-  rb.innerHTML = EMOJIS.map(function(e) {
-    return '<button class="iv-reaction-btn" data-emoji="'+e+'" onclick="toggleReaction(\''+escStr(e)+'\')">'
-         + e+'<span class="iv-react-cnt"></span></button>';
-  }).join('');
+  currentMealUrl = url;
+  var meal = mealsCache[mealKey]||{};
+  currentMealSide = meal.side || '';
+  var delBtn = document.getElementById('iv-delete-btn');
+  if (delBtn) delBtn.style.display = (currentMealSide === mySide) ? 'flex' : 'none';
+  var sendBtn = document.getElementById('iv-send-btn');
+  if (sendBtn) sendBtn.style.background = mySide==='right'?'var(--right)':'var(--left)';
   loadViewerData(mealKey);
   document.getElementById('img-viewer').classList.add('open');
 }
 function closeViewer() { document.getElementById('img-viewer').classList.remove('open'); currentMealKey=null; }
 document.getElementById('img-viewer').addEventListener('click',function(e){ if(e.target===this) closeViewer(); });
+
+
+/* ══ 이미지 뷰어 ══ */
 
 function loadViewerData(mealKey) {
   db.ref('rooms/'+roomId+'/comments/'+mealKey).once('value', function(snap) {
