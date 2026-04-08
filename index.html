@@ -99,13 +99,20 @@ input[type=text]:focus { border-color:var(--left); }
 }
 
 /* ══ TIMELINE ══ */
-/* [FIX 1] 세로선: z-index 높이고 색상 더 밝게 */
 .tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:120px; -webkit-overflow-scrolling:touch; }
-.tl-line {
-  position:absolute; left:50%; top:0; bottom:0; width:1px;
-  background:#444444;
-  transform:translateX(-50%); pointer-events:none; z-index:1;
+/* 세로선: tl-wrap 기준 sticky처럼 동작하도록 별도 fixed 레이어로 처리 */
+.tl-wrap::before {
+  content:'';
+  position:fixed;
+  left:50%; top:0; bottom:0;
+  width:2px;
+  background:#555555;
+  transform:translateX(-50%);
+  pointer-events:none;
+  z-index:0;
 }
+/* 기존 .tl-line은 숨김 처리 (HTML에 남아있으므로) */
+.tl-line { display:none; }
 .empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:100px 32px; color:var(--muted); text-align:center; }
 .empty-eye { font-size:48px; animation:blink 3.5s infinite; }
 @keyframes blink { 0%,88%,100%{opacity:1} 93%{opacity:0} }
@@ -247,14 +254,14 @@ input[type=text]:focus { border-color:var(--left); }
 
 /* [FIX 7] 달력: 월 제목 + 요일 헤더 + 월요일 시작 */
 .cal-month-title { font-family:'Black Han Sans',sans-serif; font-size:14px; text-align:center; margin-bottom:8px; color:var(--text); }
-.clean-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:16px; }
-.cal-dow { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); }
+.clean-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:16px; }
+.cal-dow { height:28px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); }
 .cal-dow.sun { color:#ff5252; }
-.cal-day { aspect-ratio:1; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; }
+.cal-day { height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; }
 .cal-day.clean { background:rgba(255,107,53,.2); color:var(--left); font-family:'Black Han Sans',sans-serif; }
 .cal-day.dirty { background:rgba(255,255,255,.04); color:var(--muted); }
 .cal-day.future { color:var(--line); }
-.cal-day.today { border:1px solid var(--muted); }
+.cal-day.today { border:1px solid var(--muted); color:var(--text); }
 .cal-day.empty { background:transparent; }
 .bonus-list { display:flex; flex-direction:column; gap:8px; }
 .bonus-item { background:var(--surface2); border-radius:12px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
@@ -647,7 +654,7 @@ function updateAllCardBars() {
 }
 
 /* ══ TIMELINE ══
- * [FIX 2] 완전 재설계: 좌우 독립 시간축, 픽셀/시간 고정 비율
+ * 좌우 독립 시간축 + 간격 압축 (로그 스케일)
  */
 function renderTimeline(meals) {
   var tl = document.getElementById('timeline');
@@ -676,43 +683,76 @@ function renderTimeline(meals) {
 
     var CARD_H   = 172;  /* 카드 높이 (margin 포함) */
     var PAD      = 12;   /* 상단 여백 */
-    var PX_PER_MS = 0.00008; /* 픽셀/밀리초: 1시간 = 288px */
     var STACK_GAP = 85;  /* 1시간 이내 같은사이드 → 스택 간격 */
-    var MIN_GAP   = 8;   /* 카드 최소 간격 */
+    var MIN_GAP   = 16;  /* 카드 사이 최소 간격 */
+    /* 간격 압축: 시간 차이에 로그 스케일 적용
+       - 30분 이내: 거의 그대로 (최소 MIN_GAP + CARD_H)
+       - 1~3시간: 완만하게 증가
+       - 3시간 이상: 최대 120px 캡 */
+    var MAX_TIME_GAP_PX = 120; /* 아무리 시간 차가 커도 이 이상 간격 안 벌어짐 */
+    var ONE_HOUR_MS = 3600000;
 
-    /* 하루 전체의 시간 범위를 구해서 기준 ts 결정 */
-    var allTs = dayMeals.map(function(m){ return m.ts; });
-    var dayMinTs = Math.min.apply(null, allTs);
+    function timeGapToPx(deltaMs) {
+      if (deltaMs <= 0) return 0;
+      /* 로그 스케일: log(1 + x) 형태, 1시간 → 80px 기준 */
+      var hours = deltaMs / ONE_HOUR_MS;
+      var px = Math.round(80 * Math.log(1 + hours) / Math.log(2));
+      return Math.min(px, MAX_TIME_GAP_PX);
+    }
 
     /* 각 사이드 독립적으로 Y 계산 */
     function computePositions(arr) {
       var posMap = {};
-      var prevTop = null, prevTs = null;
-      arr.forEach(function(m) {
-        var rawY = PAD + Math.round((m.ts - dayMinTs) * PX_PER_MS);
+      arr.forEach(function(m, i) {
         var top;
-        if (prevTop !== null && (m.ts - prevTs) < 3600000) {
-          /* 1시간 이내 → 스택 */
-          top = prevTop + STACK_GAP;
+        if (i === 0) {
+          top = PAD;
         } else {
-          /* 이전 카드와 최소 간격 확보 */
-          top = rawY;
-          if (prevTop !== null && top < prevTop + CARD_H + MIN_GAP) {
-            top = prevTop + CARD_H + MIN_GAP;
+          var prev = arr[i-1];
+          var deltaMs = m.ts - prev.ts;
+          if (deltaMs < ONE_HOUR_MS) {
+            /* 1시간 이내 → 스택 */
+            top = posMap[prev.key] + STACK_GAP;
+          } else {
+            /* 로그 압축 간격 */
+            var gap = timeGapToPx(deltaMs);
+            top = posMap[prev.key] + CARD_H + gap;
           }
         }
+        /* 최소 간격 보장 */
+        if (i > 0) {
+          var minTop = posMap[arr[i-1].key] + CARD_H + MIN_GAP;
+          if (top < minTop) top = minTop;
+        }
         posMap[m.key] = top;
-        prevTop = top;
-        prevTs  = m.ts;
       });
       return posMap;
     }
 
     var leftPos  = computePositions(lefts);
     var rightPos = computePositions(rights);
-    var posMap   = Object.assign({}, leftPos, rightPos);
 
-    /* [FIX 8] z-index: 시간순으로 위에 오는 카드가 더 높게 */
+    /* 좌우 합쳐서 posMap 만들 때: 같은 시간대 좌우가 비슷한 높이에 오도록
+       각 사이드의 첫 카드 기준점을 맞춤 */
+    var leftFirst  = lefts.length  ? lefts[0].ts  : null;
+    var rightFirst = rights.length ? rights[0].ts : null;
+
+    /* 두 사이드 모두 있을 때 첫 카드 높이 동기화 */
+    if (leftFirst !== null && rightFirst !== null) {
+      var firstDelta = rightFirst - leftFirst;
+      var syncOffset = timeGapToPx(Math.abs(firstDelta));
+      if (firstDelta > 0) {
+        /* 오른쪽이 더 늦게 시작 → 오른쪽 전체를 아래로 */
+        Object.keys(rightPos).forEach(function(k){ rightPos[k] += syncOffset; });
+      } else if (firstDelta < 0) {
+        /* 왼쪽이 더 늦게 시작 → 왼쪽 전체를 아래로 */
+        Object.keys(leftPos).forEach(function(k){ leftPos[k] += syncOffset; });
+      }
+    }
+
+    var posMap = Object.assign({}, leftPos, rightPos);
+
+    /* z-index: 시간순 */
     var sortedByTs = dayMeals.slice().sort(function(a,b){ return a.ts-b.ts; });
     var zMap = {};
     sortedByTs.forEach(function(m, i){ zMap[m.key] = i+2; });
@@ -727,7 +767,7 @@ function renderTimeline(meals) {
     wrap.style.height = DAY_H+'px';
     tl.appendChild(wrap);
 
-    /* [FIX 3] 과식 경고: 좌우 각각 5번째 카드 다음에 배치, 겹침 없음 */
+    /* 과식 경고: 좌우 각각 마지막 카드 다음에 배치 */
     [lefts, rights].forEach(function(arr, idx) {
       var side = idx===0 ? 'left' : 'right';
       if (arr.length >= 5) {
