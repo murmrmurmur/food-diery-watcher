@@ -13,6 +13,9 @@
   --surface2: #202020;
   --left: #ff6b35;
   --right: #35c9ff;
+  --accent: #ff6b35;
+  --accent-glow: rgba(255,107,53,.4);
+  --accent-tint: rgba(255,107,53,.1);
   --line: #2a2a2a;
   --text: #f0ede8;
   --muted: #666;
@@ -43,7 +46,7 @@ input[type=text] {
   font-size:16px; padding:12px 16px; outline:none;
   transition:border-color .2s; -webkit-appearance:none;
 }
-input[type=text]:focus { border-color:var(--left); }
+input[type=text]:focus { border-color:var(--accent); }
 .who-grid, .time-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .who-btn {
   padding:14px 8px; border-radius:14px;
@@ -51,12 +54,12 @@ input[type=text]:focus { border-color:var(--left); }
   color:var(--muted); font-family:'Gowun Dodum',sans-serif;
   font-size:15px; cursor:pointer; transition:all .18s; text-align:center;
 }
-.who-btn.sel-left  { border-color:var(--left);  color:var(--left);  background:rgba(255,107,53,.1); }
+.who-btn.sel-left  { border-color:var(--accent);  color:var(--accent);  background:var(--accent-tint); }
 .who-btn.sel-right { border-color:var(--right); color:var(--right); background:rgba(53,201,255,.1); }
 .field-hint { font-size:11px; color:var(--muted); margin-top:2px; }
 .start-btn {
   width:100%; padding:16px; border:none; border-radius:14px;
-  background:var(--left); color:#fff;
+  background:var(--accent); color:#fff;
   font-family:'Black Han Sans',sans-serif; font-size:17px; letter-spacing:1px;
   cursor:pointer; transition:opacity .2s, transform .15s;
 }
@@ -92,7 +95,7 @@ input[type=text]:focus { border-color:var(--left); }
 }
 .hdr-chip:active { opacity:.7; }
 .coin-badge { font-size:11px; color:var(--text); background:var(--surface2); border-radius:20px; padding:4px 11px; border:1px solid var(--line); white-space:nowrap; cursor:pointer; transition:border-color .18s; }
-.coin-badge:active { border-color:var(--left); }
+.coin-badge:active { border-color:var(--accent); }
 /* 알림 뱃지 */
 .notif-badge {
   position:absolute; top:-5px; right:-5px;
@@ -181,10 +184,10 @@ input[type=text]:focus { border-color:var(--left); }
 /* ══ FAB ══ */
 .fab {
   position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
-  background:var(--left); color:#fff; border:none; border-radius:56px;
+  background:var(--accent); color:#fff; border:none; border-radius:56px;
   padding:15px 28px; font-family:'Black Han Sans',sans-serif;
   font-size:15px; letter-spacing:1px; cursor:pointer;
-  box-shadow:0 8px 28px rgba(255,107,53,.4);
+  box-shadow:0 8px 28px var(--accent-glow);
   display:flex; align-items:center; gap:8px;
   transition:transform .2s; z-index:30; white-space:nowrap;
 }
@@ -194,7 +197,7 @@ input[type=text]:focus { border-color:var(--left); }
   position:fixed; left:50%; transform:translateX(-50%);
   bottom:104px;
   background:var(--surface);
-  border:1.5px solid var(--left);
+  border:1.5px solid var(--accent);
   border-radius:14px; padding:9px 16px;
   font-family:'Gowun Dodum',sans-serif; font-size:12px;
   color:var(--text); white-space:nowrap; z-index:30;
@@ -205,7 +208,7 @@ input[type=text]:focus { border-color:var(--left); }
   content:''; position:absolute;
   bottom:-8px; left:50%; transform:translateX(-50%);
   border-left:7px solid transparent; border-right:7px solid transparent;
-  border-top:8px solid var(--left);
+  border-top:8px solid var(--accent);
 }
 .fab-bubble[data-side='right']::after { border-top-color:var(--right); }
 .fab-bubble[data-side='right'] { border-color:var(--right); color:var(--text); }
@@ -221,7 +224,7 @@ input[type=text]:focus { border-color:var(--left); }
 .prev-box { width:100%; aspect-ratio:1; background:var(--surface2); border-radius:16px; border:2px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; position:relative; transition:border-color .2s; font-size:42px; flex-shrink:0; }
 .prev-box:active { border-color:var(--left); }
 .prev-box img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-.modal-post { background:var(--left); color:#fff; border:none; border-radius:14px; padding:16px; font-family:'Black Han Sans',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer; }
+.modal-post { background:var(--accent); color:#fff; border:none; border-radius:14px; padding:16px; font-family:'Black Han Sans',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer; }
 .modal-post:disabled { opacity:.35; cursor:not-allowed; }
 .modal-cancel { background:none; border:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:14px; cursor:pointer; text-align:center; }
 .spin { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:sp .65s linear infinite; vertical-align:middle; margin-right:6px; }
@@ -252,7 +255,7 @@ input[type=text]:focus { border-color:var(--left); }
 
 /* 설정 패널 */
 .setting-row { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
-.setting-save-btn { width:100%; padding:15px; border:none; border-radius:14px; background:var(--left); color:#fff; font-family:'Black Han Sans',sans-serif; font-size:16px; cursor:pointer; margin-top:6px; }
+.setting-save-btn { width:100%; padding:15px; border:none; border-radius:14px; background:var(--accent); color:#fff; font-family:'Black Han Sans',sans-serif; font-size:16px; cursor:pointer; margin-top:6px; }
 /* 알림 패널 */
 .notif-item { display:flex; align-items:center; gap:12px; background:var(--surface2); border-radius:12px; padding:12px; cursor:pointer; margin-bottom:8px; transition:opacity .15s; }
 .notif-item:active { opacity:.7; }
@@ -271,7 +274,7 @@ input[type=text]:focus { border-color:var(--left); }
 .coin-row { display:flex; justify-content:space-between; align-items:center; }
 .coin-label { font-size:12px; color:var(--muted); }
 .coin-val { font-family:'Black Han Sans',sans-serif; font-size:18px; }
-.coin-val.lc { color:var(--left); }
+.coin-val.lc { color:var(--accent); }
 .coin-val.rc { color:var(--right); }
 .coin-divider { height:1px; background:var(--line); }
 .coin-total { font-family:'Black Han Sans',sans-serif; font-size:22px; text-align:center; padding:6px 0; }
@@ -279,11 +282,11 @@ input[type=text]:focus { border-color:var(--left); }
 .goal-wrap { margin:2px 0 14px; }
 .goal-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px; }
 .goal-bg { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
-.goal-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--left),var(--right)); transition:width .6s ease; }
+.goal-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--right)); transition:width .6s ease; }
 .streak-row { display:flex; gap:10px; margin-bottom:14px; }
 .streak-card { flex:1; background:var(--surface2); border-radius:14px; padding:14px; text-align:center; }
 .streak-num { font-family:'Black Han Sans',sans-serif; font-size:28px; }
-.streak-num.lc { color:var(--left); }
+.streak-num.lc { color:var(--accent); }
 .streak-num.rc { color:var(--right); }
 .streak-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
 .section-lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
@@ -305,10 +308,10 @@ input[type=text]:focus { border-color:var(--left); }
 .cal-dot.right-clean { background:var(--right); }
 .bonus-list { display:flex; flex-direction:column; gap:8px; }
 .bonus-item { background:var(--surface2); border-radius:12px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
-.bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--left); }
+.bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--accent); }
 
 /* ══ 토스트 ══ */
-.time-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--left); border-radius:16px; padding:13px 18px; font-size:13px; color:var(--text); text-align:center; z-index:90; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:290px; line-height:1.6; cursor:pointer; animation:slideDown .3s ease; }
+.time-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--accent); border-radius:16px; padding:13px 18px; font-size:13px; color:var(--text); text-align:center; z-index:90; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:290px; line-height:1.6; cursor:pointer; animation:slideDown .3s ease; }
 .notif-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--right); border-radius:16px; padding:11px 16px; font-size:13px; color:var(--text); text-align:center; z-index:91; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:320px; line-height:1.6; animation:slideDown .3s ease; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 </style>
@@ -562,6 +565,16 @@ function pickSide(s) {
   mySide = s;
   document.getElementById('wb-left').className  = 'who-btn'+(s==='left' ?' sel-left' :'');
   document.getElementById('wb-right').className = 'who-btn'+(s==='right'?' sel-right':'');
+  /* 선택 즉시 setup 화면 accent 색 미리보기 */
+  var ac = s==='right' ? '#35c9ff' : '#ff6b35';
+  var ag = s==='right' ? 'rgba(53,201,255,.4)' : 'rgba(255,107,53,.4)';
+  var at = s==='right' ? 'rgba(53,201,255,.1)' : 'rgba(255,107,53,.1)';
+  document.documentElement.style.setProperty('--accent', ac);
+  document.documentElement.style.setProperty('--accent-glow', ag);
+  document.documentElement.style.setProperty('--accent-tint', at);
+  /* start 버튼 색 */
+  var sb = document.getElementById('btn-start');
+  if(sb) sb.style.background = ac;
   chkValid();
 }
 function chkValid() {
@@ -599,16 +612,16 @@ function doLogout() { localStorage.removeItem(SAVE_KEY); location.reload(); }
 
 /* ══ INIT ══ */
 function initApp(sleepTime, wakeTime) {
+  /* --accent CSS 변수를 mySide에 따라 설정 — 앱 전체 색상 테마 결정 */
+  var accentColor = mySide==='right' ? '#35c9ff' : '#ff6b35';
+  var accentGlow  = mySide==='right' ? 'rgba(53,201,255,.4)' : 'rgba(255,107,53,.4)';
+  var accentTint  = mySide==='right' ? 'rgba(53,201,255,.1)' : 'rgba(255,107,53,.1)';
+  document.documentElement.style.setProperty('--accent', accentColor);
+  document.documentElement.style.setProperty('--accent-glow', accentGlow);
+  document.documentElement.style.setProperty('--accent-tint', accentTint);
   var fab = document.getElementById('fab-btn');
-  if (mySide==='right') {
-    fab.style.background='var(--right)';
-    fab.style.boxShadow='0 8px 28px rgba(53,201,255,.4)';
-  }
-  /* 올리기 버튼 색상 side별 적용 */
-  var postBtn = document.getElementById('postbtn');
-  if (postBtn) {
-    postBtn.style.background = mySide==='right' ? 'var(--right)' : 'var(--left)';
-  }
+  fab.style.background = accentColor;
+  fab.style.boxShadow  = '0 8px 28px '+accentGlow;
 
   db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
   db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime:sleepTime, wakeTime:wakeTime});
@@ -751,7 +764,8 @@ function updateAllCardBars() {
 function renderTimeline(meals) {
   var tl = document.getElementById('timeline');
   var empty = document.getElementById('emptystate');
-  tl.innerHTML = '';
+  /* DOM 완전 초기화 후 렌더 (삭제 후 재계산 보장) */
+  while(tl.firstChild) tl.removeChild(tl.firstChild);
   if (!meals||!meals.length) { empty.style.display='flex'; return; }
   empty.style.display = 'none';
 
@@ -927,7 +941,7 @@ function openViewer(url, mealKey) {
   var delBtn = document.getElementById('iv-delete-btn');
   if (delBtn) delBtn.style.display = (currentMealSide === mySide) ? 'flex' : 'none';
   var sendBtn = document.getElementById('iv-send-btn');
-  if (sendBtn) sendBtn.style.background = mySide==='right'?'var(--right)':'var(--left)';
+  if (sendBtn) sendBtn.style.background = 'var(--accent)';
   loadViewerData(mealKey);
   document.getElementById('img-viewer').classList.add('open');
 }
@@ -943,7 +957,7 @@ function loadViewerData(mealKey) {
     var el   = document.getElementById('iv-comments');
     el.innerHTML = list.map(function(c){
       var side = c.side || (cachedNames.left===c.name ? 'left' : 'right');
-      var color = side==='left' ? 'var(--left)' : 'var(--right)';
+      var color = side==='left' ? 'var(--accent)' : 'var(--right)';
       return '<div class="iv-comment">'
         +'<div class="cv-name-row">'
         +'<div class="cv-dot" style="background:'+color+'"></div>'
@@ -983,7 +997,7 @@ function openModal() {
   document.getElementById('fileinput').onchange = fileChosen;
   /* 올리기 버튼 side 색상 */
   var btn = document.getElementById('postbtn');
-  if (btn) btn.style.background = mySide==='right' ? 'var(--right)' : 'var(--left)';
+  if (btn) btn.style.background = 'var(--accent)';
   document.getElementById('backdrop').classList.add('open');
 }
 function closeModal() { document.getElementById('backdrop').classList.remove('open'); }
@@ -1206,7 +1220,7 @@ function updateFabBubble(){
   var sm  = timeToMinutes(_warnSleepTime);
   var wm  = timeToMinutes(_warnWakeTime);
   var dm  = sm - 240;
-  var sideColor = mySide==='right' ? 'var(--right)' : 'var(--left)';
+  var sideColor = mySide==='right' ? 'var(--right)' : 'var(--accent)';
 
   var isSleepTime;
   if(sm>=1440){
@@ -1274,7 +1288,7 @@ function openNotifPanel() {
     list.innerHTML = '';
     unreadNotifs.slice(0,30).forEach(function(n) {
       var meal = mealsCache[n.mealKey]||{};
-      var color = (n.side==='left'||cachedNames.left===n.name) ? 'var(--left)' : 'var(--right)';
+      var color = (n.side==='left'||cachedNames.left===n.name) ? 'var(--accent)' : 'var(--right)';
       var timeAgo = formatTimeAgo(n.ts);
       var item = document.createElement('div');
       item.className = 'notif-item';
