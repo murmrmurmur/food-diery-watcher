@@ -13,9 +13,12 @@
   --surface2: #202020;
   --left: #ff6b35;
   --right: #35c9ff;
-  --accent: #ff6b35;
+  --accent: #ff6b35;      /* 내 사이드 색 (initApp에서 동적 설정) */
   --accent-glow: rgba(255,107,53,.4);
   --accent-tint: rgba(255,107,53,.1);
+  --other: #35c9ff;       /* 상대방 사이드 색 (initApp에서 동적 설정) */
+  --other-glow: rgba(53,201,255,.4);
+  --other-tint: rgba(53,201,255,.1);
   --line: #2a2a2a;
   --text: #f0ede8;
   --muted: #666;
@@ -222,7 +225,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .modal-handle { width:36px; height:4px; background:var(--line); border-radius:2px; margin:0 auto -2px; }
 .modal-title { font-family:'Black Han Sans',sans-serif; font-size:17px; text-align:center; }
 .prev-box { width:100%; aspect-ratio:1; background:var(--surface2); border-radius:16px; border:2px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; position:relative; transition:border-color .2s; font-size:42px; flex-shrink:0; }
-.prev-box:active { border-color:var(--left); }
+.prev-box:active { border-color:var(--accent); }
 .prev-box img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .modal-post { background:var(--accent); color:#fff; border:none; border-radius:14px; padding:16px; font-family:'Black Han Sans',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer; }
 .modal-post:disabled { opacity:.35; cursor:not-allowed; }
@@ -241,7 +244,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .iv-comment .cv-name { font-size:10px; font-family:'Black Han Sans',sans-serif; }
 .iv-input-row { display:flex; gap:8px; width:100%; max-width:400px; }
 .iv-input-row input { flex:1; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:12px; color:var(--text); font-family:'Gowun Dodum',sans-serif; font-size:14px; padding:10px 14px; outline:none; -webkit-appearance:none; }
-.iv-input-row button { background:var(--left); border:none; border-radius:12px; color:#fff; font-family:'Black Han Sans',sans-serif; font-size:13px; padding:10px 16px; cursor:pointer; }
+.iv-input-row button { background:var(--accent); border:none; border-radius:12px; color:#fff; font-family:'Black Han Sans',sans-serif; font-size:13px; padding:10px 16px; cursor:pointer; }
 .iv-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:14px; cursor:pointer; z-index:101; }
 .iv-delete { position:absolute; top:14px; left:14px; background:rgba(255,59,48,.15); border:1px solid rgba(255,59,48,.3); color:#ff3b30; border-radius:50%; width:36px; height:36px; font-size:13px; cursor:pointer; z-index:101; display:flex; align-items:center; justify-content:center; }
 
@@ -308,11 +311,11 @@ input[type=text]:focus { border-color:var(--accent); }
 .cal-dot.right-clean { background:var(--right); }
 .bonus-list { display:flex; flex-direction:column; gap:8px; }
 .bonus-item { background:var(--surface2); border-radius:12px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
-.bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--left); }
+.bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--accent); }
 
 /* ══ 토스트 ══ */
 .time-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--accent); border-radius:16px; padding:13px 18px; font-size:13px; color:var(--text); text-align:center; z-index:90; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:290px; line-height:1.6; cursor:pointer; animation:slideDown .3s ease; }
-.notif-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--right); border-radius:16px; padding:11px 16px; font-size:13px; color:var(--text); text-align:center; z-index:91; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:320px; line-height:1.6; animation:slideDown .3s ease; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.notif-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--other); border-radius:16px; padding:11px 16px; font-size:13px; color:var(--text); text-align:center; z-index:91; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:320px; line-height:1.6; animation:slideDown .3s ease; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 </style>
 </head>
@@ -569,9 +572,15 @@ function pickSide(s) {
   var ac = s==='right' ? '#35c9ff' : '#ff6b35';
   var ag = s==='right' ? 'rgba(53,201,255,.4)' : 'rgba(255,107,53,.4)';
   var at = s==='right' ? 'rgba(53,201,255,.1)' : 'rgba(255,107,53,.1)';
+  var oc = s==='right' ? '#ff6b35' : '#35c9ff';
+  var og = s==='right' ? 'rgba(255,107,53,.4)' : 'rgba(53,201,255,.4)';
+  var ot = s==='right' ? 'rgba(255,107,53,.1)' : 'rgba(53,201,255,.1)';
   document.documentElement.style.setProperty('--accent', ac);
   document.documentElement.style.setProperty('--accent-glow', ag);
   document.documentElement.style.setProperty('--accent-tint', at);
+  document.documentElement.style.setProperty('--other', oc);
+  document.documentElement.style.setProperty('--other-glow', og);
+  document.documentElement.style.setProperty('--other-tint', ot);
   /* start 버튼 색 */
   var sb = document.getElementById('btn-start');
   if(sb) sb.style.background = ac;
@@ -612,13 +621,19 @@ function doLogout() { localStorage.removeItem(SAVE_KEY); location.reload(); }
 
 /* ══ INIT ══ */
 function initApp(sleepTime, wakeTime) {
-  /* --accent CSS 변수를 mySide에 따라 설정 — 앱 전체 색상 테마 결정 */
+  /* --accent = 내 사이드 색, --other = 상대방 사이드 색 */
   var accentColor = mySide==='right' ? '#35c9ff' : '#ff6b35';
   var accentGlow  = mySide==='right' ? 'rgba(53,201,255,.4)' : 'rgba(255,107,53,.4)';
   var accentTint  = mySide==='right' ? 'rgba(53,201,255,.1)' : 'rgba(255,107,53,.1)';
+  var otherColor  = mySide==='right' ? '#ff6b35' : '#35c9ff';
+  var otherGlow   = mySide==='right' ? 'rgba(255,107,53,.4)' : 'rgba(53,201,255,.4)';
+  var otherTint   = mySide==='right' ? 'rgba(255,107,53,.1)' : 'rgba(53,201,255,.1)';
   document.documentElement.style.setProperty('--accent', accentColor);
   document.documentElement.style.setProperty('--accent-glow', accentGlow);
   document.documentElement.style.setProperty('--accent-tint', accentTint);
+  document.documentElement.style.setProperty('--other', otherColor);
+  document.documentElement.style.setProperty('--other-glow', otherGlow);
+  document.documentElement.style.setProperty('--other-tint', otherTint);
   var fab = document.getElementById('fab-btn');
   fab.style.background = accentColor;
   fab.style.boxShadow  = '0 8px 28px '+accentGlow;
@@ -648,7 +663,10 @@ function initApp(sleepTime, wakeTime) {
   });
 
   db.ref('rooms/'+roomId+'/meals').orderByChild('ts').on('value', function(snap) {
-    var arr=[]; snap.forEach(function(c){ var v=c.val(); v.key=c.key; arr.push(v); mealsCache[c.key]=v; });
+    /* mealsCache 완전 교체 — 삭제된 항목이 캐시에 남지 않도록 */
+    mealsCache = {};
+    var arr=[];
+    snap.forEach(function(c){ var v=c.val(); v.key=c.key; arr.push(v); mealsCache[c.key]=v; });
     renderTimeline(arr);
   });
 
@@ -680,8 +698,10 @@ function initApp(sleepTime, wakeTime) {
   /* 마지막 방문 시간 (이전 앱 종료 시점) */
   var LAST_VISIT_KEY = 'diet_lastvisit_'+roomId+'_'+mySide;
   var lastVisitTs = parseInt(localStorage.getItem(LAST_VISIT_KEY)||'0');
-  /* 현재 방문 시간 기록 — 다음 번 앱 열 때 기준점으로 사용 */
-  localStorage.setItem(LAST_VISIT_KEY, String(Date.now()));
+  /* 현재 방문 시간 기록은 앱 종료 시점에만 — 지금 즉시 덮으면 다음 진입 때 알림이 사라짐 */
+  function saveVisitTs() { localStorage.setItem(LAST_VISIT_KEY, String(Date.now())); }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') saveVisitTs(); });
+  window.addEventListener('pagehide', saveVisitTs);
 
   /* 이미 처리된 commentKey 집합 (read 여부 무관하게 모두 등록 — 중복 방지) */
   var notifiedKeys = {};
@@ -860,7 +880,9 @@ function renderTimeline(meals) {
         var warnEl   = document.createElement('div');
         warnEl.className = side==='left' ? 'warn-msg-left' : 'warn-msg-right';
         warnEl.style.top = warnTop+'px';
-        warnEl.textContent = WARNING_MSGS[Math.floor(Math.random()*WARNING_MSGS.length)]
+        /* 경고 문구: lastCard.key 해시 기반으로 고정 — 렌더마다 바뀌지 않도록 */
+        var warnIdx = lastCard.key.split('').reduce(function(a,c){ return a+c.charCodeAt(0); }, 0) % WARNING_MSGS.length;
+        warnEl.textContent = WARNING_MSGS[warnIdx]
           .replace('%s', cachedNames[side]||(side==='left'?'왼쪽':'오른쪽'));
         wrap.appendChild(warnEl);
       }
@@ -957,7 +979,7 @@ function loadViewerData(mealKey) {
     var el   = document.getElementById('iv-comments');
     el.innerHTML = list.map(function(c){
       var side = c.side || (cachedNames.left===c.name ? 'left' : 'right');
-      var color = side==='left' ? 'var(--accent)' : 'var(--right)';
+      var color = side==='left' ? 'var(--left)' : 'var(--right)';
       return '<div class="iv-comment">'
         +'<div class="cv-name-row">'
         +'<div class="cv-dot" style="background:'+color+'"></div>'
@@ -982,11 +1004,42 @@ function deleteMeal() {
   if (!confirm('이 사진을 삭제할까요?')) return;
   var key = currentMealKey;
   closeViewer();
+  /* mealsCache에서 즉시 제거 — 클린데이 재판정 등에서 삭제된 항목이 집계되지 않도록 */
+  delete mealsCache[key];
   /* Firebase 삭제 */
-  db.ref('rooms/'+roomId+'/meals/'+key).remove();
-  db.ref('rooms/'+roomId+'/reactions/'+key).remove();
-  db.ref('rooms/'+roomId+'/comments/'+key).remove();
+  Promise.all([
+    db.ref('rooms/'+roomId+'/meals/'+key).remove(),
+    db.ref('rooms/'+roomId+'/reactions/'+key).remove(),
+    db.ref('rooms/'+roomId+'/comments/'+key).remove()
+  ]).then(function() {
+    /* 삭제 완료 후 클린데이 재판정 (오늘 / 어제) */
+    rejudgeCleanDay(new Date());                              /* 오늘 */
+    var yest = new Date(); yest.setDate(yest.getDate()-1);
+    rejudgeCleanDay(yest);                                    /* 어제 */
+  });
   /* Cloudinary는 서버사이드 API 필요 — 파일 자체는 남지만 앱에서는 안 보임 */
+}
+
+/* 삭제 후 특정 날짜 클린데이 재판정 (코인은 건드리지 않고 cleanDays만 갱신) */
+/* Firebase에서 직접 조회 — mealsCache 타이밍 문제 방지 */
+function rejudgeCleanDay(dateObj) {
+  var dk = dateObj.toISOString().slice(0,10);
+  db.ref('rooms/'+roomId+'/settings/'+mySide).once('value', function(snap) {
+    var st = (snap.val()||{}).sleepTime||'24:00';
+    var sm = timeToMinutes(st), cm = sm - 240;
+    var dayStart = new Date(dateObj); dayStart.setHours(0,0,0,0);
+    var dayEnd   = new Date(dateObj); dayEnd.setHours(23,59,59,999);
+    var nightCutMs = dayStart.getTime() + cm*60*1000;
+    /* Firebase에서 직접 읽어서 판정 — 삭제 직후 mealsCache가 아직 갱신 안 됐을 수 있음 */
+    db.ref('rooms/'+roomId+'/meals').once('value', function(snap2) {
+      var late = false;
+      snap2.forEach(function(c) {
+        var m = c.val();
+        if (m.side===mySide && m.ts>=nightCutMs && m.ts<=dayEnd.getTime()) late = true;
+      });
+      db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(!late);
+    });
+  });
 }
 
 /* ══ 업로드 ══ */
