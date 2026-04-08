@@ -186,7 +186,7 @@ input[type=text]:focus { border-color:var(--left); }
 /* 말풍선 경고 */
 .fab-bubble {
   position:fixed; left:50%; transform:translateX(-50%);
-  bottom:88px;
+  bottom:104px;
   background:var(--surface);
   border:1.5px solid var(--left);
   border-radius:14px; padding:9px 16px;
@@ -273,17 +273,21 @@ input[type=text]:focus { border-color:var(--left); }
 .streak-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
 .section-lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
 
-/* [FIX 7] 달력: 월 제목 + 요일 헤더 + 월요일 시작 */
+/* 달력 */
 .cal-month-title { font-family:'Black Han Sans',sans-serif; font-size:14px; text-align:center; margin-bottom:8px; color:var(--text); }
-.clean-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:16px; }
-.cal-dow { height:28px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); }
+.clean-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:0; margin-bottom:16px; }
+.cal-dow { height:24px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); }
 .cal-dow.sun { color:#ff5252; }
-.cal-day { height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; }
-.cal-day.clean { background:rgba(255,107,53,.2); color:var(--left); font-family:'Black Han Sans',sans-serif; }
-.cal-day.dirty { background:rgba(255,255,255,.04); color:var(--muted); }
-.cal-day.future { color:var(--line); }
-.cal-day.today { border:1px solid var(--muted); color:var(--text); }
-.cal-day.empty { background:transparent; }
+/* 날짜 셀: 숫자+점을 하나의 셀에 */
+.cal-cell { display:flex; flex-direction:column; align-items:center; padding:3px 0; min-height:44px; }
+.cal-cell.empty { min-height:44px; }
+.cal-num { height:22px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--muted); width:22px; border-radius:50%; }
+.cal-num.today { border:1px solid var(--muted); color:var(--text); }
+.cal-num.future { color:var(--line); }
+.cal-dots { display:flex; gap:2px; height:10px; align-items:center; justify-content:center; margin-top:1px; }
+.cal-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.cal-dot.left-clean  { background:var(--left); }
+.cal-dot.right-clean { background:var(--right); }
 .bonus-list { display:flex; flex-direction:column; gap:8px; }
 .bonus-item { background:var(--surface2); border-radius:12px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
 .bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--left); }
@@ -1040,7 +1044,7 @@ function openCoinPanel() {
 function closeCoinPanel() { document.getElementById('coin-panel').classList.remove('open'); }
 document.getElementById('coin-panel').addEventListener('click',function(e){ if(e.target===this) closeCoinPanel(); });
 
-/* 달력: 날짜 전체를 먼저 동기로 생성 후 Firebase로 클래스만 업데이트 */
+/* 달력: 양쪽 cleanDays 동시 로드 후 점 표시 */
 function buildCalendar() {
   var cal   = document.getElementById('cp-calendar');
   var now   = new Date();
@@ -1052,10 +1056,14 @@ function buildCalendar() {
   var monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   document.getElementById('cp-cal-month').textContent = y+'년 '+monthNames[mo];
 
-  /* 전체 DOM 한 번에 구성 */
+  /* 1일 요일 offset (월=0 기준) */
+  var firstDow = new Date(y, mo, 1).getDay();
+  var offset   = (firstDow === 0) ? 6 : firstDow - 1;
+
+  /* 전체 그리드 한 번에 구성 */
   cal.innerHTML = '';
 
-  /* 요일 헤더 */
+  /* 요일 헤더 7개 */
   ['월','화','수','목','금','토','일'].forEach(function(d, i) {
     var el = document.createElement('div');
     el.className = 'cal-dow' + (i===6?' sun':'');
@@ -1063,38 +1071,62 @@ function buildCalendar() {
     cal.appendChild(el);
   });
 
-  /* 1일 앞 빈칸 */
-  var firstDow = new Date(y, mo, 1).getDay();
-  var offset   = (firstDow === 0) ? 6 : firstDow - 1;
+  /* 빈칸 */
   for (var b=0; b<offset; b++) {
     var blank = document.createElement('div');
-    blank.className = 'cal-day empty';
+    blank.className = 'cal-cell empty';
     cal.appendChild(blank);
   }
 
-  /* 날짜 칸 전부 먼저 동기 생성 */
+  /* 날짜 셀 전부 생성 */
   for (var d=1; d<=days; d++) {
-    var el = document.createElement('div');
-    el.className = 'cal-day future';
-    el.textContent = d;
-    el.id = 'cal-d-' + d;
-    if (d === today) el.classList.add('today');
-    cal.appendChild(el);
+    var cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    cell.id = 'cal-cell-'+d;
+
+    var num = document.createElement('div');
+    num.className = 'cal-num' + (d===today?' today':'') + (d>today?' future':'');
+    num.textContent = d;
+    cell.appendChild(num);
+
+    var dots = document.createElement('div');
+    dots.className = 'cal-dots';
+    dots.id = 'cal-dots-'+d;
+    cell.appendChild(dots);
+
+    cal.appendChild(cell);
   }
 
-  /* Firebase 응답 오면 클래스만 업데이트 */
-  db.ref('rooms/'+roomId+'/cleanDays/'+mySide).once('value', function(snap) {
-    var data = snap.val()||{};
-    for (var d=1; d<=days; d++) {
-      if (d > today) continue;
+  /* 양쪽 cleanDays 동시 fetch */
+  var leftData={}, rightData={};
+  function renderDots(){
+    for (var d=1; d<=today; d++) {
+      var dotsEl = document.getElementById('cal-dots-'+d);
+      if (!dotsEl) continue;
+      dotsEl.innerHTML = '';
       var key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-      var el  = document.getElementById('cal-d-'+d);
-      if (!el) continue;
-      el.classList.remove('future');
-      if (data[key]===true)       el.classList.add('clean');
-      else if (data[key]===false) el.classList.add('dirty');
-      else                        el.classList.add('future');
+      var lv = leftData[key], rv = rightData[key];
+      /* 왼쪽: 클린만 주황 점 */
+      if (lv === true) {
+        var ld = document.createElement('div');
+        ld.className = 'cal-dot left-clean';
+        dotsEl.appendChild(ld);
+      }
+      /* 오른쪽: 클린만 파랑 점 */
+      if (rv === true) {
+        var rd = document.createElement('div');
+        rd.className = 'cal-dot right-clean';
+        dotsEl.appendChild(rd);
+      }
     }
+  }
+
+  db.ref('rooms/'+roomId+'/cleanDays/left').once('value', function(snap){
+    leftData = snap.val()||{};
+    db.ref('rooms/'+roomId+'/cleanDays/right').once('value', function(snap2){
+      rightData = snap2.val()||{};
+      renderDots();
+    });
   });
 }
 
