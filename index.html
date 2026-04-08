@@ -656,45 +656,67 @@ function initApp(sleepTime, wakeTime) {
   });
   setTimeout(function(){ reactNotifReady=true; }, 3000);
 
-  /* 댓글 알림: child_added + child_changed, 상대방 댓글만 */
-  var commentNotifReady = false;
-  var seenCommentKeys = {};
+  /* 댓글 알림: 마지막 방문 이후 달린 댓글 감지 */
 
   /* 저장된 알림 불러오기 */
   try {
     var saved = JSON.parse(localStorage.getItem(NOTIF_KEY+'_'+roomId+'_'+mySide)||'[]');
     unreadNotifs = Array.isArray(saved) ? saved : [];
   } catch(e){ unreadNotifs=[]; }
+
+  /* 마지막 방문 시간 (이전 앱 종료 시점) */
+  var LAST_VISIT_KEY = 'diet_lastvisit_'+roomId+'_'+mySide;
+  var lastVisitTs = parseInt(localStorage.getItem(LAST_VISIT_KEY)||'0');
+  /* 현재 방문 시간 기록 — 다음 번 앱 열 때 기준점으로 사용 */
+  localStorage.setItem(LAST_VISIT_KEY, String(Date.now()));
+
+  /* 이미 알림에 있는 commentKey 집합 */
+  var notifiedKeys = {};
+  unreadNotifs.forEach(function(n){ if(n.commentKey) notifiedKeys[n.commentKey]=true; });
+
   updateNotifBadge();
 
-  function addNotif(mealKey, c) {
-    unreadNotifs.unshift({mealKey:mealKey, name:c.name, side:c.side||'', text:c.text, ts:c.ts||Date.now()});
+  function addNotif(mealKey, commentKey, c) {
+    if (notifiedKeys[commentKey]) return; /* 중복 방지 */
+    notifiedKeys[commentKey] = true;
+    unreadNotifs.unshift({mealKey:mealKey, commentKey:commentKey, name:c.name, side:c.side||'', text:c.text, ts:c.ts||Date.now()});
     if(unreadNotifs.length>50) unreadNotifs.pop();
     localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide, JSON.stringify(unreadNotifs));
     updateNotifBadge();
     showNotifToast('💬 '+c.name+': '+c.text);
   }
 
-  function watchComments(snap) {
-    if (!commentNotifReady) return;
+  /* 앱 시작 시: 지난 방문 이후 댓글 전체 스캔 */
+  db.ref('rooms/'+roomId+'/comments').once('value', function(snap) {
+    var allComments = snap.val()||{};
+    Object.keys(allComments).forEach(function(mealKey) {
+      var mealComments = allComments[mealKey]||{};
+      Object.keys(mealComments).forEach(function(ck) {
+        var c = mealComments[ck];
+        if (!c || !c.name || c.name === myName) return;
+        var commentTs = c.ts || 0;
+        /* 마지막 방문 이후에 달린 댓글만 알림 */
+        if (commentTs > lastVisitTs) {
+          addNotif(mealKey, ck, c);
+        }
+      });
+    });
+  });
+
+  /* 실시간: 앱 켜진 상태에서 새로 달리는 댓글 감지 */
+  var realtimeReady = false;
+  db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
+    if (!realtimeReady) return;
     var mealKey = snap.key;
     var mealComments = snap.val()||{};
     Object.keys(mealComments).forEach(function(ck) {
-      if (seenCommentKeys[ck]) return;
-      seenCommentKeys[ck] = true;
       var c = mealComments[ck];
-      if (c && c.name && c.name !== myName) {
-        addNotif(mealKey, c);
-      }
+      if (!c || !c.name || c.name === myName) return;
+      addNotif(mealKey, ck, c);
     });
-  }
-
-  db.ref('rooms/'+roomId+'/comments').on('child_added', function(snap) { watchComments(snap); });
-  db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
-    if (!commentNotifReady) return;
-    watchComments(snap);
   });
-  setTimeout(function(){ commentNotifReady=true; }, 3000);
+  /* 초기 로딩 완료 후 실시간 감지 시작 */
+  setTimeout(function(){ realtimeReady=true; }, 2000);
 }
 
 /* [FIX 5] 타임라인 카드 상단 바 업데이트 */
