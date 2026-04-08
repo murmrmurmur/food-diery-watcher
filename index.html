@@ -76,27 +76,33 @@ input[type=text]:focus { border-color:var(--left); }
   display:flex; flex-direction:column; gap:7px; z-index:40;
 }
 .hdr-row1 { display:flex; align-items:center; justify-content:space-between; }
-.hdr-row2 { display:flex; align-items:center; justify-content:space-between; }
+.hdr-row2 { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 .hdr-title { font-family:'Black Han Sans',sans-serif; font-size:14px; letter-spacing:.5px; }
-.coin-badge {
-  font-size:11px; color:var(--text);
-  background:var(--surface2); border-radius:20px;
-  padding:4px 11px; border:1px solid var(--line); white-space:nowrap; cursor:pointer;
-  transition:border-color .18s;
-}
-.coin-badge:active { border-color:var(--left); }
-.hdr-names { display:flex; gap:10px; align-items:center; }
-.n-badge { display:flex; align-items:center; gap:5px; font-size:12px; }
+.hdr-names { display:flex; gap:8px; align-items:center; }
+.n-badge { display:flex; align-items:center; gap:5px; font-size:11px; }
 .n-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .n-dot.l { background:var(--left); }
 .n-dot.r { background:var(--right); }
 .hdr-vs { font-size:10px; color:var(--muted); }
-.hdr-btns { display:flex; gap:6px; }
-.hdr-icon-btn {
-  background:var(--surface2); border:1px solid var(--line);
-  border-radius:10px; padding:5px 10px; cursor:pointer; color:var(--text);
-  font-family:'Gowun Dodum',sans-serif; font-size:11px;
+.hdr-chip {
+  font-size:11px; color:var(--text);
+  background:var(--surface2); border-radius:20px;
+  padding:4px 11px; border:1px solid var(--line); white-space:nowrap; cursor:pointer;
+  transition:border-color .18s; position:relative;
 }
+.hdr-chip:active { opacity:.7; }
+.coin-badge { font-size:11px; color:var(--text); background:var(--surface2); border-radius:20px; padding:4px 11px; border:1px solid var(--line); white-space:nowrap; cursor:pointer; transition:border-color .18s; }
+.coin-badge:active { border-color:var(--left); }
+/* 알림 뱃지 */
+.notif-badge {
+  position:absolute; top:-5px; right:-5px;
+  background:#ff3b30; color:#fff; border-radius:10px;
+  font-size:9px; font-family:'Black Han Sans',sans-serif;
+  min-width:16px; height:16px; padding:0 4px;
+  display:none; align-items:center; justify-content:center;
+  border:1.5px solid var(--bg);
+}
+.notif-badge.show { display:flex; }
 
 /* ══ TIMELINE ══ */
 .tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:120px; -webkit-overflow-scrolling:touch; }
@@ -222,22 +228,19 @@ input[type=text]:focus { border-color:var(--left); }
 @keyframes sp { to{transform:rotate(360deg)} }
 
 /* ══ 이미지 뷰어 ══ */
-.img-viewer-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.93); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; opacity:0; pointer-events:none; transition:opacity .22s; padding:56px 20px 36px; }
+.img-viewer-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.93); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; opacity:0; pointer-events:none; transition:opacity .22s; padding:56px 20px 36px; }
 .img-viewer-backdrop.open { opacity:1; pointer-events:all; }
-#iv-img { width:88vw; max-width:380px; aspect-ratio:1; object-fit:cover; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.8); flex-shrink:0; }
-.iv-reactions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
-.iv-reaction-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:20px; padding:7px 13px; font-size:20px; cursor:pointer; transition:transform .15s, background .15s; position:relative; }
-.iv-reaction-btn:active { transform:scale(1.25); }
-.iv-reaction-btn.reacted { background:rgba(255,107,53,.25); border-color:var(--left); }
-.iv-react-cnt { position:absolute; top:-5px; right:-5px; background:var(--left); color:#fff; border-radius:10px; font-size:9px; padding:1px 4px; font-family:'Black Han Sans',sans-serif; min-width:14px; text-align:center; display:none; }
-.iv-reaction-btn.has-cnt .iv-react-cnt { display:block; }
-.iv-comments { width:100%; max-width:380px; max-height:110px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
-.iv-comment { background:rgba(255,255,255,.06); border-radius:10px; padding:7px 12px; font-size:12px; color:var(--text); line-height:1.5; }
-.iv-comment .cv-name { font-size:10px; color:var(--muted); margin-bottom:2px; }
-.iv-input-row { display:flex; gap:8px; width:100%; max-width:380px; }
+#iv-img { width:88vw; max-width:400px; aspect-ratio:1; object-fit:cover; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.8); flex-shrink:0; }
+.iv-comments { width:100%; max-width:400px; max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.iv-comment { background:rgba(255,255,255,.06); border-radius:10px; padding:8px 12px; font-size:13px; color:var(--text); line-height:1.5; }
+.iv-comment .cv-name-row { display:flex; align-items:center; gap:5px; margin-bottom:3px; }
+.iv-comment .cv-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.iv-comment .cv-name { font-size:10px; font-family:'Black Han Sans',sans-serif; }
+.iv-input-row { display:flex; gap:8px; width:100%; max-width:400px; }
 .iv-input-row input { flex:1; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:12px; color:var(--text); font-family:'Gowun Dodum',sans-serif; font-size:14px; padding:10px 14px; outline:none; -webkit-appearance:none; }
 .iv-input-row button { background:var(--left); border:none; border-radius:12px; color:#fff; font-family:'Black Han Sans',sans-serif; font-size:13px; padding:10px 16px; cursor:pointer; }
 .iv-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:14px; cursor:pointer; z-index:101; }
+.iv-delete { position:absolute; top:14px; left:14px; background:rgba(255,59,48,.15); border:1px solid rgba(255,59,48,.3); color:#ff3b30; border-radius:50%; width:36px; height:36px; font-size:13px; cursor:pointer; z-index:101; display:flex; align-items:center; justify-content:center; }
 
 /* ══ 슬라이드업 패널 공통 ══ */
 .panel-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:60; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s; }
@@ -250,6 +253,18 @@ input[type=text]:focus { border-color:var(--left); }
 /* 설정 패널 */
 .setting-row { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
 .setting-save-btn { width:100%; padding:15px; border:none; border-radius:14px; background:var(--left); color:#fff; font-family:'Black Han Sans',sans-serif; font-size:16px; cursor:pointer; margin-top:6px; }
+/* 알림 패널 */
+.notif-item { display:flex; align-items:center; gap:12px; background:var(--surface2); border-radius:12px; padding:12px; cursor:pointer; margin-bottom:8px; transition:opacity .15s; }
+.notif-item:active { opacity:.7; }
+.notif-thumb { width:40px; height:40px; border-radius:8px; object-fit:cover; flex-shrink:0; background:var(--line); }
+.notif-info { flex:1; min-width:0; }
+.notif-who { display:flex; align-items:center; gap:4px; margin-bottom:3px; }
+.notif-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.notif-name { font-size:10px; font-family:'Black Han Sans',sans-serif; }
+.notif-time { font-size:10px; color:var(--muted); }
+.notif-text { font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.notif-arrow { font-size:11px; color:var(--muted); flex-shrink:0; }
+.notif-empty { text-align:center; color:var(--muted); font-size:13px; padding:32px 0; }
 
 /* 코인 패널 */
 .coin-summary { background:var(--surface2); border-radius:18px; padding:20px; display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
@@ -338,18 +353,20 @@ input[type=text]:focus { border-color:var(--left); }
   <div class="hdr">
     <div class="hdr-row1">
       <div class="hdr-title">👁 식단 감시당하기</div>
-      <div class="coin-badge" id="my-coin" onclick="openCoinPanel()">🪙 0코인</div>
-    </div>
-    <div class="hdr-row2">
       <div class="hdr-names">
         <div class="n-badge"><div class="n-dot l"></div><span id="dn-left">—</span></div>
         <div class="hdr-vs">vs</div>
         <div class="n-badge"><div class="n-dot r"></div><span id="dn-right">—</span></div>
       </div>
-      <div class="hdr-btns">
-        <button class="hdr-icon-btn" onclick="openSettingPanel()">⚙️ 설정</button>
-        <button class="hdr-icon-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+    <div class="hdr-row2">
+      <div class="coin-badge" id="my-coin" onclick="openCoinPanel()">🪙 0코인</div>
+      <div class="hdr-chip" id="notif-chip" onclick="openNotifPanel()">
+        🔔 알림
+        <div class="notif-badge" id="notif-badge"></div>
       </div>
+      <div class="hdr-chip" onclick="openSettingPanel()">⚙️ 설정</div>
+      <div class="hdr-chip" onclick="doLogout()">로그아웃</div>
     </div>
   </div>
 
@@ -382,13 +399,23 @@ input[type=text]:focus { border-color:var(--left); }
 
 <!-- ══ 이미지 뷰어 ══ -->
 <div class="img-viewer-backdrop" id="img-viewer">
+  <button class="iv-delete" id="iv-delete-btn" onclick="deleteMeal()">🗑</button>
   <button class="iv-close" onclick="closeViewer()">✕</button>
   <img id="iv-img" src="" alt="">
-  <div class="iv-reactions" id="iv-reactions"></div>
   <div class="iv-comments" id="iv-comments"></div>
   <div class="iv-input-row">
     <input type="text" id="iv-comment-input" placeholder="댓글 입력..." maxlength="50">
-    <button onclick="postComment()">전송</button>
+    <button id="iv-send-btn" onclick="postComment()">전송</button>
+  </div>
+</div>
+
+<!-- ══ 알림 패널 ══ -->
+<div class="panel-backdrop" id="notif-panel">
+  <div class="panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title">🔔 알림</div>
+    <div id="notif-list"></div>
+    <button class="modal-cancel" style="margin-top:8px" onclick="closeNotifPanel()">닫기</button>
   </div>
 </div>
 
@@ -494,17 +521,18 @@ var WARNING_MSGS = [
   '🫃 %s 이 추세면 내일 큰일',
   '💀 %s 야식의 결말을 봐요'
 ];
-var EMOJIS = ['❤️','😂','😮','👍','🥲','🔫'];
 
 /* ── 상태 ── */
 var mySide = null, myName = '', roomId = '';
 var selFile = null, busy = false, db;
 var SAVE_KEY = 'diet_watch_v1';
-var currentMealKey = null;
+var currentMealKey = null, currentMealSide = null, currentMealUrl = null;
 var cachedNames = {};
-/* [FIX 5] 반응/댓글 캐시 (타임라인 뱃지용) */
 var reactionsCache = {};
 var commentsCache  = {};
+var mealsCache = {};       /* mealKey → {url, side, ts} */
+var unreadNotifs = [];     /* {mealKey, commenterName, commenterSide, text, ts} */
+var NOTIF_KEY = 'diet_notifs_v1';
 
 /* ══ 시간 입력 파싱 (숫자 4자리 → "HH:MM") ══ */
 function parseTimeInput(raw) {
@@ -607,7 +635,7 @@ function initApp(sleepTime, wakeTime) {
   });
 
   db.ref('rooms/'+roomId+'/meals').orderByChild('ts').on('value', function(snap) {
-    var arr=[]; snap.forEach(function(c){ var v=c.val(); v.key=c.key; arr.push(v); });
+    var arr=[]; snap.forEach(function(c){ var v=c.val(); v.key=c.key; arr.push(v); mealsCache[c.key]=v; });
     renderTimeline(arr);
   });
 
@@ -628,38 +656,43 @@ function initApp(sleepTime, wakeTime) {
   });
   setTimeout(function(){ reactNotifReady=true; }, 3000);
 
-  /* [FIX 4] 댓글 알림: child_added + child_changed 둘 다 감시, 상대방 댓글만 알림 */
+  /* 댓글 알림: child_added + child_changed, 상대방 댓글만 */
   var commentNotifReady = false;
   var seenCommentKeys = {};
 
+  /* 저장된 알림 불러오기 */
+  try {
+    var saved = JSON.parse(localStorage.getItem(NOTIF_KEY+'_'+roomId+'_'+mySide)||'[]');
+    unreadNotifs = Array.isArray(saved) ? saved : [];
+  } catch(e){ unreadNotifs=[]; }
+  updateNotifBadge();
+
+  function addNotif(mealKey, c) {
+    unreadNotifs.unshift({mealKey:mealKey, name:c.name, side:c.side||'', text:c.text, ts:c.ts||Date.now()});
+    if(unreadNotifs.length>50) unreadNotifs.pop();
+    localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide, JSON.stringify(unreadNotifs));
+    updateNotifBadge();
+    showNotifToast('💬 '+c.name+': '+c.text);
+  }
+
   function watchComments(snap) {
     if (!commentNotifReady) return;
+    var mealKey = snap.key;
     var mealComments = snap.val()||{};
     Object.keys(mealComments).forEach(function(ck) {
       if (seenCommentKeys[ck]) return;
       seenCommentKeys[ck] = true;
       var c = mealComments[ck];
       if (c && c.name && c.name !== myName) {
-        showNotifToast('💬 '+c.name+': '+c.text);
+        addNotif(mealKey, c);
       }
     });
   }
 
-  db.ref('rooms/'+roomId+'/comments').on('child_added', function(snap) {
-    watchComments(snap);
-  });
+  db.ref('rooms/'+roomId+'/comments').on('child_added', function(snap) { watchComments(snap); });
   db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
     if (!commentNotifReady) return;
-    var mealComments = snap.val()||{};
-    /* 새로 생긴 댓글 찾기 */
-    Object.keys(mealComments).forEach(function(ck) {
-      if (seenCommentKeys[ck]) return;
-      seenCommentKeys[ck] = true;
-      var c = mealComments[ck];
-      if (c && c.name && c.name !== myName) {
-        showNotifToast('💬 '+c.name+': '+c.text);
-      }
-    });
+    watchComments(snap);
   });
   setTimeout(function(){ commentNotifReady=true; }, 3000);
 }
@@ -879,43 +912,41 @@ function closeViewer() { document.getElementById('img-viewer').classList.remove(
 document.getElementById('img-viewer').addEventListener('click',function(e){ if(e.target===this) closeViewer(); });
 
 function loadViewerData(mealKey) {
-  db.ref('rooms/'+roomId+'/reactions/'+mealKey).once('value', function(snap) {
-    var data = snap.val()||{};
-    var myR  = data[mySide]||{};
-    document.querySelectorAll('.iv-reaction-btn').forEach(function(btn) {
-      var hex = encodeEmoji(btn.dataset.emoji);
-      btn.classList.toggle('reacted', !!myR[hex]);
-      var total = 0;
-      Object.values(data).forEach(function(sd){ if(sd&&sd[hex]) total++; });
-      var cnt = btn.querySelector('.iv-react-cnt');
-      if (total>0) { cnt.textContent=total; btn.classList.add('has-cnt'); }
-      else { cnt.textContent=''; btn.classList.remove('has-cnt'); }
-    });
-  });
   db.ref('rooms/'+roomId+'/comments/'+mealKey).once('value', function(snap) {
     var list = Object.values(snap.val()||{}).sort(function(a,b){ return a.ts-b.ts; });
     var el   = document.getElementById('iv-comments');
     el.innerHTML = list.map(function(c){
-      return '<div class="iv-comment"><div class="cv-name">'+(c.name||'')+'</div>'+(c.text||'')+'</div>';
+      var side = c.side || (cachedNames.left===c.name ? 'left' : 'right');
+      var color = side==='left' ? 'var(--left)' : 'var(--right)';
+      return '<div class="iv-comment">'
+        +'<div class="cv-name-row">'
+        +'<div class="cv-dot" style="background:'+color+'"></div>'
+        +'<span class="cv-name" style="color:'+color+'">'+(c.name||'')+'</span>'
+        +'</div>'
+        +(c.text||'')+'</div>';
     }).join('');
     el.scrollTop = el.scrollHeight;
-  });
-}
-function encodeEmoji(e) { return (e.codePointAt(0)||0).toString(16); }
-function toggleReaction(emoji) {
-  if (!currentMealKey) return;
-  var path = 'rooms/'+roomId+'/reactions/'+currentMealKey+'/'+mySide+'/'+encodeEmoji(emoji);
-  db.ref(path).once('value', function(snap) {
-    (snap.val() ? db.ref(path).remove() : db.ref(path).set(true))
-      .then(function(){ loadViewerData(currentMealKey); });
   });
 }
 function postComment() {
   var input = document.getElementById('iv-comment-input');
   var text  = input.value.trim();
   if (!text||!currentMealKey) return;
-  db.ref('rooms/'+roomId+'/comments/'+currentMealKey).push({name:myName,text:text,ts:Date.now()})
+  db.ref('rooms/'+roomId+'/comments/'+currentMealKey).push({name:myName,side:mySide,text:text,ts:Date.now()})
     .then(function(){ input.value=''; loadViewerData(currentMealKey); });
+}
+
+/* ══ 삭제 ══ */
+function deleteMeal() {
+  if (!currentMealKey || currentMealSide !== mySide) return;
+  if (!confirm('이 사진을 삭제할까요?')) return;
+  var key = currentMealKey;
+  closeViewer();
+  /* Firebase 삭제 */
+  db.ref('rooms/'+roomId+'/meals/'+key).remove();
+  db.ref('rooms/'+roomId+'/reactions/'+key).remove();
+  db.ref('rooms/'+roomId+'/comments/'+key).remove();
+  /* Cloudinary는 서버사이드 API 필요 — 파일 자체는 남지만 앱에서는 안 보임 */
 }
 
 /* ══ 업로드 ══ */
@@ -1194,6 +1225,72 @@ function showNotifToast(msg){
   el.onclick=function(){ if(el.parentNode) document.body.removeChild(el); };
   document.body.appendChild(el);
   setTimeout(function(){ if(el.parentNode) document.body.removeChild(el); },4000);
+}
+
+/* ══ 알림 패널 ══ */
+function updateNotifBadge() {
+  var badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  var unread = unreadNotifs.filter(function(n){ return !n.read; });
+  if (unread.length > 0) {
+    badge.textContent = unread.length > 9 ? '9+' : unread.length;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+}
+function openNotifPanel() {
+  /* 목록 렌더 */
+  var list = document.getElementById('notif-list');
+  if (!unreadNotifs.length) {
+    list.innerHTML = '<div class="notif-empty">새 알림이 없어요 👁</div>';
+  } else {
+    list.innerHTML = '';
+    unreadNotifs.slice(0,30).forEach(function(n) {
+      var meal = mealsCache[n.mealKey]||{};
+      var color = (n.side==='left'||cachedNames.left===n.name) ? 'var(--left)' : 'var(--right)';
+      var timeAgo = formatTimeAgo(n.ts);
+      var item = document.createElement('div');
+      item.className = 'notif-item';
+      item.innerHTML = (meal.url
+        ? '<img class="notif-thumb" src="'+escStr(meal.url)+'" loading="lazy">'
+        : '<div class="notif-thumb"></div>')
+        +'<div class="notif-info">'
+        +'<div class="notif-who">'
+        +'<div class="notif-dot" style="background:'+color+'"></div>'
+        +'<span class="notif-name" style="color:'+color+'">'+escStr(n.name)+'</span>'
+        +'<span class="notif-time">· '+timeAgo+'</span>'
+        +'</div>'
+        +'<div class="notif-text">'+escStr(n.text)+'</div>'
+        +'</div>'
+        +'<div class="notif-arrow">›</div>';
+      item.onclick = function() {
+        closeNotifPanel();
+        if (meal.url) openViewer(meal.url, n.mealKey);
+      };
+      list.appendChild(item);
+    });
+  }
+  /* 전부 읽음 처리 */
+  unreadNotifs.forEach(function(n){ n.read=true; });
+  localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide, JSON.stringify(unreadNotifs));
+  updateNotifBadge();
+  document.getElementById('notif-panel').classList.add('open');
+}
+function closeNotifPanel() { document.getElementById('notif-panel').classList.remove('open'); }
+document.addEventListener('DOMContentLoaded', function(){
+  var np = document.getElementById('notif-panel');
+  if(np) np.addEventListener('click', function(e){ if(e.target===this) closeNotifPanel(); });
+});
+function formatTimeAgo(ts) {
+  if(!ts) return '';
+  var diff = Date.now()-ts;
+  var m = Math.floor(diff/60000);
+  if(m<1) return '방금';
+  if(m<60) return m+'분 전';
+  var h = Math.floor(m/60);
+  if(h<24) return h+'시간 전';
+  return Math.floor(h/24)+'일 전';
 }
 
 /* ══ 클린데이 코인 ══ */
