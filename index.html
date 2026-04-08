@@ -19,7 +19,8 @@
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body { background:var(--bg); color:var(--text); font-family:'Gowun Dodum',sans-serif; min-height:100dvh; overflow-x:hidden; }
+html { background:var(--bg); color:var(--text); font-family:'Gowun Dodum',sans-serif; }
+body { overflow:hidden; min-height:100dvh; overflow-x:hidden; }
 
 /* ── SETUP ── */
 #setup {
@@ -67,6 +68,8 @@ input[type=text]:focus { border-color:var(--left); }
 .who-btn.sel-left  { border-color:var(--left);  color:var(--left);  background:rgba(255,107,53,.1); }
 .who-btn.sel-right { border-color:var(--right); color:var(--right); background:rgba(53,201,255,.1); }
 
+.time-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
 .start-btn {
   width:100%; padding:17px; border:none; border-radius:14px;
   background:var(--left); color:#fff;
@@ -80,29 +83,35 @@ input[type=text]:focus { border-color:var(--left); }
 .err-msg { font-size:12px; color:#ff5252; text-align:center; min-height:16px; }
 
 /* ── APP ── */
-#app { display:none; flex-direction:column; min-height:100dvh; }
+#app { display:none; flex-direction:column; height:100dvh; }
 
 .hdr {
-  position:sticky; top:0; z-index:40;
+  flex-shrink:0;
   background:rgba(14,14,14,.96); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--line); padding:14px 18px;
   display:flex; align-items:center; justify-content:space-between;
+  z-index:40;
 }
 .hdr-title { font-family:'Black Han Sans',sans-serif; font-size:14px; letter-spacing:.5px; }
-.hdr-right { display:flex; align-items:center; gap:12px; }
+.hdr-right { display:flex; align-items:center; gap:10px; }
 .hdr-names { display:flex; gap:12px; align-items:center; }
 .n-badge { display:flex; align-items:center; gap:5px; font-size:12px; }
 .n-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .n-dot.l { background:var(--left); }
 .n-dot.r { background:var(--right); }
 .hdr-vs { font-size:10px; color:var(--muted); }
+.coin-badge {
+  font-size:11px; color:var(--text);
+  background:var(--surface2); border-radius:20px;
+  padding:3px 9px; border:1px solid var(--line); white-space:nowrap;
+}
 .logout-btn {
   font-size:11px; color:var(--muted); background:none; border:none;
   cursor:pointer; padding:4px 8px; font-family:'Gowun Dodum',sans-serif;
 }
 
 /* ── TIMELINE ── */
-.tl-wrap { flex:1; position:relative; padding-bottom:110px; }
+.tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:110px; -webkit-overflow-scrolling:touch; }
 .tl-line {
   position:absolute; left:50%; top:0; bottom:0; width:1px;
   background:linear-gradient(to bottom, transparent 0%, #2a2a2a 40px, #2a2a2a calc(100% - 40px), transparent 100%);
@@ -127,10 +136,16 @@ input[type=text]:focus { border-color:var(--left); }
   border:1px solid var(--line); border-radius:20px; white-space:nowrap; z-index:2;
 }
 
+.warn-msg {
+  text-align:center; font-size:13px; color:#ff5252;
+  padding:8px 0 4px; letter-spacing:1px;
+}
+
 .mrow {
   display:grid; grid-template-columns:1fr 20px 1fr;
   align-items:start; padding:0 14px; margin-bottom:4px;
-  position:relative; animation:pop .3s ease forwards; opacity:0;
+  position:absolute; width:100%;
+  animation:pop .3s ease forwards; opacity:0;
 }
 @keyframes pop { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
@@ -147,11 +162,16 @@ input[type=text]:focus { border-color:var(--left); }
   max-width:148px; width:100%;
   box-shadow:0 4px 20px rgba(0,0,0,.6);
   margin:12px 0; aspect-ratio:1; background:var(--surface2);
+  cursor:pointer; transition:transform .15s;
 }
+.mcrd:active { transform:scale(.96); }
 .mrow.ml .mcrd { justify-self:end; margin-right:14px; border-top-right-radius:3px; }
 .mrow.mr .mcrd { justify-self:start; margin-left:14px; border-top-left-radius:3px; }
 .mcrd img { width:100%; height:100%; object-fit:cover; display:block; }
 .mrow-center { position:relative; }
+
+/* 스택 카드 그림자 */
+.mcrd.stacked { box-shadow:0 -6px 20px rgba(0,0,0,.8); }
 
 /* ── FAB ── */
 .fab {
@@ -165,7 +185,7 @@ input[type=text]:focus { border-color:var(--left); }
 }
 .fab:active { transform:translateX(-50%) scale(.95); }
 
-/* ── MODAL ── */
+/* ── 업로드 MODAL ── */
 .backdrop {
   position:fixed; inset:0; background:rgba(0,0,0,.8);
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
@@ -211,6 +231,70 @@ input[type=text]:focus { border-color:var(--left); }
   vertical-align:middle; margin-right:6px;
 }
 @keyframes sp { to{transform:rotate(360deg)} }
+
+/* ── 이미지 뷰어 ── */
+.img-viewer-backdrop {
+  position:fixed; inset:0; background:rgba(0,0,0,.92);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  z-index:100; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:12px;
+  opacity:0; pointer-events:none; transition:opacity .22s;
+  padding:24px 20px 40px;
+}
+.img-viewer-backdrop.open { opacity:1; pointer-events:all; }
+#iv-img {
+  width:90vw; max-width:360px; aspect-ratio:1;
+  object-fit:cover; border-radius:20px;
+  box-shadow:0 8px 40px rgba(0,0,0,.8); flex-shrink:0;
+}
+.iv-meta { font-size:14px; color:rgba(255,255,255,.7); text-align:center; }
+.iv-reactions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.iv-reaction-btn {
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+  border-radius:20px; padding:6px 12px; font-size:18px; cursor:pointer;
+  transition:transform .15s, background .15s;
+}
+.iv-reaction-btn:active { transform:scale(1.2); }
+.iv-reaction-btn.reacted { background:rgba(255,107,53,.2); border-color:var(--left); }
+.iv-comments {
+  width:100%; max-width:360px; max-height:120px;
+  overflow-y:auto; display:flex; flex-direction:column; gap:6px;
+}
+.iv-comment {
+  background:rgba(255,255,255,.06); border-radius:10px;
+  padding:7px 12px; font-size:12px; color:var(--text); line-height:1.5;
+}
+.iv-comment .cv-name { font-size:10px; color:var(--muted); margin-bottom:2px; }
+.iv-input-row { display:flex; gap:8px; width:100%; max-width:360px; }
+.iv-input-row input {
+  flex:1; background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.15); border-radius:12px;
+  color:var(--text); font-family:'Gowun Dodum',sans-serif;
+  font-size:14px; padding:10px 14px; outline:none; -webkit-appearance:none;
+}
+.iv-input-row button {
+  background:var(--left); border:none; border-radius:12px;
+  color:#fff; font-family:'Black Han Sans',sans-serif;
+  font-size:13px; padding:10px 16px; cursor:pointer;
+}
+.iv-close {
+  position:absolute; top:20px; right:20px;
+  background:rgba(255,255,255,.1); border:none; color:#fff;
+  width:36px; height:36px; border-radius:50%;
+  font-size:14px; cursor:pointer; z-index:101;
+}
+
+/* ── 시간 경고 토스트 ── */
+.time-toast {
+  position:fixed; top:70px; left:50%; transform:translateX(-50%);
+  background:var(--surface); border:1px solid var(--left);
+  border-radius:16px; padding:14px 20px; font-size:13px;
+  color:var(--text); text-align:center; z-index:90;
+  box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:280px;
+  line-height:1.6; cursor:pointer;
+  animation:slideDown .3s ease;
+}
+@keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 </style>
 </head>
 <body>
@@ -236,6 +320,13 @@ input[type=text]:focus { border-color:var(--left); }
       <div class="lbl">내 이름 / 닉네임</div>
       <input type="text" id="i-name" placeholder="예: 소현" maxlength="10">
     </div>
+    <div class="field">
+      <div class="lbl">취침 / 기상 시간</div>
+      <div class="time-grid">
+        <input type="text" id="i-sleep" placeholder="취침 예: 24:00" maxlength="5">
+        <input type="text" id="i-wake"  placeholder="기상 예: 07:30" maxlength="5">
+      </div>
+    </div>
     <div class="err-msg" id="err-msg"></div>
     <button class="start-btn" id="btn-start" onclick="startApp()" disabled>감시 시작 👁</button>
   </div>
@@ -246,6 +337,7 @@ input[type=text]:focus { border-color:var(--left); }
   <div class="hdr">
     <div class="hdr-title">👁 식단 감시당하기</div>
     <div class="hdr-right">
+      <div class="coin-badge" id="my-coin">🪙 0</div>
       <div class="hdr-names">
         <div class="n-badge"><div class="n-dot l"></div><span id="dn-left">—</span></div>
         <div class="hdr-vs">vs</div>
@@ -264,10 +356,10 @@ input[type=text]:focus { border-color:var(--left); }
     <div id="timeline"></div>
   </div>
 
-  <button class="fab" onclick="openModal()">📸 지금 먹어요</button>
+  <button class="fab" id="fab-btn" onclick="openModal()">📸 지금 먹어요</button>
 </div>
 
-<!-- ── MODAL ── -->
+<!-- ── 업로드 MODAL ── -->
 <div class="backdrop" id="backdrop">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -282,14 +374,26 @@ input[type=text]:focus { border-color:var(--left); }
   </div>
 </div>
 
-<!-- Firebase compat SDK (Storage 불필요 — DB에 직접 저장) -->
+<!-- ── 이미지 뷰어 ── -->
+<div class="img-viewer-backdrop" id="img-viewer">
+  <button class="iv-close" onclick="closeViewer()">✕</button>
+  <img id="iv-img" src="" alt="">
+  <div class="iv-meta" id="iv-meta"></div>
+  <div class="iv-reactions" id="iv-reactions"></div>
+  <div class="iv-comments" id="iv-comments"></div>
+  <div class="iv-input-row">
+    <input type="text" id="iv-comment-input" placeholder="댓글 입력..." maxlength="50">
+    <button onclick="postComment()">전송</button>
+  </div>
+</div>
+
+<!-- Firebase compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
 /* ══════════════════════════════════════════
-   🔥 FIREBASE CONFIG — 여기만 바꾸면 돼요!
-   Firebase 콘솔 > 프로젝트 설정 > 내 앱 > SDK 설정
+   🔥 FIREBASE CONFIG
 ══════════════════════════════════════════ */
 var FIREBASE_CONFIG = {
   apiKey:            "AIzaSyAR2J3l1yqs_k8CGWkT-vUQsH_PTXrvAQI",
@@ -300,23 +404,40 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "588037697607",
   appId:             "1:588037697607:web:7745740c19aab0dd27c162"
 };
-/* ══════════════════════════════════════════ */
 
+var CLOUDINARY_CLOUD  = 'dqnt3ybt8';
+var CLOUDINARY_PRESET = 'diet_watch_unsigned';
+
+var WARNING_MSGS = [
+  '🔫 %s 그만 드세요',
+  '🚨 %s 오늘 몇 번째예요',
+  '👀 %s 이러다 큰일 나요',
+  '🤦 %s 진심이에요?',
+  '📢 %s 식욕을 다스리세요'
+];
+
+var EMOJIS = ['❤️','😂','😮','👍','🥲','🔫'];
+
+/* ── 상태 ── */
 var mySide  = null;
 var myName  = '';
 var roomId  = '';
 var selFile = null;
 var busy    = false;
-var db, storage;
+var db;
 var SAVE_KEY = 'diet_watch_v1';
+var currentMealKey = null;
+var cachedNames = {};
 
 /* ── restore session ── */
 (function() {
   try {
     var s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!s) return;
-    document.getElementById('i-room').value = s.room || '';
-    document.getElementById('i-name').value = s.name || '';
+    document.getElementById('i-room').value  = s.room  || '';
+    document.getElementById('i-name').value  = s.name  || '';
+    document.getElementById('i-sleep').value = s.sleepTime || '';
+    document.getElementById('i-wake').value  = s.wakeTime  || '';
     if (s.side) pickSide(s.side);
     if (s.autoLogin && s.room && s.name && s.side) {
       setTimeout(startApp, 80);
@@ -343,6 +464,8 @@ function startApp() {
   document.getElementById('err-msg').textContent = '';
   roomId = document.getElementById('i-room').value.trim().replace(/\s+/g,'_').toLowerCase();
   myName = document.getElementById('i-name').value.trim();
+  var sleepTime = document.getElementById('i-sleep').value.trim() || '24:00';
+  var wakeTime  = document.getElementById('i-wake').value.trim()  || '07:30';
   if (!roomId || !myName || !mySide) return;
 
   try {
@@ -354,12 +477,13 @@ function startApp() {
   }
 
   localStorage.setItem(SAVE_KEY, JSON.stringify({
-    room: roomId, name: myName, side: mySide, autoLogin: true
+    room: roomId, name: myName, side: mySide,
+    sleepTime: sleepTime, wakeTime: wakeTime, autoLogin: true
   }));
 
   document.getElementById('setup').style.display = 'none';
   document.getElementById('app').style.display   = 'flex';
-  initApp();
+  initApp(sleepTime, wakeTime);
 }
 
 function doLogout() {
@@ -368,22 +492,59 @@ function doLogout() {
 }
 
 /* ── init ── */
-function initApp() {
-  document.getElementById(mySide === 'left' ? 'dn-left' : 'dn-right').textContent = myName;
+function initApp(sleepTime, wakeTime) {
+  // FAB 색상 + 이름에 (나) 표시
+  var fab = document.getElementById('fab-btn');
+  if (mySide === 'right') {
+    fab.style.background  = 'var(--right)';
+    fab.style.boxShadow   = '0 8px 28px rgba(53,201,255,.4)';
+  }
+  var myBadge = document.getElementById(mySide === 'left' ? 'dn-left' : 'dn-right');
+  myBadge.textContent = myName + ' (나)';
+
+  // DB에 이름·설정 저장
   db.ref('rooms/' + roomId + '/names/' + mySide).set(myName);
+  db.ref('rooms/' + roomId + '/settings/' + mySide).set({
+    sleepTime: sleepTime, wakeTime: wakeTime
+  });
+
+  // 이름 실시간 구독
   db.ref('rooms/' + roomId + '/names').on('value', function(snap) {
     var v = snap.val() || {};
-    document.getElementById('dn-left').textContent  = v.left  || '왼쪽';
-    document.getElementById('dn-right').textContent = v.right || '오른쪽';
+    cachedNames = v;
+    var leftText  = (v.left  || '왼쪽')  + (mySide === 'left'  ? ' (나)' : '');
+    var rightText = (v.right || '오른쪽') + (mySide === 'right' ? ' (나)' : '');
+    document.getElementById('dn-left').textContent  = leftText;
+    document.getElementById('dn-right').textContent = rightText;
   });
+
+  // 식사 실시간 구독
   db.ref('rooms/' + roomId + '/meals').orderByChild('ts').on('value', function(snap) {
     var arr = [];
-    snap.forEach(function(c) { arr.push(c.val()); });
+    snap.forEach(function(c) {
+      var v = c.val();
+      v.key = c.key;
+      arr.push(v);
+    });
     renderTimeline(arr);
   });
+
+  // 코인 표시
+  updateCoinDisplay();
+
+  // 어제 클린데이 판정
+  judgeYesterday();
+
+  // 시간 경고
+  var saved = JSON.parse(localStorage.getItem(SAVE_KEY));
+  if (saved && saved.sleepTime && saved.wakeTime) {
+    checkTimeWarning(saved.sleepTime, saved.wakeTime);
+  }
 }
 
-/* ── render: 시간 비례 타임라인 ── */
+/* ══════════════════════════════════════════
+   타임라인 렌더 (페어링 + 스택 레이아웃)
+══════════════════════════════════════════ */
 function renderTimeline(meals) {
   var tl    = document.getElementById('timeline');
   var empty = document.getElementById('emptystate');
@@ -391,15 +552,16 @@ function renderTimeline(meals) {
   if (!meals || meals.length === 0) { empty.style.display = 'flex'; return; }
   empty.style.display = 'none';
 
-  // 날짜별로 그룹핑
-  var byDate = {};
-  var dateOrder = [];
+  // 날짜별 그룹핑
+  var byDate = {}, dateOrder = [];
   meals.forEach(function(m) {
-    var t       = new Date(m.ts);
-    var dateKey = t.toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
-    if (!byDate[dateKey]) { byDate[dateKey] = []; dateOrder.push(dateKey); }
-    byDate[dateKey].push(m);
+    var t = new Date(m.ts);
+    var dk = t.toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric', weekday:'long'});
+    if (!byDate[dk]) { byDate[dk] = []; dateOrder.push(dk); }
+    byDate[dk].push(m);
   });
+
+  var names = cachedNames;
 
   dateOrder.forEach(function(dateKey) {
     // 날짜 구분선
@@ -410,60 +572,230 @@ function renderTimeline(meals) {
 
     var dayMeals = byDate[dateKey];
 
-    var CARD_H = 172;  // 카드 높이 근사값
-    var MIN_GAP = 180; // 사진 간 최소 간격 (겹침 방지)
-    var PAD = 20;
-
-    // 1) 시간 비례 위치 먼저 계산
-    var minTs = dayMeals.reduce(function(a,b){ return Math.min(a,b.ts); }, Infinity);
-    var maxTs = dayMeals.reduce(function(a,b){ return Math.max(a,b.ts); }, -Infinity);
-    var range = Math.max(maxTs - minTs, 2 * 60 * 60 * 1000);
-
-    // 전체 높이: 비례 배치에 필요한 최소 높이 vs 장수 기반 최소 높이 중 큰 값
-    var DAY_H = Math.max(dayMeals.length * MIN_GAP + PAD * 2, 400);
-
-    // 비례 위치 계산
-    var positions = dayMeals.map(function(m) {
-      var ratio = (m.ts - minTs) / range;
-      return PAD + ratio * (DAY_H - CARD_H - PAD * 2);
-    });
-
-    // 2) 겹침 방지: 위에서부터 순서대로 최소 간격 보장
-    for (var i = 1; i < positions.length; i++) {
-      if (positions[i] < positions[i-1] + MIN_GAP) {
-        positions[i] = positions[i-1] + MIN_GAP;
+    // 과식 경고 (5번 이상)
+    var leftCount  = dayMeals.filter(function(m){ return m.side === 'left'; }).length;
+    var rightCount = dayMeals.filter(function(m){ return m.side === 'right'; }).length;
+    if (leftCount >= 5 || rightCount >= 5) {
+      var warn = document.createElement('div');
+      warn.className = 'warn-msg';
+      function randMsg(name) {
+        var msg = WARNING_MSGS[Math.floor(Math.random() * WARNING_MSGS.length)];
+        return msg.replace('%s', name);
       }
+      var txt = '';
+      if (leftCount  >= 5) txt += randMsg(names.left  || '왼쪽') + '  ';
+      if (rightCount >= 5) txt += randMsg(names.right || '오른쪽');
+      warn.textContent = txt.trim();
+      tl.appendChild(warn);
     }
 
-    // 3) 아래로 밀린 만큼 전체 높이 늘리기
-    var lastBottom = positions[positions.length - 1] + CARD_H + PAD;
-    if (lastBottom > DAY_H) DAY_H = lastBottom;
+    /* ─ 페어링 + 스택 레이아웃 계산 ─ */
+    var CARD_H   = 172;
+    var PAIR_GAP = 20;   // 페어링: 두 카드 동일 top
+    var STACK_DY = 85;   // 스택: 62% 겹침
+    var MIN_GAP  = 180;  // 비페어링 최소 간격
+    var PAD      = 20;
+
+    var lefts  = dayMeals.filter(function(m){ return m.side === 'left'; });
+    var rights = dayMeals.filter(function(m){ return m.side === 'right'; });
+
+    // 그리디 페어링: 좌우를 시간순 정렬 후 가장 가까운 것끼리
+    var pairedLeft  = new Array(lefts.length).fill(false);
+    var pairedRight = new Array(rights.length).fill(false);
+    var pairs = []; // [{left: idx, right: idx}]
+
+    lefts.forEach(function(lm, li) {
+      var bestDiff = Infinity, bestRi = -1;
+      rights.forEach(function(rm, ri) {
+        if (pairedRight[ri]) return;
+        var diff = Math.abs(lm.ts - rm.ts);
+        if (diff < bestDiff) { bestDiff = diff; bestRi = ri; }
+      });
+      if (bestRi >= 0) {
+        pairs.push({ li: li, ri: bestRi });
+        pairedLeft[li]       = true;
+        pairedRight[bestRi]  = true;
+      }
+    });
+
+    // 포지션 맵: mealKey -> top
+    var posMap = {};
+    var nextTop = PAD;
+
+    // 페어링된 쌍 먼저 배치
+    pairs.sort(function(a, b) {
+      var tl2 = lefts[a.li].ts, tr2 = rights[a.ri].ts;
+      var tl3 = lefts[b.li].ts, tr3 = rights[b.ri].ts;
+      return Math.min(tl2, tr2) - Math.min(tl3, tr3);
+    });
+    pairs.forEach(function(p) {
+      var top = nextTop;
+      posMap[lefts[p.li].key]  = top;
+      posMap[rights[p.ri].key] = top;
+      nextTop = top + MIN_GAP;
+    });
+
+    // 페어링 안 된 항목 (한쪽 스택)
+    // side별로 미페어링 항목 추출 → 같은 side내 1시간 이내면 스택
+    function placeSolo(items, paired) {
+      var unpaired = items.filter(function(m, i){ return !paired[i]; });
+      if (unpaired.length === 0) return;
+      unpaired.sort(function(a,b){ return a.ts - b.ts; });
+      var prevTop = null, prevTs = null;
+      unpaired.forEach(function(m) {
+        var top;
+        if (prevTop !== null && (m.ts - prevTs) < 3600000) {
+          // 스택
+          top = prevTop + STACK_DY;
+        } else {
+          top = nextTop;
+          nextTop = top + MIN_GAP;
+        }
+        posMap[m.key] = top;
+        if (top + MIN_GAP > nextTop) nextTop = top + MIN_GAP;
+        prevTop = top; prevTs = m.ts;
+      });
+    }
+    placeSolo(lefts,  pairedLeft);
+    placeSolo(rights, pairedRight);
+
+    // 전체 높이 계산
+    var maxTop = PAD;
+    Object.values(posMap).forEach(function(t){ if (t > maxTop) maxTop = t; });
+    var DAY_H = maxTop + CARD_H + PAD;
 
     var wrap = document.createElement('div');
     wrap.style.cssText = 'position:relative; height:' + DAY_H + 'px;';
     tl.appendChild(wrap);
 
-    dayMeals.forEach(function(m, i) {
-      var row = document.createElement('div');
-      row.className = 'mrow ' + (m.side === 'left' ? 'ml' : 'mr');
-      row.style.cssText = 'position:absolute; top:' + positions[i] + 'px; width:100%; animation:pop .3s ease forwards; opacity:0;';
+    // 스택 여부 판단 (같은 사이드에서 연속 스택)
+    var stackedKeys = {};
+    ['left','right'].forEach(function(side) {
+      var sideItems = dayMeals.filter(function(m){ return m.side === side; }).sort(function(a,b){ return a.ts - b.ts; });
+      for (var i = 1; i < sideItems.length; i++) {
+        if ((sideItems[i].ts - sideItems[i-1].ts) < 3600000) {
+          stackedKeys[sideItems[i].key] = true;
+        }
+      }
+    });
 
-      var card   = '<div class="mcrd"><img src="' + m.url + '" loading="lazy"></div>';
+    dayMeals.forEach(function(m, globalIdx) {
+      var top = posMap[m.key];
+      if (top === undefined) top = PAD + globalIdx * MIN_GAP;
+
+      var hhmm = new Date(m.ts).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false});
+      var isStacked = stackedKeys[m.key];
+      var stackStyle = isStacked ? ' stacked' : '';
+
+      var barColor = m.side === 'left' ? 'var(--left)' : 'var(--right)';
+      var barStyle = 'box-shadow:inset 0 4px 0 0 ' + barColor + ';';
+
+      // z-index: 스택일수록 높게 (나중에 올린 것이 위에)
+      var zIdx = isStacked ? globalIdx + 10 : 1;
+
+      var card   = '<div class="mcrd' + stackStyle + '" style="' + barStyle + 'z-index:' + zIdx + '" '
+                 + 'onclick="openViewer(\'' + escStr(m.url) + '\',\'' + hhmm + '\',\'' + escStr(m.menu||'') + '\',\'' + escStr(m.key) + '\')">'
+                 + '<img src="' + escStr(m.url) + '" loading="lazy"></div>';
       var center = '<div class="mrow-center"><div class="tdot"></div></div>';
       var blank  = '<div></div>';
-      row.innerHTML = m.side === 'left'
-        ? card + center + blank
-        : blank + center + card;
+
+      var row = document.createElement('div');
+      row.className = 'mrow ' + (m.side === 'left' ? 'ml' : 'mr');
+      row.style.cssText = 'position:absolute; top:' + top + 'px; width:100%;';
+      row.innerHTML = m.side === 'left' ? card + center + blank : blank + center + card;
       wrap.appendChild(row);
     });
   });
 
   requestAnimationFrame(function() {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    var tw = document.getElementById('tl-wrap');
+    tw.scrollTop = tw.scrollHeight;
   });
 }
 
-/* ── modal ── */
+function escStr(s) {
+  return String(s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+/* ══════════════════════════════════════════
+   이미지 뷰어
+══════════════════════════════════════════ */
+function openViewer(url, time, menu, mealKey) {
+  document.getElementById('iv-img').src = url;
+  document.getElementById('iv-meta').textContent = time + (menu ? '  ' + menu : '');
+  currentMealKey = mealKey;
+  var rb = document.getElementById('iv-reactions');
+  rb.innerHTML = EMOJIS.map(function(e) {
+    return '<button class="iv-reaction-btn" data-emoji="' + e + '" onclick="toggleReaction(\'' + e + '\')">' + e + '</button>';
+  }).join('');
+  loadViewerData(mealKey);
+  document.getElementById('img-viewer').classList.add('open');
+}
+
+function closeViewer() {
+  document.getElementById('img-viewer').classList.remove('open');
+  currentMealKey = null;
+}
+
+document.getElementById('img-viewer').addEventListener('click', function(e) {
+  if (e.target === this) closeViewer();
+});
+
+function loadViewerData(mealKey) {
+  // 반응
+  db.ref('rooms/' + roomId + '/reactions/' + mealKey).once('value', function(snap) {
+    var data = snap.val() || {};
+    var myReactions = data[mySide] || {};
+    document.querySelectorAll('.iv-reaction-btn').forEach(function(btn) {
+      var hex = encodeEmoji(btn.dataset.emoji);
+      btn.classList.toggle('reacted', !!myReactions[hex]);
+    });
+  });
+  // 댓글
+  db.ref('rooms/' + roomId + '/comments/' + mealKey).once('value', function(snap) {
+    var data = snap.val() || {};
+    var list = Object.values(data);
+    list.sort(function(a,b){ return a.ts - b.ts; });
+    var el = document.getElementById('iv-comments');
+    el.innerHTML = list.map(function(c) {
+      return '<div class="iv-comment"><div class="cv-name">' + (c.name||'') + '</div>' + (c.text||'') + '</div>';
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+  });
+}
+
+function encodeEmoji(e) {
+  return (e.codePointAt(0)||0).toString(16);
+}
+
+function toggleReaction(emoji) {
+  if (!currentMealKey) return;
+  var hex  = encodeEmoji(emoji);
+  var path = 'rooms/' + roomId + '/reactions/' + currentMealKey + '/' + mySide + '/' + hex;
+  db.ref(path).once('value', function(snap) {
+    if (snap.val()) {
+      db.ref(path).remove().then(function(){ loadViewerData(currentMealKey); });
+    } else {
+      db.ref(path).set(true).then(function(){ loadViewerData(currentMealKey); });
+    }
+  });
+}
+
+function postComment() {
+  var input = document.getElementById('iv-comment-input');
+  var text  = input.value.trim();
+  if (!text || !currentMealKey) return;
+  db.ref('rooms/' + roomId + '/comments/' + currentMealKey).push({
+    name: myName, text: text, ts: Date.now()
+  }).then(function() {
+    input.value = '';
+    loadViewerData(currentMealKey);
+  });
+}
+
+/* ══════════════════════════════════════════
+   업로드 모달
+══════════════════════════════════════════ */
 function openModal() {
   selFile = null;
   document.getElementById('notetxt').value = '';
@@ -480,7 +812,7 @@ function fileChosen(e) {
   selFile = f;
   var r = new FileReader();
   r.onload = function(ev) {
-    var pb = document.getElementById('prevbox');
+    var pb   = document.getElementById('prevbox');
     var icon = document.getElementById('prev-icon');
     if (icon) icon.style.display = 'none';
     var img = pb.querySelector('img');
@@ -490,7 +822,7 @@ function fileChosen(e) {
   r.readAsDataURL(f);
 }
 
-/* ── watermark: 정중앙에 크게 (두번째 사진 스타일) ── */
+/* ── 워터마크 스탬프 ── */
 function stampImage(file, menuText, cb) {
   var reader = new FileReader();
   reader.onload = function(ev) {
@@ -501,15 +833,14 @@ function stampImage(file, menuText, cb) {
         if (w >= h) { h = Math.round(h*MAX/w); w = MAX; }
         else        { w = Math.round(w*MAX/h); h = MAX; }
       }
-      var c   = document.createElement('canvas');
+      var c = document.createElement('canvas');
       c.width = w; c.height = h;
       var ctx = c.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
 
       var now  = new Date();
       var hhmm = now.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false});
-      var cx   = w / 2;
-      var cy   = h / 2;
+      var cx   = w / 2, cy = h / 2;
 
       function drawText(text, x, y, size, alpha) {
         ctx.font      = 'bold ' + size + 'px Arial, sans-serif';
@@ -520,20 +851,17 @@ function stampImage(file, menuText, cb) {
         ctx.fillText(text, x, y);
       }
 
-      // 시간: 정중앙에 크게
       var timeSize = Math.round(w * 0.22);
       var menuSize = Math.round(w * 0.08);
-      // 메뉴명 있으면 두 줄 중앙 정렬, 없으면 시간만
       if (menuText) {
-        var gap      = timeSize * 0.3;
-        var totalH   = timeSize + gap + menuSize;
-        var startY   = cy - totalH / 2 + timeSize * 0.8;
-        drawText(hhmm,     cx, startY,              timeSize, 0.95);
-        drawText(menuText, cx, startY + gap + menuSize, menuSize, 0.88);
+        var gap    = timeSize * 0.3;
+        var totalH = timeSize + gap + menuSize;
+        var startY = cy - totalH / 2 + timeSize * 0.8;
+        drawText(hhmm,     cx, startY,                   timeSize, 0.95);
+        drawText(menuText, cx, startY + gap + menuSize,  menuSize, 0.88);
       } else {
         drawText(hhmm, cx, cy + timeSize * 0.35, timeSize, 0.95);
       }
-
       cb(c.toDataURL('image/jpeg', 0.4));
     };
     img.onerror = function() { cb(null); };
@@ -542,11 +870,7 @@ function stampImage(file, menuText, cb) {
   reader.readAsDataURL(file);
 }
 
-/* ── Cloudinary config ── */
-var CLOUDINARY_CLOUD  = 'dqnt3ybt8';
-var CLOUDINARY_PRESET = 'diet_watch_unsigned';
-
-/* ── post: Cloudinary에 이미지 올리고 URL만 Firebase DB에 저장 ── */
+/* ── 포스트 ── */
 function doPost() {
   if (!selFile || busy) return;
   busy = true;
@@ -559,28 +883,160 @@ function doPost() {
 
   stampImage(selFile, menuText, function(dataUrl) {
     var formData = new FormData();
-    formData.append('file', dataUrl);
-    formData.append('upload_preset', CLOUDINARY_PRESET);
+    formData.append('file',           dataUrl);
+    formData.append('upload_preset',  CLOUDINARY_PRESET);
 
     fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {
-      method: 'POST',
-      body: formData
+      method: 'POST', body: formData
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r){ return r.json(); })
     .then(function(data) {
       if (!data.secure_url) throw new Error(data.error ? data.error.message : '업로드 실패');
       return db.ref('rooms/' + roomId + '/meals').push({
         side: mySide,
         url:  data.secure_url,
-        ts:   ts
+        ts:   ts,
+        menu: menuText || null
       });
     })
-    .then(function() { donePost(btn); })
-    .catch(function(e) { alert('올리기 실패: ' + e.message); donePost(btn); });
+    .then(function(ref) {
+      // key를 meal 자체에도 저장 (반응/댓글 연동용)
+      return db.ref('rooms/' + roomId + '/meals/' + ref.key + '/key').set(ref.key);
+    })
+    .then(function(){ donePost(btn); })
+    .catch(function(e){ alert('올리기 실패: ' + e.message); donePost(btn); });
   });
 }
+
 function donePost(btn) {
-  busy = false; btn.innerHTML = '올리기'; btn.disabled = false; selFile = null; closeModal();
+  busy = false; btn.innerHTML = '올리기'; btn.disabled = false;
+  selFile = null; closeModal();
+}
+
+/* ══════════════════════════════════════════
+   시간 경고 팝업
+══════════════════════════════════════════ */
+function timeToMinutes(str) {
+  var parts = (str || '24:00').split(':');
+  return parseInt(parts[0]) * 60 + parseInt(parts[1] || 0);
+}
+
+function checkTimeWarning(sleepTime, wakeTime) {
+  var warnKey = 'diet_warn_' + new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(warnKey)) return;
+
+  var now      = new Date();
+  var nowMin   = now.getHours() * 60 + now.getMinutes();
+  var sleepMin = timeToMinutes(sleepTime);
+  var wakeMin  = timeToMinutes(wakeTime);
+  var dangerMin = sleepMin - 240;
+
+  var msg = null;
+
+  if (nowMin >= dangerMin && nowMin < sleepMin) {
+    msg = '🍽 잠들기 4시간 전부터는 먹지 마세요!';
+  }
+  if (sleepMin >= 1440 && nowMin < wakeMin) {
+    msg = '😴 잘 시간이에요, 자러 가세요!';
+  }
+  if (sleepMin < 1440 && (nowMin >= sleepMin || nowMin < wakeMin)) {
+    msg = '😴 잘 시간이에요, 자러 가세요!';
+  }
+
+  if (msg) {
+    localStorage.setItem(warnKey, '1');
+    showTimeWarning(msg);
+  }
+}
+
+function showTimeWarning(msg) {
+  var el = document.createElement('div');
+  el.className = 'time-toast';
+  el.textContent = msg;
+  el.onclick = function() { if (el.parentNode) document.body.removeChild(el); };
+  document.body.appendChild(el);
+  setTimeout(function() {
+    if (el.parentNode) document.body.removeChild(el);
+  }, 5000);
+}
+
+/* ══════════════════════════════════════════
+   클린데이 코인 시스템
+══════════════════════════════════════════ */
+function judgeYesterday() {
+  var yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  var dateKey = yesterday.toISOString().slice(0, 10);
+
+  db.ref('rooms/' + roomId + '/cleanDays/' + mySide + '/' + dateKey).once('value', function(snap) {
+    if (snap.val() !== null) return; // 이미 판정됨
+
+    db.ref('rooms/' + roomId + '/settings/' + mySide).once('value', function(snap2) {
+      var settings  = snap2.val() || {};
+      var sleepTime = settings.sleepTime || '24:00';
+      var sleepMin  = timeToMinutes(sleepTime);
+      var cutoffMin = sleepMin - 240;
+
+      var cutoffTs = new Date(yesterday);
+      cutoffTs.setHours(Math.floor(cutoffMin / 60), cutoffMin % 60, 0, 0);
+
+      var dayEnd = new Date(yesterday);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      db.ref('rooms/' + roomId + '/meals').once('value', function(snap3) {
+        var meals = snap3.val() || {};
+        var lateEat = Object.values(meals).some(function(m) {
+          return m.side === mySide
+            && m.ts >= cutoffTs.getTime()
+            && m.ts <= dayEnd.getTime();
+        });
+        var isClean = !lateEat;
+        db.ref('rooms/' + roomId + '/cleanDays/' + mySide + '/' + dateKey).set(isClean);
+        if (isClean) addCoin(dateKey);
+        else {
+          // 연속 끊김
+          db.ref('rooms/' + roomId + '/streaks/' + mySide).set(0);
+        }
+      });
+    });
+  });
+}
+
+function addCoin(dateKey) {
+  db.ref('rooms/' + roomId + '/coins/' + mySide).once('value', function(snap) {
+    var current = snap.val() || 0;
+    db.ref('rooms/' + roomId + '/streaks/' + mySide).once('value', function(snap2) {
+      var streak    = snap2.val() || 0;
+      var newStreak = streak + 1;
+      var bonus = 0;
+      if (newStreak === 3) bonus = 1;
+      if (newStreak === 7) bonus = 3;
+      var earned = 1 + bonus;
+
+      db.ref('rooms/' + roomId + '/coins/' + mySide).set(current + earned);
+      db.ref('rooms/' + roomId + '/streaks/' + mySide).set(newStreak);
+
+      // 커플 클린 보너스
+      var otherSide = mySide === 'left' ? 'right' : 'left';
+      db.ref('rooms/' + roomId + '/cleanDays/' + otherSide + '/' + dateKey).once('value', function(snap3) {
+        if (snap3.val() === true) {
+          db.ref('rooms/' + roomId + '/coins/' + mySide).set(current + earned + 1);
+        }
+        updateCoinDisplay();
+      });
+    });
+  });
+}
+
+function updateCoinDisplay() {
+  db.ref('rooms/' + roomId + '/coins').once('value', function(snap) {
+    var data  = snap.val() || {};
+    var my    = data[mySide] || 0;
+    var other = data[mySide === 'left' ? 'right' : 'left'] || 0;
+    var won   = (my + other) * 500;
+    document.getElementById('my-coin').textContent =
+      '🪙 ' + my + ' (합산 ' + won.toLocaleString() + '원)';
+  });
 }
 </script>
 </body>
