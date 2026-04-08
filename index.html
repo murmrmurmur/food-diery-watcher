@@ -274,7 +274,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .coin-row { display:flex; justify-content:space-between; align-items:center; }
 .coin-label { font-size:12px; color:var(--muted); }
 .coin-val { font-family:'Black Han Sans',sans-serif; font-size:18px; }
-.coin-val.lc { color:var(--accent); }
+.coin-val.lc { color:var(--left); }
 .coin-val.rc { color:var(--right); }
 .coin-divider { height:1px; background:var(--line); }
 .coin-total { font-family:'Black Han Sans',sans-serif; font-size:22px; text-align:center; padding:6px 0; }
@@ -282,11 +282,11 @@ input[type=text]:focus { border-color:var(--accent); }
 .goal-wrap { margin:2px 0 14px; }
 .goal-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px; }
 .goal-bg { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
-.goal-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--right)); transition:width .6s ease; }
+.goal-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--left),var(--right)); transition:width .6s ease; }
 .streak-row { display:flex; gap:10px; margin-bottom:14px; }
 .streak-card { flex:1; background:var(--surface2); border-radius:14px; padding:14px; text-align:center; }
 .streak-num { font-family:'Black Han Sans',sans-serif; font-size:28px; }
-.streak-num.lc { color:var(--accent); }
+.streak-num.lc { color:var(--left); }
 .streak-num.rc { color:var(--right); }
 .streak-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
 .section-lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
@@ -308,7 +308,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .cal-dot.right-clean { background:var(--right); }
 .bonus-list { display:flex; flex-direction:column; gap:8px; }
 .bonus-item { background:var(--surface2); border-radius:12px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
-.bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--accent); }
+.bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--left); }
 
 /* ══ 토스트 ══ */
 .time-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--accent); border-radius:16px; padding:13px 18px; font-size:13px; color:var(--text); text-align:center; z-index:90; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:290px; line-height:1.6; cursor:pointer; animation:slideDown .3s ease; }
@@ -683,7 +683,7 @@ function initApp(sleepTime, wakeTime) {
   /* 현재 방문 시간 기록 — 다음 번 앱 열 때 기준점으로 사용 */
   localStorage.setItem(LAST_VISIT_KEY, String(Date.now()));
 
-  /* 이미 알림에 있는 commentKey 집합 */
+  /* 이미 처리된 commentKey 집합 (read 여부 무관하게 모두 등록 — 중복 방지) */
   var notifiedKeys = {};
   unreadNotifs.forEach(function(n){ if(n.commentKey) notifiedKeys[n.commentKey]=true; });
 
@@ -692,7 +692,7 @@ function initApp(sleepTime, wakeTime) {
   function addNotif(mealKey, commentKey, c) {
     if (notifiedKeys[commentKey]) return; /* 중복 방지 */
     notifiedKeys[commentKey] = true;
-    unreadNotifs.unshift({mealKey:mealKey, commentKey:commentKey, name:c.name, side:c.side||'', text:c.text, ts:c.ts||Date.now()});
+    unreadNotifs.unshift({mealKey:mealKey, commentKey:commentKey, name:c.name, side:c.side||'', text:c.text, ts:c.ts||Date.now(), read:false});
     if(unreadNotifs.length>50) unreadNotifs.pop();
     localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide, JSON.stringify(unreadNotifs));
     updateNotifBadge();
@@ -1280,15 +1280,15 @@ function updateNotifBadge() {
   }
 }
 function openNotifPanel() {
-  /* 목록 렌더 */
   var list = document.getElementById('notif-list');
-  if (!unreadNotifs.length) {
+  var toShow = unreadNotifs.filter(function(n){ return !n.read; });
+  if (!toShow.length) {
     list.innerHTML = '<div class="notif-empty">새 알림이 없어요 👁</div>';
   } else {
     list.innerHTML = '';
-    unreadNotifs.slice(0,30).forEach(function(n) {
+    toShow.slice(0,30).forEach(function(n) {
       var meal = mealsCache[n.mealKey]||{};
-      var color = (n.side==='left'||cachedNames.left===n.name) ? 'var(--accent)' : 'var(--right)';
+      var color = (n.side==='left'||cachedNames.left===n.name) ? 'var(--left)' : 'var(--right)';
       var timeAgo = formatTimeAgo(n.ts);
       var item = document.createElement('div');
       item.className = 'notif-item';
@@ -1311,7 +1311,6 @@ function openNotifPanel() {
       list.appendChild(item);
     });
   }
-  /* 전부 읽음 처리 */
   unreadNotifs.forEach(function(n){ n.read=true; });
   localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide, JSON.stringify(unreadNotifs));
   updateNotifBadge();
