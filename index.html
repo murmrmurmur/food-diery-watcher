@@ -99,37 +99,56 @@ input[type=text]:focus { border-color:var(--left); }
 }
 
 /* ══ TIMELINE ══ */
+/* [FIX 1] 세로선: z-index 높이고 색상 더 밝게 */
 .tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:120px; -webkit-overflow-scrolling:touch; }
 .tl-line {
   position:absolute; left:50%; top:0; bottom:0; width:1px;
-  background:#2a2a2a;
-  transform:translateX(-50%); pointer-events:none; z-index:0;
+  background:#444444;
+  transform:translateX(-50%); pointer-events:none; z-index:1;
 }
 .empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:100px 32px; color:var(--muted); text-align:center; }
 .empty-eye { font-size:48px; animation:blink 3.5s infinite; }
 @keyframes blink { 0%,88%,100%{opacity:1} 93%{opacity:0} }
 .empty p { font-size:14px; line-height:1.8; }
 
-.date-div { display:flex; align-items:center; padding:26px 20px 10px; }
+.date-div { display:flex; align-items:center; padding:26px 20px 10px; position:relative; z-index:2; }
 .date-div .dd-line { flex:1; height:1px; background:var(--line); }
 .date-div .dd-text { font-size:11px; letter-spacing:1.5px; color:var(--muted); padding:5px 14px; background:var(--bg); border:1px solid var(--line); border-radius:20px; white-space:nowrap; z-index:2; }
 
 .day-wrap { position:relative; }
 
-/* 과식 경고: absolute — 5번째 카드 바로 아래 */
-.warn-msg {
-  position:absolute; left:0; right:0;
-  text-align:center; font-size:12px; color:#ff5252;
-  padding:3px 16px; letter-spacing:.5px; z-index:10;
+/* [FIX 3] 과식 경고: 왼쪽/오른쪽 각각 컬럼 안에 배치 */
+.warn-msg-left {
+  position:absolute;
+  left:0; width:50%;
+  padding-right:28px;
+  text-align:right;
+  font-size:11px; color:#ff5252;
+  letter-spacing:.3px; z-index:10;
+  line-height:1.5;
+}
+.warn-msg-right {
+  position:absolute;
+  right:0; width:50%;
+  padding-left:28px;
+  text-align:left;
+  font-size:11px; color:#ff5252;
+  letter-spacing:.3px; z-index:10;
+  line-height:1.5;
 }
 
+/* [FIX 2] 타임라인 카드 레이아웃 */
 .mrow { display:grid; grid-template-columns:1fr 20px 1fr; align-items:start; padding:0 14px; position:absolute; width:100%; animation:pop .3s ease forwards; opacity:0; }
 @keyframes pop { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .tdot { position:absolute; left:50%; top:22px; width:9px; height:9px; border-radius:50%; border:2px solid var(--bg); transform:translateX(-50%); z-index:3; }
 .mrow.ml .tdot { background:var(--left); }
 .mrow.mr .tdot { background:var(--right); }
 
-.mcrd { border-radius:14px; overflow:hidden; max-width:148px; width:100%; box-shadow:0 4px 20px rgba(0,0,0,.6); margin:12px 0; aspect-ratio:1; background:var(--surface2); cursor:pointer; transition:transform .15s; position:relative; }
+.mcrd {
+  border-radius:14px; overflow:hidden; max-width:148px; width:100%;
+  box-shadow:0 4px 20px rgba(0,0,0,.6); margin:12px 0; aspect-ratio:1;
+  background:var(--surface2); cursor:pointer; transition:transform .15s; position:relative;
+}
 .mcrd:active { transform:scale(.96); }
 .mrow.ml .mcrd { justify-self:end; margin-right:14px; border-top-right-radius:3px; }
 .mrow.mr .mcrd { justify-self:start; margin-left:14px; border-top-left-radius:3px; }
@@ -137,13 +156,14 @@ input[type=text]:focus { border-color:var(--left); }
 .mcrd.stacked { box-shadow:0 -6px 20px rgba(0,0,0,.8); }
 .mrow-center { position:relative; }
 
-/* 반응 뱃지 (카드 위) */
-.react-badge {
-  position:absolute; bottom:4px; right:4px;
-  background:rgba(0,0,0,.72); border-radius:10px;
-  font-size:11px; padding:2px 5px; pointer-events:none;
-  backdrop-filter:blur(4px); display:none;
+/* [FIX 5] 반응/댓글 있는 카드 상단 컬러 바 */
+.mcrd-bar {
+  position:absolute; top:0; left:0; right:0; height:4px;
+  border-radius:14px 14px 0 0; display:none;
 }
+.mcrd-bar.visible { display:block; }
+.mcrd-bar.left-bar { background:var(--left); }
+.mcrd-bar.right-bar { background:var(--right); }
 
 /* ══ FAB ══ */
 .fab {
@@ -224,11 +244,18 @@ input[type=text]:focus { border-color:var(--left); }
 .streak-num.rc { color:var(--right); }
 .streak-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
 .section-lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
+
+/* [FIX 7] 달력: 월 제목 + 요일 헤더 + 월요일 시작 */
+.cal-month-title { font-family:'Black Han Sans',sans-serif; font-size:14px; text-align:center; margin-bottom:8px; color:var(--text); }
 .clean-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:16px; }
+.cal-dow { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); }
+.cal-dow.sun { color:#ff5252; }
 .cal-day { aspect-ratio:1; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; }
 .cal-day.clean { background:rgba(255,107,53,.2); color:var(--left); font-family:'Black Han Sans',sans-serif; }
 .cal-day.dirty { background:rgba(255,255,255,.04); color:var(--muted); }
 .cal-day.future { color:var(--line); }
+.cal-day.today { border:1px solid var(--muted); }
+.cal-day.empty { background:transparent; }
 .bonus-list { display:flex; flex-direction:column; gap:8px; }
 .bonus-item { background:var(--surface2); border-radius:12px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
 .bonus-item .bv { font-family:'Black Han Sans',sans-serif; color:var(--left); }
@@ -389,6 +416,8 @@ input[type=text]:focus { border-color:var(--left); }
     </div>
 
     <div class="section-lbl">이번달 클린데이 달력</div>
+    <!-- [FIX 7] 월 제목 추가 -->
+    <div class="cal-month-title" id="cp-cal-month"></div>
     <div class="clean-calendar" id="cp-calendar"></div>
 
     <div class="section-lbl">코인 보너스 안내</div>
@@ -441,6 +470,9 @@ var selFile = null, busy = false, db;
 var SAVE_KEY = 'diet_watch_v1';
 var currentMealKey = null;
 var cachedNames = {};
+/* [FIX 5] 반응/댓글 캐시 (타임라인 뱃지용) */
+var reactionsCache = {};
+var commentsCache  = {};
 
 /* ══ 시간 입력 파싱 (숫자 4자리 → "HH:MM") ══ */
 function parseTimeInput(raw) {
@@ -524,6 +556,16 @@ function initApp(sleepTime, wakeTime) {
     document.getElementById('cp-rs-name').textContent = (v.right ||'오른쪽')+' 연속';
   });
 
+  /* [FIX 5] 반응/댓글 실시간 캐시 + 타임라인 뱃지 업데이트 */
+  db.ref('rooms/'+roomId+'/reactions').on('value', function(snap) {
+    reactionsCache = snap.val()||{};
+    updateAllCardBars();
+  });
+  db.ref('rooms/'+roomId+'/comments').on('value', function(snap) {
+    commentsCache = snap.val()||{};
+    updateAllCardBars();
+  });
+
   db.ref('rooms/'+roomId+'/meals').orderByChild('ts').on('value', function(snap) {
     var arr=[]; snap.forEach(function(c){ var v=c.val(); v.key=c.key; arr.push(v); });
     renderTimeline(arr);
@@ -533,27 +575,80 @@ function initApp(sleepTime, wakeTime) {
   judgeYesterday();
   checkTimeWarning(sleepTime, wakeTime);
 
-  // 상대방 반응/댓글 알림
-  var notifInit = false;
+  /* [FIX 4] 반응 알림: 내 사이드가 바뀐 건지 확인해서 상대 변경만 알림 */
+  var reactNotifReady = false;
   db.ref('rooms/'+roomId+'/reactions').on('child_changed', function(snap) {
-    if (!notifInit) return;
-    showNotifToast('💬 '+(cachedNames[mySide==='left'?'right':'left']||'상대')+'이 반응을 남겼어요!');
+    if (!reactNotifReady) return;
+    var reactionData = snap.val()||{};
+    var otherSide = mySide==='left'?'right':'left';
+    /* 상대방 사이드 데이터가 있을 때만 알림 */
+    if (reactionData[otherSide]) {
+      showNotifToast('😮 '+(cachedNames[otherSide]||'상대')+'이 반응을 남겼어요!');
+    }
   });
-  setTimeout(function(){ notifInit=true; }, 3000);
+  setTimeout(function(){ reactNotifReady=true; }, 3000);
 
-  var commentInitKeys = {};
+  /* [FIX 4] 댓글 알림: child_added + child_changed 둘 다 감시, 상대방 댓글만 알림 */
+  var commentNotifReady = false;
+  var seenCommentKeys = {};
+
+  function watchComments(snap) {
+    if (!commentNotifReady) return;
+    var mealComments = snap.val()||{};
+    Object.keys(mealComments).forEach(function(ck) {
+      if (seenCommentKeys[ck]) return;
+      seenCommentKeys[ck] = true;
+      var c = mealComments[ck];
+      if (c && c.name && c.name !== myName) {
+        showNotifToast('💬 '+c.name+': '+c.text);
+      }
+    });
+  }
+
   db.ref('rooms/'+roomId+'/comments').on('child_added', function(snap) {
-    if (commentInitKeys[snap.key]) return;
-    commentInitKeys[snap.key] = true;
-    var comments = snap.val()||{};
-    var list = Object.values(comments).sort(function(a,b){ return a.ts-b.ts; });
-    if (!list.length) return;
-    var last = list[list.length-1];
-    if (last && last.name && last.name !== myName) showNotifToast('💬 '+last.name+': '+last.text);
+    watchComments(snap);
+  });
+  db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
+    if (!commentNotifReady) return;
+    var mealComments = snap.val()||{};
+    /* 새로 생긴 댓글 찾기 */
+    Object.keys(mealComments).forEach(function(ck) {
+      if (seenCommentKeys[ck]) return;
+      seenCommentKeys[ck] = true;
+      var c = mealComments[ck];
+      if (c && c.name && c.name !== myName) {
+        showNotifToast('💬 '+c.name+': '+c.text);
+      }
+    });
+  });
+  setTimeout(function(){ commentNotifReady=true; }, 3000);
+}
+
+/* [FIX 5] 타임라인 카드 상단 바 업데이트 */
+function updateAllCardBars() {
+  document.querySelectorAll('.mcrd[data-meal-key]').forEach(function(card) {
+    var key = card.getAttribute('data-meal-key');
+    var side = card.getAttribute('data-meal-side');
+    var hasReact = reactionsCache[key] && Object.keys(reactionsCache[key]).some(function(s){
+      return reactionsCache[key][s] && Object.keys(reactionsCache[key][s]).length > 0;
+    });
+    var hasComment = commentsCache[key] && Object.keys(commentsCache[key]).length > 0;
+    var bar = card.querySelector('.mcrd-bar');
+    if (bar) {
+      if (hasReact || hasComment) {
+        bar.classList.add('visible');
+        bar.classList.remove('left-bar','right-bar');
+        bar.classList.add(side+'-bar');
+      } else {
+        bar.classList.remove('visible');
+      }
+    }
   });
 }
 
-/* ══ TIMELINE ══ */
+/* ══ TIMELINE ══
+ * [FIX 2] 완전 재설계: 좌우 독립 시간축, 픽셀/시간 고정 비율
+ */
 function renderTimeline(meals) {
   var tl = document.getElementById('timeline');
   var empty = document.getElementById('emptystate');
@@ -575,136 +670,139 @@ function renderTimeline(meals) {
     tl.appendChild(div);
 
     var dayMeals = byDate[dateKey];
-    var CARD_H=172, STACK_DY=85, MIN_GAP=190, PAD=16;
 
     var lefts  = dayMeals.filter(function(m){ return m.side==='left';  }).sort(function(a,b){ return a.ts-b.ts; });
     var rights = dayMeals.filter(function(m){ return m.side==='right'; }).sort(function(a,b){ return a.ts-b.ts; });
 
-    /* 시간 범위 — 4시간 최소 */
-    var allTs  = dayMeals.map(function(m){ return m.ts; });
-    var minTs  = Math.min.apply(null, allTs);
-    var maxTs  = Math.max.apply(null, allTs);
-    var range  = Math.max(maxTs-minTs, 4*3600*1000);
-    var SPREAD = Math.max(dayMeals.length*MIN_GAP, 600); // 펼침 범위
+    var CARD_H   = 172;  /* 카드 높이 (margin 포함) */
+    var PAD      = 12;   /* 상단 여백 */
+    var PX_PER_MS = 0.00008; /* 픽셀/밀리초: 1시간 = 288px */
+    var STACK_GAP = 85;  /* 1시간 이내 같은사이드 → 스택 간격 */
+    var MIN_GAP   = 8;   /* 카드 최소 간격 */
 
-    function tsToY(ts) {
-      return PAD + Math.round(((ts-minTs)/range) * (SPREAD-CARD_H));
-    }
+    /* 하루 전체의 시간 범위를 구해서 기준 ts 결정 */
+    var allTs = dayMeals.map(function(m){ return m.ts; });
+    var dayMinTs = Math.min.apply(null, allTs);
 
-    /* 그리디 페어링 */
-    var pairedL = new Array(lefts.length).fill(false);
-    var pairedR = new Array(rights.length).fill(false);
-    var pairs   = [];
-    lefts.forEach(function(lm,li) {
-      var best=Infinity, bri=-1;
-      rights.forEach(function(rm,ri) {
-        if (pairedR[ri]) return;
-        var d = Math.abs(lm.ts-rm.ts);
-        if (d<best) { best=d; bri=ri; }
-      });
-      if (bri>=0) { pairs.push({li:li,ri:bri}); pairedL[li]=true; pairedR[bri]=true; }
-    });
-
-    var posMap = {};
-    var occupied = []; // [{min, max}] 점유 구간
-
-    function claimPos(top) {
-      // 겹치면 밀어내기
-      var bottom = top+CARD_H;
-      var safe = false;
-      while (!safe) {
-        safe = true;
-        for (var i=0; i<occupied.length; i++) {
-          if (top < occupied[i].max+8 && bottom > occupied[i].min-8) {
-            top = occupied[i].max + 8;
-            bottom = top+CARD_H;
-            safe = false; break;
+    /* 각 사이드 독립적으로 Y 계산 */
+    function computePositions(arr) {
+      var posMap = {};
+      var prevTop = null, prevTs = null;
+      arr.forEach(function(m) {
+        var rawY = PAD + Math.round((m.ts - dayMinTs) * PX_PER_MS);
+        var top;
+        if (prevTop !== null && (m.ts - prevTs) < 3600000) {
+          /* 1시간 이내 → 스택 */
+          top = prevTop + STACK_GAP;
+        } else {
+          /* 이전 카드와 최소 간격 확보 */
+          top = rawY;
+          if (prevTop !== null && top < prevTop + CARD_H + MIN_GAP) {
+            top = prevTop + CARD_H + MIN_GAP;
           }
         }
-      }
-      occupied.push({min:top, max:top+CARD_H});
-      return top;
-    }
-
-    /* 페어링 배치 */
-    pairs.sort(function(a,b){ return Math.min(lefts[a.li].ts,rights[a.ri].ts)-Math.min(lefts[b.li].ts,rights[b.ri].ts); });
-    pairs.forEach(function(p) {
-      var avg = (lefts[p.li].ts+rights[p.ri].ts)/2;
-      var top = claimPos(tsToY(avg));
-      posMap[lefts[p.li].key]  = top;
-      posMap[rights[p.ri].key] = top;
-    });
-
-    /* 미페어링 배치 */
-    function placeSolo(items, paired) {
-      var unpaired = items.filter(function(m,i){ return !paired[i]; });
-      var prevTop=null, prevTs=null;
-      unpaired.forEach(function(m) {
-        var top;
-        if (prevTop!==null && (m.ts-prevTs)<3600000) {
-          top = prevTop+STACK_DY;
-          occupied.push({min:top, max:top+CARD_H});
-        } else {
-          top = claimPos(tsToY(m.ts));
-        }
-        posMap[m.key]=top; prevTop=top; prevTs=m.ts;
+        posMap[m.key] = top;
+        prevTop = top;
+        prevTs  = m.ts;
       });
+      return posMap;
     }
-    placeSolo(lefts,  pairedL);
-    placeSolo(rights, pairedR);
 
+    var leftPos  = computePositions(lefts);
+    var rightPos = computePositions(rights);
+    var posMap   = Object.assign({}, leftPos, rightPos);
+
+    /* [FIX 8] z-index: 시간순으로 위에 오는 카드가 더 높게 */
+    var sortedByTs = dayMeals.slice().sort(function(a,b){ return a.ts-b.ts; });
+    var zMap = {};
+    sortedByTs.forEach(function(m, i){ zMap[m.key] = i+2; });
+
+    /* day-wrap 높이 */
     var maxTop = PAD;
     Object.values(posMap).forEach(function(t){ if(t>maxTop) maxTop=t; });
-    var DAY_H = maxTop+CARD_H+PAD+40;
+    var DAY_H = maxTop + CARD_H + PAD + 40;
 
     var wrap = document.createElement('div');
     wrap.className = 'day-wrap';
     wrap.style.height = DAY_H+'px';
     tl.appendChild(wrap);
 
-    /* 스택 여부 */
-    var stackedKeys = {};
-    ['left','right'].forEach(function(side) {
-      var si = dayMeals.filter(function(m){ return m.side===side; }).sort(function(a,b){ return a.ts-b.ts; });
-      for (var i=1;i<si.length;i++) if ((si[i].ts-si[i-1].ts)<3600000) stackedKeys[si[i].key]=true;
-    });
-
-    /* 과식 경고 위치 — 5번째 카드 바로 아래 */
-    [lefts,rights].forEach(function(arr, idx) {
-      var side = idx===0?'left':'right';
-      if (arr.length>=5 && posMap[arr[4].key]!==undefined) {
-        var warnEl = document.createElement('div');
-        warnEl.className = 'warn-msg';
-        warnEl.style.top = (posMap[arr[4].key]+CARD_H+12+12)+'px'; // +12 for margin
-        warnEl.textContent = WARNING_MSGS[Math.floor(Math.random()*WARNING_MSGS.length)].replace('%s', cachedNames[side]||(side==='left'?'왼쪽':'오른쪽'));
+    /* [FIX 3] 과식 경고: 좌우 각각 5번째 카드 다음에 배치, 겹침 없음 */
+    [lefts, rights].forEach(function(arr, idx) {
+      var side = idx===0 ? 'left' : 'right';
+      if (arr.length >= 5) {
+        var lastCard = arr[arr.length-1];
+        var warnTop  = posMap[lastCard.key] + CARD_H + 16;
+        var warnEl   = document.createElement('div');
+        warnEl.className = side==='left' ? 'warn-msg-left' : 'warn-msg-right';
+        warnEl.style.top = warnTop+'px';
+        warnEl.textContent = WARNING_MSGS[Math.floor(Math.random()*WARNING_MSGS.length)]
+          .replace('%s', cachedNames[side]||(side==='left'?'왼쪽':'오른쪽'));
         wrap.appendChild(warnEl);
       }
     });
 
     /* 카드 렌더 */
-    dayMeals.forEach(function(m, gi) {
+    dayMeals.forEach(function(m) {
       var top = posMap[m.key];
-      if (top===undefined) top = PAD+gi*MIN_GAP;
-      var isStacked = stackedKeys[m.key];
-      var barColor  = m.side==='left'?'var(--left)':'var(--right)';
-      var zIdx      = isStacked ? gi+10 : gi+1;
-      var boxShadow = 'inset 0 4px 0 0 '+barColor+(isStacked?',0 -6px 20px rgba(0,0,0,.8)':'');
+      if (top === undefined) top = PAD;
+      var isStacked = (m.side==='left'
+        ? (leftPos[m.key] !== undefined && lefts.some(function(lm){ return lm.key!==m.key && Math.abs(leftPos[lm.key]-leftPos[m.key]) < CARD_H; }))
+        : (rightPos[m.key] !== undefined && rights.some(function(rm){ return rm.key!==m.key && Math.abs(rightPos[rm.key]-rightPos[m.key]) < CARD_H; })));
+      var barColorClass = m.side==='left' ? 'left-bar' : 'right-bar';
+      var zIdx = zMap[m.key] || 2;
 
-      var card = '<div class="mcrd'+(isStacked?' stacked':'')+'" '
-               + 'style="box-shadow:'+boxShadow+';z-index:'+zIdx+'" '
-               + 'onclick="openViewer(\''+escStr(m.url)+'\',\''+escStr(m.key)+'\')">'
-               + '<img src="'+escStr(m.url)+'" loading="lazy">'
-               + '</div>';
+      /* [FIX 5] data 속성으로 meal key/side 저장 */
+      var card = document.createElement('div');
+      card.className = 'mcrd' + (isStacked?' stacked':'');
+      card.setAttribute('data-meal-key', m.key);
+      card.setAttribute('data-meal-side', m.side);
+      card.style.zIndex = zIdx;
+      card.onclick = function(){ openViewer(m.url, m.key); };
+
+      /* 상단 컬러 바 (반응/댓글 있으면 표시) */
+      var bar = document.createElement('div');
+      bar.className = 'mcrd-bar ' + barColorClass;
+      var hasReact = reactionsCache[m.key] && Object.keys(reactionsCache[m.key]).some(function(s){
+        return reactionsCache[m.key][s] && Object.keys(reactionsCache[m.key][s]).length>0;
+      });
+      var hasComment = commentsCache[m.key] && Object.keys(commentsCache[m.key]).length>0;
+      if (hasReact || hasComment) bar.classList.add('visible');
+      card.appendChild(bar);
+
+      var img = document.createElement('img');
+      img.src = m.url;
+      img.loading = 'lazy';
+      card.appendChild(img);
+
       var center = '<div class="mrow-center"><div class="tdot"></div></div>';
       var blank  = '<div></div>';
 
       var row = document.createElement('div');
       row.className = 'mrow '+(m.side==='left'?'ml':'mr');
       row.style.top = top+'px';
-      row.innerHTML = m.side==='left' ? card+center+blank : blank+center+card;
+      row.style.zIndex = zIdx;
+
+      if (m.side==='left') {
+        var leftCell = document.createElement('div');
+        leftCell.style.display='flex'; leftCell.style.justifyContent='flex-end';
+        leftCell.appendChild(card);
+        row.innerHTML = '';
+        row.appendChild(leftCell);
+        row.insertAdjacentHTML('beforeend', center+blank);
+      } else {
+        var rightCell = document.createElement('div');
+        rightCell.style.display='flex'; rightCell.style.justifyContent='flex-start';
+        rightCell.appendChild(card);
+        row.innerHTML = blank+center;
+        row.appendChild(rightCell);
+      }
       wrap.appendChild(row);
     });
   });
+
+  /* 반응/댓글 바 최초 적용 */
+  updateAllCardBars();
 
   requestAnimationFrame(function() {
     var tw = document.getElementById('tl-wrap');
@@ -795,13 +893,13 @@ function fileChosen(e) {
   r.readAsDataURL(f);
 }
 
-/* 워터마크 — 600px / JPEG 0.72 (#12) */
+/* [FIX 6] 워터마크: MAX=900, JPEG 0.85 */
 function stampImage(file, menuText, cb) {
   var reader=new FileReader();
   reader.onload=function(ev){
     var img=new Image();
     img.onload=function(){
-      var MAX=600, w=img.width, h=img.height;
+      var MAX=900, w=img.width, h=img.height;
       if(w>MAX||h>MAX){ if(w>=h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
       var c=document.createElement('canvas'); c.width=w; c.height=h;
       var ctx=c.getContext('2d'); ctx.drawImage(img,0,0,w,h);
@@ -819,7 +917,7 @@ function stampImage(file, menuText, cb) {
       } else {
         dt(hhmm,cx,cy+ts*0.35,ts,0.95);
       }
-      cb(c.toDataURL('image/jpeg',0.72));
+      cb(c.toDataURL('image/jpeg',0.85));
     };
     img.onerror=function(){ cb(null); };
     img.src=ev.target.result;
@@ -892,20 +990,53 @@ function openCoinPanel() {
 function closeCoinPanel() { document.getElementById('coin-panel').classList.remove('open'); }
 document.getElementById('coin-panel').addEventListener('click',function(e){ if(e.target===this) closeCoinPanel(); });
 
+/* [FIX 7] 달력: 월 제목 + 요일 헤더(월~일) + 빈칸 채우기 */
 function buildCalendar() {
-  var cal=document.getElementById('cp-calendar');
-  var now=new Date(), y=now.getFullYear(), mo=now.getMonth(), today=now.getDate();
-  var days=new Date(y,mo+1,0).getDate();
-  cal.innerHTML='';
-  db.ref('rooms/'+roomId+'/cleanDays/'+mySide).once('value',function(snap){
-    var data=snap.val()||{};
-    for(var d=1;d<=days;d++){
-      var key=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-      var el=document.createElement('div'); el.className='cal-day'; el.textContent=d;
-      if(d>today)                el.classList.add('future');
-      else if(data[key]===true)  el.classList.add('clean');
-      else if(data[key]===false) el.classList.add('dirty');
-      else                       el.classList.add('future');
+  var cal  = document.getElementById('cp-calendar');
+  var now  = new Date();
+  var y    = now.getFullYear();
+  var mo   = now.getMonth();   /* 0-indexed */
+  var today = now.getDate();
+  var days  = new Date(y, mo+1, 0).getDate();
+
+  /* 월 제목 */
+  var monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cp-cal-month').textContent = y+'년 '+monthNames[mo];
+
+  cal.innerHTML = '';
+
+  /* 요일 헤더: 월화수목금토일 */
+  var dowLabels = ['월','화','수','목','금','토','일'];
+  dowLabels.forEach(function(d, i) {
+    var el = document.createElement('div');
+    el.className = 'cal-dow' + (i===6?' sun':'');
+    el.textContent = d;
+    cal.appendChild(el);
+  });
+
+  /* 1일의 요일 (0=일, 1=월 ... 6=토) → 월요일 시작 기준 offset */
+  var firstDow = new Date(y, mo, 1).getDay(); /* 0=일 */
+  var offset   = (firstDow === 0) ? 6 : firstDow - 1; /* 월=0, 화=1 ... 일=6 */
+
+  /* 앞 빈칸 */
+  for (var i=0; i<offset; i++) {
+    var blank = document.createElement('div');
+    blank.className = 'cal-day empty';
+    cal.appendChild(blank);
+  }
+
+  db.ref('rooms/'+roomId+'/cleanDays/'+mySide).once('value', function(snap) {
+    var data = snap.val()||{};
+    for (var d=1; d<=days; d++) {
+      var key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var el  = document.createElement('div');
+      el.className = 'cal-day';
+      el.textContent = d;
+      if (d === today)        el.classList.add('today');
+      if (d > today)          el.classList.add('future');
+      else if (data[key]===true)  el.classList.add('clean');
+      else if (data[key]===false) el.classList.add('dirty');
+      else                        el.classList.add('future');
       cal.appendChild(el);
     }
   });
