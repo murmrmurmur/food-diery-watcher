@@ -654,7 +654,11 @@ function updateAllCardBars() {
 }
 
 /* ══ TIMELINE ══
- * 좌우 독립 시간축 + 간격 압축 (로그 스케일)
+ * 규칙:
+ * 1. 좌우 합쳐서 시간순 정렬 → 하나의 이벤트 큐
+ * 2. 직전 이벤트와 15분 이내 → 같은 Y (동시 취급, 나란히 표시)
+ * 3. 직전 이벤트와 1시간 미만 → 스택 간격 (85px)
+ * 4. 직전 이벤트와 1시간 이상 → 고정 간격 (24px), 빈 공간 없음
  */
 function renderTimeline(meals) {
   var tl = document.getElementById('timeline');
@@ -678,84 +682,62 @@ function renderTimeline(meals) {
 
     var dayMeals = byDate[dateKey];
 
-    var lefts  = dayMeals.filter(function(m){ return m.side==='left';  }).sort(function(a,b){ return a.ts-b.ts; });
-    var rights = dayMeals.filter(function(m){ return m.side==='right'; }).sort(function(a,b){ return a.ts-b.ts; });
+    var CARD_H    = 172;
+    var PAD       = 12;
+    var STACK_GAP = 85;
+    var NEXT_GAP  = 24;
+    var SAME_MS   = 15 * 60 * 1000;
+    var STACK_MS  = 60 * 60 * 1000;
 
-    var CARD_H   = 172;  /* 카드 높이 (margin 포함) */
-    var PAD      = 12;   /* 상단 여백 */
-    var STACK_GAP = 85;  /* 1시간 이내 같은사이드 → 스택 간격 */
-    var MIN_GAP   = 16;  /* 카드 사이 최소 간격 */
-    /* 간격 압축: 시간 차이에 로그 스케일 적용
-       - 30분 이내: 거의 그대로 (최소 MIN_GAP + CARD_H)
-       - 1~3시간: 완만하게 증가
-       - 3시간 이상: 최대 120px 캡 */
-    var MAX_TIME_GAP_PX = 120; /* 아무리 시간 차가 커도 이 이상 간격 안 벌어짐 */
-    var ONE_HOUR_MS = 3600000;
+    /* 좌우 합쳐서 시간순 정렬 */
+    var sorted = dayMeals.slice().sort(function(a,b){ return a.ts - b.ts; });
 
-    function timeGapToPx(deltaMs) {
-      if (deltaMs <= 0) return 0;
-      /* 로그 스케일: log(1 + x) 형태, 1시간 → 80px 기준 */
-      var hours = deltaMs / ONE_HOUR_MS;
-      var px = Math.round(80 * Math.log(1 + hours) / Math.log(2));
-      return Math.min(px, MAX_TIME_GAP_PX);
-    }
+    var posMap = {};
+    var prevGroupTs = null;
+    var prevGroupY  = null;
 
-    /* 각 사이드 독립적으로 Y 계산 */
-    function computePositions(arr) {
-      var posMap = {};
-      arr.forEach(function(m, i) {
-        var top;
-        if (i === 0) {
-          top = PAD;
-        } else {
-          var prev = arr[i-1];
-          var deltaMs = m.ts - prev.ts;
-          if (deltaMs < ONE_HOUR_MS) {
-            /* 1시간 이내 → 스택 */
-            top = posMap[prev.key] + STACK_GAP;
-          } else {
-            /* 로그 압축 간격 */
-            var gap = timeGapToPx(deltaMs);
-            top = posMap[prev.key] + CARD_H + gap;
-          }
-        }
-        /* 최소 간격 보장 */
-        if (i > 0) {
-          var minTop = posMap[arr[i-1].key] + CARD_H + MIN_GAP;
-          if (top < minTop) top = minTop;
-        }
-        posMap[m.key] = top;
-      });
-      return posMap;
-    }
-
-    var leftPos  = computePositions(lefts);
-    var rightPos = computePositions(rights);
-
-    /* 좌우 합쳐서 posMap 만들 때: 같은 시간대 좌우가 비슷한 높이에 오도록
-       각 사이드의 첫 카드 기준점을 맞춤 */
-    var leftFirst  = lefts.length  ? lefts[0].ts  : null;
-    var rightFirst = rights.length ? rights[0].ts : null;
-
-    /* 두 사이드 모두 있을 때 첫 카드 높이 동기화 */
-    if (leftFirst !== null && rightFirst !== null) {
-      var firstDelta = rightFirst - leftFirst;
-      var syncOffset = timeGapToPx(Math.abs(firstDelta));
-      if (firstDelta > 0) {
-        /* 오른쪽이 더 늦게 시작 → 오른쪽 전체를 아래로 */
-        Object.keys(rightPos).forEach(function(k){ rightPos[k] += syncOffset; });
-      } else if (firstDelta < 0) {
-        /* 왼쪽이 더 늦게 시작 → 왼쪽 전체를 아래로 */
-        Object.keys(leftPos).forEach(function(k){ leftPos[k] += syncOffset; });
+    var i = 0;
+    while (i < sorted.length) {
+      /* 15분 이내 묶음 → 동일 Y */
+      var groupTs = sorted[i].ts;
+      var group   = [];
+      while (i < sorted.length && Math.abs(sorted[i].ts - groupTs) <= SAME_MS) {
+        group.push(sorted[i]);
+        i++;
       }
+
+      var groupY;
+      if (prevGroupTs === null) {
+        groupY = PAD;
+      } else {
+        var deltaMs = groupTs - prevGroupTs;
+        if (deltaMs < STACK_MS) {
+          /* 1시간 미만: 스택 */
+          groupY = prevGroupY + STACK_GAP;
+        } else {
+          /* 1시간 이상: 직전 카드 바로 아래 고정 간격 */
+          groupY = prevGroupY + CARD_H + NEXT_GAP;
+        }
+      }
+
+      group.forEach(function(m){ posMap[m.key] = groupY; });
+      prevGroupTs = groupTs;
+      prevGroupY  = groupY;
     }
 
-    var posMap = Object.assign({}, leftPos, rightPos);
+    /* 스택 여부: 같은 사이드에서 Y 차이가 CARD_H 미만 */
+    var stackedKeys = {};
+    ['left','right'].forEach(function(side) {
+      var sideItems = sorted.filter(function(m){ return m.side===side; });
+      for (var si=1; si<sideItems.length; si++) {
+        var dy = posMap[sideItems[si].key] - posMap[sideItems[si-1].key];
+        if (dy < CARD_H) stackedKeys[sideItems[si].key] = true;
+      }
+    });
 
     /* z-index: 시간순 */
-    var sortedByTs = dayMeals.slice().sort(function(a,b){ return a.ts-b.ts; });
     var zMap = {};
-    sortedByTs.forEach(function(m, i){ zMap[m.key] = i+2; });
+    sorted.forEach(function(m, idx){ zMap[m.key] = idx + 2; });
 
     /* day-wrap 높이 */
     var maxTop = PAD;
@@ -768,10 +750,10 @@ function renderTimeline(meals) {
     tl.appendChild(wrap);
 
     /* 과식 경고: 좌우 각각 마지막 카드 다음에 배치 */
-    [lefts, rights].forEach(function(arr, idx) {
-      var side = idx===0 ? 'left' : 'right';
-      if (arr.length >= 5) {
-        var lastCard = arr[arr.length-1];
+    ['left','right'].forEach(function(side) {
+      var sideItems = sorted.filter(function(m){ return m.side===side; });
+      if (sideItems.length >= 5) {
+        var lastCard = sideItems[sideItems.length-1];
         var warnTop  = posMap[lastCard.key] + CARD_H + 16;
         var warnEl   = document.createElement('div');
         warnEl.className = side==='left' ? 'warn-msg-left' : 'warn-msg-right';
@@ -786,13 +768,10 @@ function renderTimeline(meals) {
     dayMeals.forEach(function(m) {
       var top = posMap[m.key];
       if (top === undefined) top = PAD;
-      var isStacked = (m.side==='left'
-        ? (leftPos[m.key] !== undefined && lefts.some(function(lm){ return lm.key!==m.key && Math.abs(leftPos[lm.key]-leftPos[m.key]) < CARD_H; }))
-        : (rightPos[m.key] !== undefined && rights.some(function(rm){ return rm.key!==m.key && Math.abs(rightPos[rm.key]-rightPos[m.key]) < CARD_H; })));
+      var isStacked    = !!stackedKeys[m.key];
       var barColorClass = m.side==='left' ? 'left-bar' : 'right-bar';
-      var zIdx = zMap[m.key] || 2;
+      var zIdx          = zMap[m.key] || 2;
 
-      /* [FIX 5] data 속성으로 meal key/side 저장 */
       var card = document.createElement('div');
       card.className = 'mcrd' + (isStacked?' stacked':'');
       card.setAttribute('data-meal-key', m.key);
@@ -800,7 +779,6 @@ function renderTimeline(meals) {
       card.style.zIndex = zIdx;
       card.onclick = function(){ openViewer(m.url, m.key); };
 
-      /* 상단 컬러 바 (반응/댓글 있으면 표시) */
       var bar = document.createElement('div');
       bar.className = 'mcrd-bar ' + barColorClass;
       var hasReact = reactionsCache[m.key] && Object.keys(reactionsCache[m.key]).some(function(s){
@@ -841,7 +819,6 @@ function renderTimeline(meals) {
     });
   });
 
-  /* 반응/댓글 바 최초 적용 */
   updateAllCardBars();
 
   requestAnimationFrame(function() {
@@ -849,6 +826,7 @@ function renderTimeline(meals) {
     tw.scrollTop = tw.scrollHeight;
   });
 }
+
 
 function escStr(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
