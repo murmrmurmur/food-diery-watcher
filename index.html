@@ -1467,15 +1467,6 @@ function initPush() {
       return requestPushPermission(reg);
     })
     .catch(function(e) { console.warn('[Push] SW 실패:', e); });
-
-  /* 앱 포그라운드일 때: pushQueue 실시간 수신 → 토스트 */
-  var pushInitTs = Date.now();
-  db.ref('rooms/'+roomId+'/pushQueue').orderByChild('ts').startAt(pushInitTs)
-    .on('child_added', function(snap) {
-      var m = snap.val();
-      if (!m || m.to !== mySide) return;
-      showNotifToast(m.title + (m.body ? '  ' + m.body : ''));
-    });
 }
 
 function requestPushPermission(reg) {
@@ -1491,8 +1482,13 @@ function requestPushPermission(reg) {
 }
 
 function sendPushToOther(title, body) {
-  var msg = { title:title, body:body, ts:Date.now(), to: mySide==='left'?'right':'left' };
-  db.ref('rooms/'+roomId+'/pushQueue').push(msg);
+  var toSide = mySide === 'left' ? 'right' : 'left';
+  /* Cloudflare Worker로 직접 전송 */
+  fetch('https://food-diary-push.paso0101.workers.dev/notify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomId: roomId, toSide: toSide, title: title, body: body })
+  }).catch(function(e) { console.warn('[Push] Worker 호출 실패:', e); });
 }
 </script>
 </body>
