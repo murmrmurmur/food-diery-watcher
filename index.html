@@ -964,7 +964,7 @@ function initPush() {
     console.log('[Push] 지원 안 하는 브라우저');
     return;
   }
-  navigator.serviceWorker.register('/sw-push.js')
+  navigator.serviceWorker.register('/food-diery-watcher/sw-push.js')
     .then(function(reg) {
       console.log('[Push] SW 등록 완료');
       /* SW에 방 정보 전달 (폴링용) */
