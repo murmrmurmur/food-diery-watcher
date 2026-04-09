@@ -1,0 +1,24 @@
+{
+  "name": "식단 감시당하기",
+  "short_name": "식단감시",
+  "description": "칼로리 말고 눈치로 다이어트",
+  "start_url": "/food-diery-watcher/",
+  "display": "standalone",
+  "background_color": "#0e0e0e",
+  "theme_color": "#0e0e0e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/food-diery-watcher/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/food-diery-watcher/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
