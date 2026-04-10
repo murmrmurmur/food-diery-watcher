@@ -684,7 +684,7 @@ function initApp(sleepTime, wakeTime) {
   checkTimeWarning(sleepTime, wakeTime);
   initPush();
 
-  /* 댓글 알림: 마지막 방문 이후 달린 댓글 감지 */
+  /* ── 댓글 알림 시스템 ── */
 
   /* 저장된 알림 불러오기 */
   try {
@@ -692,22 +692,28 @@ function initApp(sleepTime, wakeTime) {
     unreadNotifs = Array.isArray(saved) ? saved : [];
   } catch(e){ unreadNotifs=[]; }
 
-  /* 마지막 방문 시간 (이전 앱 종료 시점) */
+  /* 마지막 방문 시간 복원
+     lastVisitTs=0 이면 처음 설치(또는 홈화면 재설치로 localStorage 초기화)로 간주.
+     이 경우 과거 댓글을 전부 알림으로 띄우지 않도록 현재 시각으로 초기화. */
   var LAST_VISIT_KEY = 'diet_lastvisit_'+roomId+'_'+mySide;
   var lastVisitTs = parseInt(localStorage.getItem(LAST_VISIT_KEY)||'0');
-  /* 현재 방문 시간 기록은 앱 종료 시점에만 — 지금 즉시 덮으면 다음 진입 때 알림이 사라짐 */
+  if (!lastVisitTs) {
+    lastVisitTs = Date.now();
+    localStorage.setItem(LAST_VISIT_KEY, String(lastVisitTs));
+  }
+
   function saveVisitTs() { localStorage.setItem(LAST_VISIT_KEY, String(Date.now())); }
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') saveVisitTs(); });
   window.addEventListener('pagehide', saveVisitTs);
 
-  /* 이미 처리된 commentKey 집합 (read 여부 무관하게 모두 등록 — 중복 방지) */
+  /* 이미 처리된 commentKey 집합 — 중복 토스트/뱃지 방지 */
   var notifiedKeys = {};
   unreadNotifs.forEach(function(n){ if(n.commentKey) notifiedKeys[n.commentKey]=true; });
 
   updateNotifBadge();
 
   function addNotif(mealKey, commentKey, c) {
-    if (notifiedKeys[commentKey]) return; /* 중복 방지 */
+    if (notifiedKeys[commentKey]) return;
     notifiedKeys[commentKey] = true;
     unreadNotifs.unshift({mealKey:mealKey, commentKey:commentKey, name:c.name, side:c.side||'', text:c.text, ts:c.ts||Date.now(), read:false});
     if(unreadNotifs.length>50) unreadNotifs.pop();
@@ -715,6 +721,9 @@ function initApp(sleepTime, wakeTime) {
     updateNotifBadge();
     showNotifToast('💬 '+c.name+': '+c.text);
   }
+
+  /* realtimeReady 선언을 once() 호출보다 앞에 두어 호이스팅 혼선 방지 */
+  var realtimeReady = false;
 
   /* 앱 시작 시: 지난 방문 이후 댓글 전체 스캔 */
   db.ref('rooms/'+roomId+'/comments').once('value', function(snap) {
@@ -724,21 +733,15 @@ function initApp(sleepTime, wakeTime) {
       Object.keys(mealComments).forEach(function(ck) {
         var c = mealComments[ck];
         if (!c || !c.name || c.name === myName) return;
-        var commentTs = c.ts || 0;
-        /* 마지막 방문 이후에 달린 댓글만 알림 */
-        if (commentTs > lastVisitTs) {
-          addNotif(mealKey, ck, c);
-        }
+        if ((c.ts||0) > lastVisitTs) addNotif(mealKey, ck, c);
       });
     });
-    /* 초기 스캔 완료 후 실시간 감지 켬 — 타이머 대신 콜백 완료 시점 보장 */
+    /* 스캔 완료 후 실시간 감지 켬 */
     realtimeReady = true;
   });
 
-  /* 실시간: 앱 켜진 상태에서 새로 달리는 댓글 감지
-     child_added는 연결 시 기존 데이터를 전부 재전송하므로 제거.
-     child_changed만 사용 — 첫 댓글은 once() 스캔에서 처리됨. */
-  var realtimeReady = false;
+  /* 실시간: 앱이 열린 상태에서 새로 달리는 댓글만 감지.
+     child_added는 연결 시 기존 데이터를 전부 재전송하므로 사용하지 않음. */
   db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
     if (!realtimeReady) return;
     var mealKey = snap.key;
@@ -749,7 +752,6 @@ function initApp(sleepTime, wakeTime) {
       addNotif(mealKey, ck, c);
     });
   });
-  /* 초기 로딩 완료 후 실시간 감지 시작 — once() 콜백 끝난 직후 켬 */
 }
 
 /* [FIX 5] 타임라인 카드 상단 바 업데이트 */
@@ -821,6 +823,7 @@ function renderTimeline(meals) {
     var prevTs   = null;
     var prevY    = null;
     var prevSide = null;
+    var SAME_TS  = 60 * 1000; /* 1분 이내 = 동일 시간으로 간주 → 나란히 */
 
     sorted.forEach(function(m) {
       var y;
@@ -829,8 +832,11 @@ function renderTimeline(meals) {
       } else {
         var dt       = m.ts - prevTs;
         var sameSide = m.side === prevSide;
-        if (dt < STACK_MS) {
-          /* 같은/다른 사이드 모두 1시간 이내 → 겹침 */
+        if (dt <= SAME_TS && !sameSide) {
+          /* 다른 사이드이고 1분 이내 → 동시 취식, 같은 Y에 나란히 */
+          y = prevY;
+        } else if (dt < STACK_MS) {
+          /* 1시간 이내 → 겹침 */
           y = prevY + STACK_GAP;
         } else if (!sameSide && dt >= FAR_MS) {
           /* 다른 사이드 4시간 이상 → 더 밑 */
@@ -1465,7 +1471,9 @@ function initPush() {
     .then(function(reg) {
       /* SW에 방 정보 전달 */
       function sendInit(sw) {
-        sw.postMessage({ type:'INIT', roomId:roomId, side:mySide, ts:Date.now()-5000 });
+        /* lastVisitTs 기준으로 SW에 전달 — 앱 내부 알림 스캔과 동일한 기준점 사용 */
+        var swTs = parseInt(localStorage.getItem('diet_lastvisit_'+roomId+'_'+mySide)||'0') || Date.now();
+        sw.postMessage({ type:'INIT', roomId:roomId, side:mySide, ts:swTs });
       }
       var sw = reg.active || reg.waiting || reg.installing;
       if (sw) sendInit(sw);
