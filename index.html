@@ -163,7 +163,7 @@ input[type=text]:focus { border-color:var(--accent); }
 }
 
 /* [FIX 2] 타임라인 카드 레이아웃 */
-.mrow { display:grid; grid-template-columns:1fr 20px 1fr; align-items:start; padding:0 14px; position:absolute; width:100%; animation:pop .3s ease forwards; opacity:0; }
+.mrow { display:grid; grid-template-columns:1fr 20px 1fr; align-items:start; padding:0 14px; position:absolute; width:100%; animation:pop .3s ease forwards; opacity:0; pointer-events:none; }
 @keyframes pop { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .tdot { position:absolute; left:50%; top:22px; width:9px; height:9px; border-radius:50%; border:2px solid var(--bg); transform:translateX(-50%); z-index:3; }
 .mrow.ml .tdot { background:var(--left); }
@@ -173,6 +173,7 @@ input[type=text]:focus { border-color:var(--accent); }
   border-radius:14px; overflow:hidden; max-width:148px; width:100%;
   box-shadow:0 4px 20px rgba(0,0,0,.6); margin:12px 0; aspect-ratio:1;
   background:var(--surface2); cursor:pointer; transition:transform .15s; position:relative;
+  pointer-events:auto;
 }
 .mcrd:active { transform:scale(.96); }
 .mrow.ml .mcrd { justify-self:end; margin-right:14px; border-top-right-radius:3px; }
