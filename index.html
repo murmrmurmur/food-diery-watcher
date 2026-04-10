@@ -289,6 +289,22 @@ input[type=text]:focus { border-color:var(--accent); }
 .coin-divider { height:1px; background:var(--line); }
 .coin-total { font-family:'Black Han Sans',sans-serif; font-size:22px; text-align:center; padding:6px 0; }
 .coin-sub { font-size:12px; color:var(--muted); text-align:center; margin-top:-4px; }
+.goal-menu-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
+.goal-menu-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; padding:10px 6px; border-radius:14px;
+  border:2px solid var(--line); background:transparent;
+  color:var(--muted); font-family:'Gowun Dodum',sans-serif;
+  font-size:11px; cursor:pointer; transition:all .18s; text-align:center; line-height:1.3;
+}
+.goal-menu-btn .gm-emoji { font-size:22px; }
+.goal-menu-btn .gm-name { font-size:10px; }
+.goal-menu-btn .gm-price { font-size:10px; color:var(--muted); }
+.goal-menu-btn.sel {
+  border-color:var(--accent); background:var(--accent-tint);
+  color:var(--text);
+}
+.goal-menu-btn.sel .gm-price { color:var(--accent); }
 .goal-wrap { margin:2px 0 14px; }
 .goal-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px; }
 .goal-bg { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
@@ -373,7 +389,7 @@ input[type=text]:focus { border-color:var(--accent); }
       </div>
     </div>
     <div class="hdr-row2">
-      <div class="coin-badge" id="my-coin" onclick="openCoinPanel()">🪙 0코인</div>
+      <div class="coin-badge" id="my-coin" onclick="openCoinPanel()">💰 0원</div>
       <div class="hdr-chip" id="notif-chip" onclick="openNotifPanel()">
         🔔 알림
         <div class="notif-badge" id="notif-badge"></div>
@@ -451,28 +467,33 @@ input[type=text]:focus { border-color:var(--accent); }
   </div>
 </div>
 
-<!-- ══ 코인/통계 패널 ══ -->
+<!-- ══ 적금 패널 ══ -->
 <div class="panel-backdrop" id="coin-panel">
   <div class="panel">
     <div class="panel-handle"></div>
-    <div class="panel-title">🪙 클린데이 코인</div>
+    <div class="panel-title">💰 클린데이 적금</div>
 
+    <!-- 목표 메뉴 선택 -->
+    <div class="section-lbl">이번달 목표</div>
+    <div class="goal-menu-grid" id="goal-menu-grid"></div>
+
+    <!-- 적금 현황 -->
     <div class="coin-summary">
       <div class="coin-row">
         <span class="coin-label" id="cp-left-name">왼쪽</span>
-        <span class="coin-val lc" id="cp-left-coin">0코인</span>
+        <span class="coin-val lc" id="cp-left-coin">0원</span>
       </div>
       <div class="coin-row">
         <span class="coin-label" id="cp-right-name">오른쪽</span>
-        <span class="coin-val rc" id="cp-right-coin">0코인</span>
+        <span class="coin-val rc" id="cp-right-coin">0원</span>
       </div>
       <div class="coin-divider"></div>
       <div class="coin-total" id="cp-total">합산 0원</div>
-      <div class="coin-sub">코인 1개 = 500원 · 목표: 40코인 = 20,000원 🍗</div>
+      <div class="coin-sub" style="margin-top:4px;font-size:11px">매일 기상 시간에 전날 목표 달성 여부가 표시됩니다</div>
     </div>
 
     <div class="goal-wrap">
-      <div class="goal-labels"><span>이번달 목표 달성</span><span id="cp-goal-pct">0%</span></div>
+      <div class="goal-labels"><span id="cp-goal-label">목표까지</span><span id="cp-goal-pct">0%</span></div>
       <div class="goal-bg"><div class="goal-fill" id="cp-goal-bar" style="width:0%"></div></div>
     </div>
 
@@ -488,16 +509,15 @@ input[type=text]:focus { border-color:var(--accent); }
     </div>
 
     <div class="section-lbl">이번달 클린데이 달력</div>
-    <!-- [FIX 7] 월 제목 추가 -->
     <div class="cal-month-title" id="cp-cal-month"></div>
     <div class="clean-calendar" id="cp-calendar"></div>
 
-    <div class="section-lbl">코인 보너스 안내</div>
+    <div class="section-lbl">상금 안내</div>
     <div class="bonus-list">
-      <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+1🪙</span></div>
-      <div class="bonus-item"><span>3일 연속 클린</span><span class="bv">+1🪙 보너스</span></div>
-      <div class="bonus-item"><span>7일 연속 클린</span><span class="bv">+3🪙 보너스</span></div>
-      <div class="bonus-item"><span>커플 동시 클린</span><span class="bv">각 +1🪙 보너스</span></div>
+      <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+500원</span></div>
+      <div class="bonus-item"><span>3일 연속 클린</span><span class="bv">+500원 보너스</span></div>
+      <div class="bonus-item"><span>7일 연속 클린</span><span class="bv">+1,500원 보너스</span></div>
+      <div class="bonus-item"><span>커플 동시 클린</span><span class="bv">각 +500원 보너스</span></div>
     </div>
 
     <button class="modal-cancel" style="margin-top:20px" onclick="closeCoinPanel()">닫기</button>
@@ -537,6 +557,17 @@ var WARNING_MSGS = [
   '🫃 %s 이 추세면 내일 큰일',
   '💀 %s 야식의 결말을 봐요'
 ];
+
+/* ── 목표 메뉴 정의 ── */
+var GOAL_MENUS = [
+  { emoji:'🥤', name:'버블티',      price:6000  },
+  { emoji:'🍗', name:'치킨',        price:20000 },
+  { emoji:'🍕', name:'피자',        price:25000 },
+  { emoji:'🍣', name:'초밥',        price:35000 },
+  { emoji:'🥩', name:'소고기',      price:60000 },
+  { emoji:'🏨', name:'호텔뷔페',    price:100000}
+];
+var cachedGoalPrice = 20000; /* 로컬 캐시 */
 
 /* ── 상태 ── */
 var mySide = null, myName = '', roomId = '';
@@ -680,8 +711,13 @@ function initApp(sleepTime, wakeTime) {
     renderTimeline(arr);
   });
 
+  /* monthlyGoal 캐시 */
+  db.ref('rooms/'+roomId+'/monthlyGoal').once('value', function(snap){
+    cachedGoalPrice = snap.val() || 20000;
+  });
   updateCoinDisplay();
   judgeYesterday();
+  scheduleJudgeAtWakeTime(wakeTime);
   checkTimeWarning(sleepTime, wakeTime);
   initPush();
 
@@ -1037,9 +1073,10 @@ function rejudgeCleanDay(dateObj) {
   db.ref('rooms/'+roomId+'/settings/'+mySide).once('value', function(snap) {
     var st = (snap.val()||{}).sleepTime||'24:00';
     var sm = timeToMinutes(st), cm = sm - 240;
-    var dayStart = new Date(dateObj); dayStart.setHours(0,0,0,0);
+    /* nightCutMs: 취침 4시간 전. cm이 음수(자정 전)인 경우 전날로 넘어가므로 날짜 기준 ms로 정확 계산 */
+    var dayRef   = new Date(dateObj); dayRef.setHours(0,0,0,0);
     var dayEnd   = new Date(dateObj); dayEnd.setHours(23,59,59,999);
-    var nightCutMs = dayStart.getTime() + cm*60*1000;
+    var nightCutMs = dayRef.getTime() + cm * 60 * 1000; /* cm이 음수면 자정 이전 = 전날 밤 → OK */
     /* Firebase에서 직접 읽어서 판정 — 삭제 직후 mealsCache가 아직 갱신 안 됐을 수 있음 */
     db.ref('rooms/'+roomId+'/meals').once('value', function(snap2) {
       var late = false;
@@ -1047,7 +1084,15 @@ function rejudgeCleanDay(dateObj) {
         var m = c.val();
         if (m.side===mySide && m.ts>=nightCutMs && m.ts<=dayEnd.getTime()) late = true;
       });
-      db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(!late);
+      var isClean = !late;
+      db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(isClean);
+      /* judgeKey 초기화: 다음 앱 실행 시 judgeYesterday()가 재판정할 수 있도록 */
+      var judgeKey = 'diet_judge_'+roomId+'_'+mySide+'_'+dk;
+      if (isClean) {
+        /* 클린으로 바뀐 경우 — 다음 기상 때 코인 지급을 위해 judgeKey 삭제 */
+        localStorage.removeItem(judgeKey);
+      }
+      /* 비클린으로 바뀐 경우는 judgeKey 유지 (이미 코인 지급했다면 취소 불가 — 코인 차감은 미구현) */
     });
   });
 }
@@ -1159,17 +1204,22 @@ function saveSettings() {
   closeSettingPanel(); showNotifToast('✅ 설정이 저장됐어요');
 }
 
-/* ══ 코인 패널 ══ */
+/* ══ 적금 패널 ══ */
 function openCoinPanel() {
+  /* 목표 메뉴 그리드 렌더 */
+  db.ref('rooms/'+roomId+'/monthlyGoal').once('value', function(snapG){
+    var goalPrice = snapG.val() || 20000;
+    cachedGoalPrice = goalPrice;
+    renderGoalMenuGrid(goalPrice);
+  });
+  /* 적금 현황 */
   db.ref('rooms/'+roomId+'/coins').once('value',function(snap){
-    var c=snap.val()||{};
-    var lc=c.left||0, rc=c.right||0, total=(lc+rc)*500;
-    document.getElementById('cp-left-coin').textContent=lc+'코인';
-    document.getElementById('cp-right-coin').textContent=rc+'코인';
+    var d=snap.val()||{};
+    var lw=d.left||0, rw=d.right||0, total=lw+rw;
+    document.getElementById('cp-left-coin').textContent=lw.toLocaleString()+'원';
+    document.getElementById('cp-right-coin').textContent=rw.toLocaleString()+'원';
     document.getElementById('cp-total').textContent='합산 '+total.toLocaleString()+'원';
-    var pct=Math.min(Math.round((lc+rc)/40*100),100);
-    document.getElementById('cp-goal-pct').textContent=pct+'%';
-    document.getElementById('cp-goal-bar').style.width=pct+'%';
+    updateGoalBar(total, cachedGoalPrice);
   });
   db.ref('rooms/'+roomId+'/streaks').once('value',function(snap){
     var s=snap.val()||{};
@@ -1178,6 +1228,43 @@ function openCoinPanel() {
   });
   buildCalendar();
   document.getElementById('coin-panel').classList.add('open');
+}
+
+function updateGoalBar(total, goalPrice) {
+  var pct = Math.min(Math.round(total / goalPrice * 100), 100);
+  document.getElementById('cp-goal-pct').textContent = pct+'%';
+  document.getElementById('cp-goal-bar').style.width = pct+'%';
+  var menu = GOAL_MENUS.find(function(m){ return m.price===goalPrice; });
+  var label = menu ? menu.name+' '+menu.emoji+' 목표까지' : '목표까지';
+  document.getElementById('cp-goal-label').textContent = label;
+}
+
+function renderGoalMenuGrid(currentGoalPrice) {
+  var grid = document.getElementById('goal-menu-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  GOAL_MENUS.forEach(function(menu) {
+    var btn = document.createElement('button');
+    btn.className = 'goal-menu-btn' + (menu.price===currentGoalPrice?' sel':'');
+    btn.innerHTML =
+      '<span class="gm-emoji">'+menu.emoji+'</span>'+
+      '<span class="gm-name">'+menu.name+'</span>'+
+      '<span class="gm-price">'+menu.price.toLocaleString()+'원</span>';
+    btn.onclick = function() {
+      if (menu.price === cachedGoalPrice) return;
+      cachedGoalPrice = menu.price;
+      db.ref('rooms/'+roomId+'/monthlyGoal').set(menu.price);
+      /* 그리드 재렌더 */
+      renderGoalMenuGrid(menu.price);
+      /* 진행 바 갱신 */
+      db.ref('rooms/'+roomId+'/coins').once('value', function(snap){
+        var d=snap.val()||{};
+        updateGoalBar((d.left||0)+(d.right||0), menu.price);
+      });
+      showNotifToast('🎯 목표가 '+menu.name+' ('+menu.price.toLocaleString()+'원)으로 변경됐어요!');
+    };
+    grid.appendChild(btn);
+  });
 }
 function closeCoinPanel() { document.getElementById('coin-panel').classList.remove('open'); }
 document.getElementById('coin-panel').addEventListener('click',function(e){ if(e.target===this) closeCoinPanel(); });
@@ -1400,6 +1487,24 @@ function formatTimeAgo(ts) {
 }
 
 /* ══ 클린데이 코인 ══ */
+
+/* 매일 기상 시간에 전날 목표 달성 여부 판정 스케줄링 */
+function scheduleJudgeAtWakeTime(wakeTime){
+  var now = new Date();
+  var wm  = timeToMinutes(wakeTime||'07:30');
+  var wakeH = Math.floor(wm/60), wakeM = wm%60;
+  /* 오늘 기상 시각 */
+  var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), wakeH, wakeM, 0, 0);
+  /* 이미 지났으면 내일 기상 시각으로 */
+  if (target <= now) target.setDate(target.getDate()+1);
+  var ms = target.getTime() - now.getTime();
+  setTimeout(function(){
+    judgeYesterday();
+    /* 이후 매 24시간마다 반복 */
+    setInterval(judgeYesterday, 24*60*60*1000);
+  }, ms);
+}
+
 function judgeYesterday(){
   var yest=new Date(); yest.setDate(yest.getDate()-1);
   var dk=yest.toISOString().slice(0,10);
@@ -1407,6 +1512,8 @@ function judgeYesterday(){
   var judgeKey='diet_judge_'+roomId+'_'+mySide+'_'+dk;
   if(localStorage.getItem(judgeKey)) return;
   db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).once('value',function(snap){
+    /* cleanDays에 이미 값이 있어도 judgeKey가 없으면(삭제 후 재판정 대기 상태) 재처리 */
+    if(snap.val()!==null && localStorage.getItem(judgeKey)){ return; }
     if(snap.val()!==null){ localStorage.setItem(judgeKey,'1'); return; }
     db.ref('rooms/'+roomId+'/settings/'+mySide).once('value',function(snap2){
       var st=(snap2.val()||{}).sleepTime||'24:00';
@@ -1419,8 +1526,20 @@ function judgeYesterday(){
         var isClean=!late;
         db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(isClean);
         localStorage.setItem(judgeKey,'1');
-        if(isClean) addCoin(dk);
-        else db.ref('rooms/'+roomId+'/streaks/'+mySide).set(0);
+        if(isClean){
+          addCoin(dk);
+          /* 얼마 적립됐는지 toast로 표시 */
+          db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snapSt){
+            var st=snapSt.val()||0;  /* addCoin 실행 후이므로 이미 +1된 값 */
+            var bonusWon=st%7===0?1500:st%3===0?500:0, totalWon=500+bonusWon;
+            var msg='✨ 어제 클린데이! +'+totalWon.toLocaleString()+'원 적립 💰';
+            if(bonusWon>0) msg+=' ('+bonusWon.toLocaleString()+'원 보너스!)';
+            showToast(msg);
+          });
+        } else {
+          db.ref('rooms/'+roomId+'/streaks/'+mySide).set(0);
+          showToast('😅 어제 야식이 있었네요. 오늘은 참아봐요!');
+        }
       });
     });
   });
@@ -1430,17 +1549,17 @@ function addCoin(dk){
     var cur=snap.val()||0;
     db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snap2){
       var ns=(snap2.val()||0)+1;
-      var bonus=ns%7===0?3:ns%3===0?1:0, earned=1+bonus;
-      /* 자기 코인 저장 */
-      db.ref('rooms/'+roomId+'/coins/'+mySide).set(cur+earned);
+      /* 원 단위: 기본 500원, 3일 연속 +500원, 7일 연속 +1500원 */
+      var bonusWon = ns%7===0?1500 : ns%3===0?500 : 0;
+      var earnedWon = 500 + bonusWon;
+      db.ref('rooms/'+roomId+'/coins/'+mySide).set(cur+earnedWon);
       db.ref('rooms/'+roomId+'/streaks/'+mySide).set(ns);
       var other=mySide==='left'?'right':'left';
       db.ref('rooms/'+roomId+'/cleanDays/'+other+'/'+dk).once('value',function(snap3){
         if(snap3.val()===true){
-          /* 커플 동시 클린: cur+earned에 +1 추가 (덮어쓰기 안전 — 자기 사이드만 건드림) */
+          /* 커플 동시 클린 +500원 */
           db.ref('rooms/'+roomId+'/coins/'+mySide).once('value',function(snapNow){
-            var now=snapNow.val()||0;
-            db.ref('rooms/'+roomId+'/coins/'+mySide).set(now+1);
+            db.ref('rooms/'+roomId+'/coins/'+mySide).set((snapNow.val()||0)+500);
             updateCoinDisplay();
           });
         } else {
@@ -1453,7 +1572,17 @@ function addCoin(dk){
 function updateCoinDisplay(){
   db.ref('rooms/'+roomId+'/coins').once('value',function(snap){
     var d=snap.val()||{};
-    document.getElementById('my-coin').textContent='🪙 '+(d[mySide]||0)+'코인';
+    var myWon = d[mySide]||0;
+    document.getElementById('my-coin').textContent='💰 '+myWon.toLocaleString()+'원';
+    /* 코인 패널이 열려있으면 패널도 동시 갱신 */
+    var panel=document.getElementById('coin-panel');
+    if(panel && panel.classList.contains('open')){
+      var lw=d.left||0, rw=d.right||0, total=lw+rw;
+      document.getElementById('cp-left-coin').textContent=lw.toLocaleString()+'원';
+      document.getElementById('cp-right-coin').textContent=rw.toLocaleString()+'원';
+      document.getElementById('cp-total').textContent='합산 '+total.toLocaleString()+'원';
+      updateGoalBar(total, cachedGoalPrice);
+    }
   });
 }
 
