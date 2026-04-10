@@ -117,7 +117,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .notif-badge.show { display:flex; }
 
 /* ══ TIMELINE ══ */
-.tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:120px; -webkit-overflow-scrolling:touch; }
+.tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:180px; -webkit-overflow-scrolling:touch; }
 /* 세로선: tl-wrap 기준 sticky처럼 동작하도록 별도 fixed 레이어로 처리 */
 .tl-wrap::before {
   content:'';
@@ -731,11 +731,13 @@ function initApp(sleepTime, wakeTime) {
         }
       });
     });
+    /* 초기 스캔 완료 후 실시간 감지 켬 — 타이머 대신 콜백 완료 시점 보장 */
+    realtimeReady = true;
   });
 
   /* 실시간: 앱 켜진 상태에서 새로 달리는 댓글 감지 */
   var realtimeReady = false;
-  db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
+  function handleRealtimeComments(snap) {
     if (!realtimeReady) return;
     var mealKey = snap.key;
     var mealComments = snap.val()||{};
@@ -744,9 +746,10 @@ function initApp(sleepTime, wakeTime) {
       if (!c || !c.name || c.name === myName) return;
       addNotif(mealKey, ck, c);
     });
-  });
-  /* 초기 로딩 완료 후 실시간 감지 시작 */
-  setTimeout(function(){ realtimeReady=true; }, 2000);
+  }
+  db.ref('rooms/'+roomId+'/comments').on('child_changed', handleRealtimeComments);
+  db.ref('rooms/'+roomId+'/comments').on('child_added', handleRealtimeComments);
+  /* 초기 로딩 완료 후 실시간 감지 시작 — once() 콜백 끝난 직후 켬 */
 }
 
 /* [FIX 5] 타임라인 카드 상단 바 업데이트 */
@@ -814,6 +817,7 @@ function renderTimeline(meals) {
     var posMap = {};
     var prevGroupTs = null;
     var prevGroupY  = null;
+    var prevGroup   = null;
 
     var i = 0;
     while (i < sorted.length) {
@@ -830,7 +834,14 @@ function renderTimeline(meals) {
         groupY = PAD;
       } else {
         var deltaMs = groupTs - prevGroupTs;
-        if (deltaMs < STACK_MS) {
+        /* 같은 사이드 연속 업로드(1시간 미만)만 스택 간격 적용.
+           서로 다른 사이드이거나 1시간 이상 차이나면 항상 정상 간격. */
+        var isSameSideStack = false;
+        if (deltaMs < STACK_MS && group.length === 1 && prevGroup && prevGroup.length === 1
+            && prevGroup[0].side === group[0].side) {
+          isSameSideStack = true;
+        }
+        if (isSameSideStack) {
           groupY = prevGroupY + STACK_GAP;
         } else {
           groupY = prevGroupY + CARD_H + NEXT_GAP;
@@ -847,6 +858,7 @@ function renderTimeline(meals) {
 
       prevGroupTs = groupTs;
       prevGroupY  = groupY;
+      prevGroup   = group;
     }
 
     /* 스택 여부: 같은 사이드에서 Y 차이가 CARD_H 미만 */
@@ -1426,7 +1438,7 @@ function addCoin(dk){
     var cur=snap.val()||0;
     db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snap2){
       var ns=(snap2.val()||0)+1;
-      var bonus=ns===3?1:ns===7?3:0, earned=1+bonus;
+      var bonus=ns%7===0?3:ns%3===0?1:0, earned=1+bonus;
       /* 자기 코인 저장 */
       db.ref('rooms/'+roomId+'/coins/'+mySide).set(cur+earned);
       db.ref('rooms/'+roomId+'/streaks/'+mySide).set(ns);
