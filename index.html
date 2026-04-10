@@ -568,6 +568,7 @@ var GOAL_MENUS = [
   { emoji:'✏️',  name:'직접입력',        price:-1, custom:true }
 ];
 var cachedGoalPrice = 20000; /* 로컬 캐시 */
+var customGoalName = ''; /* 직접입력 목표 이름 */
 
 /* ── 상태 ── */
 var mySide = null, myName = '', roomId = '';
@@ -714,6 +715,9 @@ function initApp(sleepTime, wakeTime) {
   /* monthlyGoal 캐시 */
   db.ref('rooms/'+roomId+'/monthlyGoal').once('value', function(snap){
     cachedGoalPrice = snap.val() || 20000;
+  });
+  db.ref('rooms/'+roomId+'/monthlyGoalName').once('value', function(snap){
+    customGoalName = snap.val() || '';
   });
   updateCoinDisplay();
   judgeYesterday();
@@ -1210,7 +1214,10 @@ function openCoinPanel() {
   db.ref('rooms/'+roomId+'/monthlyGoal').once('value', function(snapG){
     var goalPrice = snapG.val() || 20000;
     cachedGoalPrice = goalPrice;
-    renderGoalMenuGrid(goalPrice);
+    db.ref('rooms/'+roomId+'/monthlyGoalName').once('value', function(snapN){
+      customGoalName = snapN.val() || '';
+      renderGoalMenuGrid(goalPrice);
+    });
   });
   /* 적금 현황 */
   db.ref('rooms/'+roomId+'/coins').once('value',function(snap){
@@ -1236,7 +1243,7 @@ function updateGoalBar(total, goalPrice) {
   document.getElementById('cp-goal-pct').textContent = pct+'%';
   document.getElementById('cp-goal-bar').style.width = pct+'%';
   var menu = GOAL_MENUS.find(function(m){ return !m.custom && m.price===goalPrice; });
-  var label = menu ? menu.name+' '+menu.emoji+' 목표까지' : goalPrice.toLocaleString()+'원 목표까지';
+  var label = menu ? menu.name+' '+menu.emoji+' 목표까지' : (customGoalName ? customGoalName+' ✏️ 목표까지' : goalPrice.toLocaleString()+'원 목표까지');
   document.getElementById('cp-goal-label').textContent = label;
 }
 
@@ -1252,24 +1259,31 @@ function renderGoalMenuGrid(currentGoalPrice) {
     btn.className = 'goal-menu-btn' + (isSel?' sel':'');
     if (menu.custom) {
       /* 직접입력 버튼 */
-      var dispPrice = isCustom ? currentGoalPrice.toLocaleString()+'원' : '직접 입력';
+      var dispName  = isCustom ? (customGoalName || '직접입력') : '직접 입력';
+      var dispPrice = isCustom ? currentGoalPrice.toLocaleString()+'원' : '';
       btn.innerHTML =
         '<span class="gm-emoji">'+menu.emoji+'</span>'+
-        '<span class="gm-name">'+menu.name+'</span>'+
+        '<span class="gm-name">'+dispName+'</span>'+
         '<span class="gm-price">'+dispPrice+'</span>';
       btn.onclick = function() {
-        var raw = prompt('목표 금액을 입력하세요\n(원 단위 숫자만, 예: 45000)');
-        if (raw === null) return;
-        var val = parseInt(raw.replace(/[^0-9]/g,''));
+        var nameRaw = prompt('목표 이름을 입력하세요\n(예: 오마카세, 제주도 여행)');
+        if (nameRaw === null) return;
+        var nameVal = nameRaw.trim();
+        if (!nameVal) { alert('목표 이름을 입력해주세요'); return; }
+        var priceRaw = prompt('목표 금액을 입력하세요\n(원 단위 숫자만, 예: 150000)');
+        if (priceRaw === null) return;
+        var val = parseInt(priceRaw.replace(/[^0-9]/g,''));
         if (!val || val < 500) { alert('500원 이상의 금액을 입력해주세요'); return; }
+        customGoalName = nameVal;
         cachedGoalPrice = val;
         db.ref('rooms/'+roomId+'/monthlyGoal').set(val);
+        db.ref('rooms/'+roomId+'/monthlyGoalName').set(nameVal);
         renderGoalMenuGrid(val);
         db.ref('rooms/'+roomId+'/coins').once('value', function(snap){
           var d=snap.val()||{};
           updateGoalBar((d.left||0)+(d.right||0), val);
         });
-        showNotifToast('🎯 목표가 '+val.toLocaleString()+'원으로 변경됐어요!');
+        showNotifToast('🎯 목표: '+nameVal+' ('+val.toLocaleString()+'원)으로 변경됐어요!');
       };
     } else {
       btn.innerHTML =
