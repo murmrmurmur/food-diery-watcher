@@ -735,9 +735,11 @@ function initApp(sleepTime, wakeTime) {
     realtimeReady = true;
   });
 
-  /* 실시간: 앱 켜진 상태에서 새로 달리는 댓글 감지 */
+  /* 실시간: 앱 켜진 상태에서 새로 달리는 댓글 감지
+     child_added는 연결 시 기존 데이터를 전부 재전송하므로 제거.
+     child_changed만 사용 — 첫 댓글은 once() 스캔에서 처리됨. */
   var realtimeReady = false;
-  function handleRealtimeComments(snap) {
+  db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
     if (!realtimeReady) return;
     var mealKey = snap.key;
     var mealComments = snap.val()||{};
@@ -746,9 +748,7 @@ function initApp(sleepTime, wakeTime) {
       if (!c || !c.name || c.name === myName) return;
       addNotif(mealKey, ck, c);
     });
-  }
-  db.ref('rooms/'+roomId+'/comments').on('child_changed', handleRealtimeComments);
-  db.ref('rooms/'+roomId+'/comments').on('child_added', handleRealtimeComments);
+  });
   /* 초기 로딩 완료 후 실시간 감지 시작 — once() 콜백 끝난 직후 켬 */
 }
 
@@ -775,16 +775,18 @@ function updateAllCardBars() {
 }
 
 /* ══ TIMELINE ══
- * 규칙:
- * 1. 좌우 합쳐서 시간순 정렬 → 하나의 이벤트 큐
- * 2. 직전 이벤트와 15분 이내 → 같은 Y (동시 취급, 나란히 표시)
- * 3. 직전 이벤트와 1시간 미만 → 스택 간격 (85px)
- * 4. 직전 이벤트와 1시간 이상 → 고정 간격 (24px), 빈 공간 없음
+ * 규칙 (직전 카드 기준):
+ * [같은 사이드]
+ *   < 1시간  → 겹침 (STACK_GAP)
+ *   >= 1시간 → 정상 간격 (CARD_H + NEXT_GAP)
+ * [다른 사이드]
+ *   < 1시간  → 겹침 (STACK_GAP)
+ *   1~4시간  → 바로 밑 (CARD_H + NEXT_GAP)
+ *   >= 4시간 → 더 밑 (CARD_H + FAR_GAP)
  */
 function renderTimeline(meals) {
   var tl = document.getElementById('timeline');
   var empty = document.getElementById('emptystate');
-  /* DOM 완전 초기화 후 렌더 (삭제 후 재계산 보장) */
   while(tl.firstChild) tl.removeChild(tl.firstChild);
   if (!meals||!meals.length) { empty.style.display='flex'; return; }
   empty.style.display = 'none';
@@ -808,58 +810,41 @@ function renderTimeline(meals) {
     var PAD       = 12;
     var STACK_GAP = 85;
     var NEXT_GAP  = 24;
-    var SAME_MS   = 15 * 60 * 1000;
+    var FAR_GAP   = 80;
     var STACK_MS  = 60 * 60 * 1000;
+    var FAR_MS    = 4  * 60 * 60 * 1000;
 
     /* 좌우 합쳐서 시간순 정렬 */
     var sorted = dayMeals.slice().sort(function(a,b){ return a.ts - b.ts; });
 
-    var posMap = {};
-    var prevGroupTs = null;
-    var prevGroupY  = null;
-    var prevGroup   = null;
+    var posMap   = {};
+    var prevTs   = null;
+    var prevY    = null;
+    var prevSide = null;
 
-    var i = 0;
-    while (i < sorted.length) {
-      /* 15분 이내 묶음 → 좌우 페어링 */
-      var groupTs = sorted[i].ts;
-      var group   = [];
-      while (i < sorted.length && Math.abs(sorted[i].ts - groupTs) <= SAME_MS) {
-        group.push(sorted[i]);
-        i++;
-      }
-
-      var groupY;
-      if (prevGroupTs === null) {
-        groupY = PAD;
+    sorted.forEach(function(m) {
+      var y;
+      if (prevTs === null) {
+        y = PAD;
       } else {
-        var deltaMs = groupTs - prevGroupTs;
-        /* 같은 사이드 연속 업로드(1시간 미만)만 스택 간격 적용.
-           서로 다른 사이드이거나 1시간 이상 차이나면 항상 정상 간격. */
-        var isSameSideStack = false;
-        if (deltaMs < STACK_MS && group.length === 1 && prevGroup && prevGroup.length === 1
-            && prevGroup[0].side === group[0].side) {
-          isSameSideStack = true;
-        }
-        if (isSameSideStack) {
-          groupY = prevGroupY + STACK_GAP;
+        var dt       = m.ts - prevTs;
+        var sameSide = m.side === prevSide;
+        if (dt < STACK_MS) {
+          /* 같은/다른 사이드 모두 1시간 이내 → 겹침 */
+          y = prevY + STACK_GAP;
+        } else if (!sameSide && dt >= FAR_MS) {
+          /* 다른 사이드 4시간 이상 → 더 밑 */
+          y = prevY + CARD_H + FAR_GAP;
         } else {
-          groupY = prevGroupY + CARD_H + NEXT_GAP;
+          /* 같은 사이드 1시간+, 또는 다른 사이드 1~4시간 → 바로 밑 */
+          y = prevY + CARD_H + NEXT_GAP;
         }
       }
-
-      /* 같은 그룹 안에서 같은 사이드가 여러 장이면 STACK_GAP씩 오프셋 */
-      var sideCount = { left: 0, right: 0 };
-      group.forEach(function(m) {
-        var offset = sideCount[m.side] * STACK_GAP;
-        posMap[m.key] = groupY + offset;
-        sideCount[m.side]++;
-      });
-
-      prevGroupTs = groupTs;
-      prevGroupY  = groupY;
-      prevGroup   = group;
-    }
+      posMap[m.key] = y;
+      prevTs   = m.ts;
+      prevY    = y;
+      prevSide = m.side;
+    });
 
     /* 스택 여부: 같은 사이드에서 Y 차이가 CARD_H 미만 */
     var stackedKeys = {};
