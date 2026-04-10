@@ -560,12 +560,12 @@ var WARNING_MSGS = [
 
 /* ── 목표 메뉴 정의 ── */
 var GOAL_MENUS = [
-  { emoji:'🥤', name:'버블티',      price:6000  },
-  { emoji:'🍗', name:'치킨',        price:20000 },
-  { emoji:'🍕', name:'피자',        price:25000 },
-  { emoji:'🍣', name:'초밥',        price:35000 },
-  { emoji:'🥩', name:'소고기',      price:60000 },
-  { emoji:'🏨', name:'호텔뷔페',    price:100000}
+  { emoji:'🌶',  name:'엽기떡볶이',      price:20000  },
+  { emoji:'🍗',  name:'보드람치킨&맥주', price:30000  },
+  { emoji:'🍕',  name:'리꼬피자',        price:50000  },
+  { emoji:'🍱',  name:'쿠우쿠우',        price:71800  },
+  { emoji:'🥩',  name:'송추가마골',      price:100000 },
+  { emoji:'✏️',  name:'직접입력',        price:-1, custom:true }
 ];
 var cachedGoalPrice = 20000; /* 로컬 캐시 */
 
@@ -1231,11 +1231,12 @@ function openCoinPanel() {
 }
 
 function updateGoalBar(total, goalPrice) {
+  if (!goalPrice || goalPrice <= 0) return;
   var pct = Math.min(Math.round(total / goalPrice * 100), 100);
   document.getElementById('cp-goal-pct').textContent = pct+'%';
   document.getElementById('cp-goal-bar').style.width = pct+'%';
-  var menu = GOAL_MENUS.find(function(m){ return m.price===goalPrice; });
-  var label = menu ? menu.name+' '+menu.emoji+' 목표까지' : '목표까지';
+  var menu = GOAL_MENUS.find(function(m){ return !m.custom && m.price===goalPrice; });
+  var label = menu ? menu.name+' '+menu.emoji+' 목표까지' : goalPrice.toLocaleString()+'원 목표까지';
   document.getElementById('cp-goal-label').textContent = label;
 }
 
@@ -1243,26 +1244,50 @@ function renderGoalMenuGrid(currentGoalPrice) {
   var grid = document.getElementById('goal-menu-grid');
   if (!grid) return;
   grid.innerHTML = '';
+  /* 직접입력 외 메뉴가 currentGoalPrice와 일치하는지 */
+  var isCustom = !GOAL_MENUS.some(function(m){ return !m.custom && m.price===currentGoalPrice; });
   GOAL_MENUS.forEach(function(menu) {
     var btn = document.createElement('button');
-    btn.className = 'goal-menu-btn' + (menu.price===currentGoalPrice?' sel':'');
-    btn.innerHTML =
-      '<span class="gm-emoji">'+menu.emoji+'</span>'+
-      '<span class="gm-name">'+menu.name+'</span>'+
-      '<span class="gm-price">'+menu.price.toLocaleString()+'원</span>';
-    btn.onclick = function() {
-      if (menu.price === cachedGoalPrice) return;
-      cachedGoalPrice = menu.price;
-      db.ref('rooms/'+roomId+'/monthlyGoal').set(menu.price);
-      /* 그리드 재렌더 */
-      renderGoalMenuGrid(menu.price);
-      /* 진행 바 갱신 */
-      db.ref('rooms/'+roomId+'/coins').once('value', function(snap){
-        var d=snap.val()||{};
-        updateGoalBar((d.left||0)+(d.right||0), menu.price);
-      });
-      showNotifToast('🎯 목표가 '+menu.name+' ('+menu.price.toLocaleString()+'원)으로 변경됐어요!');
-    };
+    var isSel = menu.custom ? isCustom : menu.price===currentGoalPrice;
+    btn.className = 'goal-menu-btn' + (isSel?' sel':'');
+    if (menu.custom) {
+      /* 직접입력 버튼 */
+      var dispPrice = isCustom ? currentGoalPrice.toLocaleString()+'원' : '직접 입력';
+      btn.innerHTML =
+        '<span class="gm-emoji">'+menu.emoji+'</span>'+
+        '<span class="gm-name">'+menu.name+'</span>'+
+        '<span class="gm-price">'+dispPrice+'</span>';
+      btn.onclick = function() {
+        var raw = prompt('목표 금액을 입력하세요\n(원 단위 숫자만, 예: 45000)');
+        if (raw === null) return;
+        var val = parseInt(raw.replace(/[^0-9]/g,''));
+        if (!val || val < 500) { alert('500원 이상의 금액을 입력해주세요'); return; }
+        cachedGoalPrice = val;
+        db.ref('rooms/'+roomId+'/monthlyGoal').set(val);
+        renderGoalMenuGrid(val);
+        db.ref('rooms/'+roomId+'/coins').once('value', function(snap){
+          var d=snap.val()||{};
+          updateGoalBar((d.left||0)+(d.right||0), val);
+        });
+        showNotifToast('🎯 목표가 '+val.toLocaleString()+'원으로 변경됐어요!');
+      };
+    } else {
+      btn.innerHTML =
+        '<span class="gm-emoji">'+menu.emoji+'</span>'+
+        '<span class="gm-name">'+menu.name+'</span>'+
+        '<span class="gm-price">'+menu.price.toLocaleString()+'원</span>';
+      btn.onclick = function() {
+        if (menu.price === cachedGoalPrice) return;
+        cachedGoalPrice = menu.price;
+        db.ref('rooms/'+roomId+'/monthlyGoal').set(menu.price);
+        renderGoalMenuGrid(menu.price);
+        db.ref('rooms/'+roomId+'/coins').once('value', function(snap){
+          var d=snap.val()||{};
+          updateGoalBar((d.left||0)+(d.right||0), menu.price);
+        });
+        showNotifToast('🎯 목표가 '+menu.name+' ('+menu.price.toLocaleString()+'원)으로 변경됐어요!');
+      };
+    }
     grid.appendChild(btn);
   });
 }
@@ -1572,12 +1597,12 @@ function addCoin(dk){
 function updateCoinDisplay(){
   db.ref('rooms/'+roomId+'/coins').once('value',function(snap){
     var d=snap.val()||{};
-    var myWon = d[mySide]||0;
-    document.getElementById('my-coin').textContent='💰 '+myWon.toLocaleString()+'원';
+    var lw=d.left||0, rw=d.right||0, total=lw+rw;
+    /* 헤더: 합산 금액 표시 */
+    document.getElementById('my-coin').textContent='💰 '+total.toLocaleString()+'원';
     /* 코인 패널이 열려있으면 패널도 동시 갱신 */
     var panel=document.getElementById('coin-panel');
     if(panel && panel.classList.contains('open')){
-      var lw=d.left||0, rw=d.right||0, total=lw+rw;
       document.getElementById('cp-left-coin').textContent=lw.toLocaleString()+'원';
       document.getElementById('cp-right-coin').textContent=rw.toLocaleString()+'원';
       document.getElementById('cp-total').textContent='합산 '+total.toLocaleString()+'원';
