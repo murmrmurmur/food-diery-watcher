@@ -180,6 +180,17 @@ input[type=text]:focus { border-color:var(--accent); }
 .mrow.mr .mcrd { justify-self:start; margin-left:14px; border-top-left-radius:3px; }
 .mcrd img { width:100%; height:100%; object-fit:cover; display:block; }
 .mcrd.stacked { box-shadow:0 -6px 20px rgba(0,0,0,.8); }
+/* v2 사진 타임라인 카드 메타 오버레이 */
+.mcrd-meta {
+  position:absolute; bottom:0; left:0; right:0;
+  padding:18px 7px 7px;
+  background:linear-gradient(transparent, rgba(0,0,0,.72));
+  color:#fff; font-size:10px; line-height:1.35;
+  text-align:center; pointer-events:none; border-radius:0 0 14px 14px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.mcrd-meta .meta-time { font-family:'Black Han Sans',sans-serif; font-size:13px; display:block; }
+.mcrd-meta .meta-menu { opacity:.85; display:block; margin-top:1px; }
 .mrow-center { position:relative; }
 
 /* [FIX 5] 반응/댓글 있는 카드 상단 컬러 바 */
@@ -254,6 +265,10 @@ input[type=text]:focus { border-color:var(--accent); }
 .iv-input-row button { background:var(--accent); border:none; border-radius:12px; color:#fff; font-family:'Black Han Sans',sans-serif; font-size:13px; padding:10px 16px; cursor:pointer; }
 .iv-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:14px; cursor:pointer; z-index:101; }
 .iv-delete { position:absolute; top:14px; left:14px; background:rgba(255,59,48,.15); border:1px solid rgba(255,59,48,.3); color:#ff3b30; border-radius:50%; width:36px; height:36px; font-size:13px; cursor:pointer; z-index:101; display:flex; align-items:center; justify-content:center; }
+/* v2 사진 뷰어 메타 */
+#iv-meta { display:none; text-align:center; }
+#iv-meta .ivm-time { font-family:'Black Han Sans',sans-serif; font-size:18px; color:var(--text); }
+#iv-meta .ivm-menu { font-size:13px; color:var(--muted); margin-top:3px; }
 
 /* ══ 슬라이드업 패널 공통 ══ */
 .panel-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:60; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s; }
@@ -501,6 +516,7 @@ input[type=text]:focus { border-color:var(--accent); }
   <button class="iv-delete" id="iv-delete-btn" onclick="deleteMeal()">🗑</button>
   <button class="iv-close" onclick="closeViewer()">✕</button>
   <img id="iv-img" src="" alt="">
+  <div id="iv-meta"></div>
   <div class="iv-comments" id="iv-comments"></div>
   <div class="iv-input-row">
     <input type="text" id="iv-comment-input" placeholder="댓글 입력..." maxlength="50">
@@ -1078,6 +1094,16 @@ function renderTimeline(meals) {
       img.loading = 'lazy';
       card.appendChild(img);
 
+      /* v2: 워터마크 없는 사진 → CSS 오버레이로 시간+메뉴 표시 */
+      if (m.v === 2) {
+        var hhmm = new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+        var metaDiv = document.createElement('div');
+        metaDiv.className = 'mcrd-meta';
+        metaDiv.innerHTML = '<span class="meta-time">'+hhmm+'</span>'
+          + (m.menu ? '<span class="meta-menu">'+escStr(m.menu)+'</span>' : '');
+        card.appendChild(metaDiv);
+      }
+
       var center = '<div class="mrow-center"><div class="tdot"></div></div>';
       var blank  = '<div></div>';
 
@@ -1311,6 +1337,18 @@ function openViewer(url, mealKey) {
   if (delBtn) delBtn.style.display = (currentMealSide === mySide) ? 'flex' : 'none';
   var sendBtn = document.getElementById('iv-send-btn');
   if (sendBtn) sendBtn.style.background = 'var(--accent)';
+  /* v2: 시간+메뉴를 UI 텍스트로 표시 */
+  var metaEl = document.getElementById('iv-meta');
+  if (metaEl) {
+    if (meal.v === 2) {
+      var hhmm = new Date(meal.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+      metaEl.innerHTML = '<div class="ivm-time">'+hhmm+'</div>'
+        + (meal.menu ? '<div class="ivm-menu">'+escStr(meal.menu)+'</div>' : '');
+      metaEl.style.display = '';
+    } else {
+      metaEl.style.display = 'none';
+    }
+  }
   loadViewerData(mealKey);
   document.getElementById('img-viewer').classList.add('open');
 }
@@ -1432,7 +1470,8 @@ function fileChosen(e) {
 }
 
 /* [FIX 6] 워터마크: MAX=900, JPEG 0.85 */
-function stampImage(file, menuText, cb) {
+/* 리사이즈만 (워터마크 없이) — v2 방식 */
+function resizeImage(file, cb) {
   var reader=new FileReader();
   reader.onload=function(ev){
     var img=new Image();
@@ -1440,21 +1479,7 @@ function stampImage(file, menuText, cb) {
       var MAX=900, w=img.width, h=img.height;
       if(w>MAX||h>MAX){ if(w>=h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
       var c=document.createElement('canvas'); c.width=w; c.height=h;
-      var ctx=c.getContext('2d'); ctx.drawImage(img,0,0,w,h);
-      var hhmm=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
-      var cx=w/2, cy=h/2;
-      function dt(text,x,y,size,alpha){
-        ctx.font='bold '+size+'px Arial,sans-serif'; ctx.textAlign='center';
-        ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillText(text,x+2,y+3);
-        ctx.fillStyle='rgba(255,255,255,'+alpha+')'; ctx.fillText(text,x,y);
-      }
-      var ts=Math.round(w*0.22), ms=Math.round(w*0.08);
-      if(menuText){
-        var gap=ts*0.3, tot=ts+gap+ms, sy=cy-tot/2+ts*0.8;
-        dt(hhmm,cx,sy,ts,0.95); dt(menuText,cx,sy+gap+ms,ms,0.88);
-      } else {
-        dt(hhmm,cx,cy+ts*0.35,ts,0.95);
-      }
+      c.getContext('2d').drawImage(img,0,0,w,h);
       cb(c.toDataURL('image/jpeg',0.85));
     };
     img.onerror=function(){ cb(null); };
@@ -1469,13 +1494,13 @@ function doPost() {
   var btn=document.getElementById('postbtn');
   btn.innerHTML='<span class="spin"></span> 올리는 중...'; btn.disabled=true;
   var menuText=document.getElementById('notetxt').value.trim(), ts=Date.now();
-  stampImage(selFile,menuText,function(dataUrl){
+  resizeImage(selFile,function(dataUrl){
     var fd=new FormData(); fd.append('file',dataUrl); fd.append('upload_preset',CLOUDINARY_PRESET);
     fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
     .then(function(r){ return r.json(); })
     .then(function(data){
       if(!data.secure_url) throw new Error(data.error?data.error.message:'업로드 실패');
-      return db.ref('rooms/'+roomId+'/meals').push({side:mySide,url:data.secure_url,ts:ts,menu:menuText||null});
+      return db.ref('rooms/'+roomId+'/meals').push({side:mySide,url:data.secure_url,ts:ts,menu:menuText||null,v:2});
     })
     .then(function(ref){ return db.ref('rooms/'+roomId+'/meals/'+ref.key+'/key').set(ref.key); })
     .then(function(){
