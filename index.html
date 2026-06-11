@@ -340,6 +340,40 @@ input[type=text]:focus { border-color:var(--accent); }
 .time-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--accent); border-radius:16px; padding:13px 18px; font-size:13px; color:var(--text); text-align:center; z-index:90; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:290px; line-height:1.6; cursor:pointer; animation:slideDown .3s ease; }
 .notif-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--other); border-radius:16px; padding:11px 16px; font-size:13px; color:var(--text); text-align:center; z-index:91; box-shadow:0 4px 20px rgba(0,0,0,.6); max-width:320px; line-height:1.6; animation:slideDown .3s ease; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+/* ══ 보기 모드 토글 ══ */
+.view-toggle { display:flex; gap:6px; padding:8px 14px 8px; flex-shrink:0; background:rgba(14,14,14,.96); border-bottom:1px solid var(--line); }
+.view-btn { flex:1; padding:7px 4px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; }
+.view-btn.active { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); }
+
+/* ══ 월별 그리드 ══ */
+.monthly-wrap { flex:1; overflow-y:auto; padding:14px 12px 180px; -webkit-overflow-scrolling:touch; display:none; }
+.month-section { margin-bottom:28px; }
+.month-header { display:flex; align-items:baseline; gap:7px; padding:4px 2px; margin-bottom:10px; }
+.month-header-title { font-family:'Black Han Sans',sans-serif; font-size:14px; }
+.month-count { font-size:11px; color:var(--muted); }
+.month-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
+.month-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; }
+.month-thumb:active { transform:scale(.95); }
+.month-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+
+/* ══ 시간대별 뷰 ══ */
+.timeslot-wrap { flex:1; overflow-y:auto; padding-bottom:180px; -webkit-overflow-scrolling:touch; display:none; flex-direction:column; }
+.timeslot-tabs { display:flex; gap:6px; padding:10px 12px 0; overflow-x:auto; flex-shrink:0; scrollbar-width:none; }
+.timeslot-tabs::-webkit-scrollbar { display:none; }
+.ts-tab { flex-shrink:0; padding:7px 14px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.ts-tab.active { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); }
+.timeslot-count { font-size:12px; color:var(--muted); padding:8px 14px 6px; flex-shrink:0; }
+.timeslot-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; padding:0 12px; }
+.ts-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; }
+.ts-thumb:active { transform:scale(.95); }
+.ts-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.ts-empty { text-align:center; color:var(--muted); font-size:13px; padding:40px 12px; grid-column:1/-1; }
+
+/* 더 보기 버튼 */
+.load-more-btn { display:block; margin:20px auto 0; padding:10px 28px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:13px; cursor:pointer; transition:all .18s; }
+.load-more-btn:active { border-color:var(--accent); color:var(--accent); }
+.load-more-btn:disabled { opacity:.4; cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -399,6 +433,13 @@ input[type=text]:focus { border-color:var(--accent); }
     </div>
   </div>
 
+  <!-- 보기 모드 토글 -->
+  <div class="view-toggle" id="view-toggle">
+    <button class="view-btn active" id="vbtn-feed" onclick="setViewMode('feed')">최신순</button>
+    <button class="view-btn" id="vbtn-monthly" onclick="setViewMode('monthly')">월별</button>
+    <button class="view-btn" id="vbtn-timeslot" onclick="setViewMode('timeslot')">시간대별</button>
+  </div>
+
   <div class="tl-wrap" id="tl-wrap">
     <div class="tl-line"></div>
     <div class="empty" id="emptystate">
@@ -406,6 +447,20 @@ input[type=text]:focus { border-color:var(--accent); }
       <p>아직 아무도 안 먹었네요<br>밥 먹으면 제일 먼저 올려봐요</p>
     </div>
     <div id="timeline"></div>
+  </div>
+
+  <!-- 월별 그리드 -->
+  <div class="monthly-wrap" id="monthly-wrap">
+    <div id="monthly-content"></div>
+    <button class="load-more-btn" id="monthly-load-more" onclick="loadMoreMeals()">이전 3개월 더 보기</button>
+  </div>
+
+  <!-- 시간대별 뷰 -->
+  <div class="timeslot-wrap" id="timeslot-wrap">
+    <div class="timeslot-tabs" id="timeslot-tabs"></div>
+    <div class="timeslot-count" id="timeslot-count"></div>
+    <div class="timeslot-grid" id="timeslot-grid"></div>
+    <button class="load-more-btn" id="timeslot-load-more" onclick="loadMoreMeals()">이전 3개월 더 보기</button>
   </div>
 
   <button class="fab" id="fab-btn" onclick="openModal()">📸 지금 먹어요</button>
@@ -582,6 +637,41 @@ var mealsCache = {};       /* mealKey → {url, side, ts} */
 var unreadNotifs = [];     /* {mealKey, commenterName, commenterSide, text, ts} */
 var NOTIF_KEY = 'diet_notifs_v1';
 
+/* ── 모아보기 상태 ── */
+var viewMode = 'feed';
+var realtimeMeals  = [];   /* 최근 3개월 실시간 */
+var historicalMeals = [];  /* 이전 페이지네이션 */
+var oldestRealtimeTs = null;
+var loadingMore  = false;
+var hasMoreHistory = true;
+var currentTimeslot = '아침';
+var THREE_MONTHS_MS = 3 * 30 * 24 * 60 * 60 * 1000;
+
+var TIME_SLOTS = [
+  { name:'아침', range:[6,9]   },
+  { name:'오전', range:[9,11]  },
+  { name:'점심', range:[11,14] },
+  { name:'오후', range:[14,17] },
+  { name:'저녁', range:[17,21] },
+  { name:'야식', range:[21,6]  }
+];
+
+function getTimeslot(ts) {
+  var h = new Date(ts).getHours();
+  if (h >= 6  && h < 9 ) return '아침';
+  if (h >= 9  && h < 11) return '오전';
+  if (h >= 11 && h < 14) return '점심';
+  if (h >= 14 && h < 17) return '오후';
+  if (h >= 17 && h < 21) return '저녁';
+  return '야식';
+}
+
+function getCombinedMeals() {
+  var combined = historicalMeals.concat(realtimeMeals);
+  combined.sort(function(a,b){ return a.ts - b.ts; });
+  return combined;
+}
+
 /* ══ 시간 입력 파싱 (숫자 4자리 → "HH:MM") ══ */
 function parseTimeInput(raw) {
   var s = String(raw||'').replace(/\D/g,'').slice(0,4);
@@ -704,12 +794,21 @@ function initApp(sleepTime, wakeTime) {
     updateAllCardBars();
   });
 
-  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').on('value', function(snap) {
-    /* mealsCache 완전 교체 — 삭제된 항목이 캐시에 남지 않도록 */
+  /* 최근 3개월치만 실시간 구독 */
+  realtimeMeals = []; historicalMeals = []; hasMoreHistory = true;
+  var recentCutoff = Date.now() - THREE_MONTHS_MS;
+  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(recentCutoff).on('value', function(snap) {
     mealsCache = {};
-    var arr=[];
-    snap.forEach(function(c){ var v=c.val(); v.key=c.key; arr.push(v); mealsCache[c.key]=v; });
-    renderTimeline(arr);
+    /* historicalMeals의 mealsCache 복구 */
+    historicalMeals.forEach(function(m){ mealsCache[m.key]=m; });
+    realtimeMeals = [];
+    snap.forEach(function(c){ var v=c.val(); v.key=c.key; realtimeMeals.push(v); mealsCache[c.key]=v; });
+    if (realtimeMeals.length > 0) {
+      oldestRealtimeTs = realtimeMeals[0].ts;
+    } else {
+      oldestRealtimeTs = recentCutoff;
+    }
+    refreshViews();
   });
 
   /* monthlyGoal 캐시 */
@@ -999,6 +1098,138 @@ function renderTimeline(meals) {
 
 
 function escStr(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+/* ══ 보기 모드 ══ */
+function refreshViews() {
+  var combined = getCombinedMeals();
+  if (viewMode === 'feed') renderTimeline(combined);
+  else if (viewMode === 'monthly') renderMonthlyView(combined);
+  else if (viewMode === 'timeslot') renderTimeslotView(combined);
+}
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('vbtn-feed').classList.toggle('active', mode==='feed');
+  document.getElementById('vbtn-monthly').classList.toggle('active', mode==='monthly');
+  document.getElementById('vbtn-timeslot').classList.toggle('active', mode==='timeslot');
+  document.getElementById('tl-wrap').style.display       = mode==='feed'     ? ''     : 'none';
+  document.getElementById('monthly-wrap').style.display  = mode==='monthly'  ? 'block': 'none';
+  document.getElementById('timeslot-wrap').style.display = mode==='timeslot' ? 'flex' : 'none';
+  refreshViews();
+}
+
+function loadMoreMeals() {
+  if (loadingMore || !hasMoreHistory) return;
+  loadingMore = true;
+  var btns = document.querySelectorAll('.load-more-btn');
+  btns.forEach(function(b){ b.disabled=true; b.textContent='불러오는 중...'; });
+
+  var endTs = (oldestRealtimeTs || Date.now()) - 1;
+  if (historicalMeals.length > 0) endTs = Math.min(endTs, historicalMeals[0].ts - 1);
+  var startTs = endTs - THREE_MONTHS_MS;
+
+  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(startTs).endAt(endTs).once('value', function(snap) {
+    var fetched = [];
+    snap.forEach(function(c){ var v=c.val(); v.key=c.key; fetched.push(v); mealsCache[c.key]=v; });
+    if (fetched.length === 0) {
+      hasMoreHistory = false;
+    } else {
+      historicalMeals = fetched.concat(historicalMeals);
+      historicalMeals.sort(function(a,b){ return a.ts - b.ts; });
+    }
+    loadingMore = false;
+    refreshViews();
+    var label = hasMoreHistory ? '이전 3개월 더 보기' : '더 이상 없어요';
+    btns.forEach(function(b){ b.disabled=!hasMoreHistory; b.textContent=label; });
+  });
+}
+
+/* ══ 월별 그리드 렌더 ══ */
+function renderMonthlyView(meals) {
+  var content = document.getElementById('monthly-content');
+  if (!content) return;
+
+  var byMonth = {}, monthOrder = [];
+  var sorted = meals.slice().sort(function(a,b){ return b.ts - a.ts; });
+  sorted.forEach(function(m) {
+    var d = new Date(m.ts);
+    var mk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if (!byMonth[mk]) { byMonth[mk]=[]; monthOrder.push(mk); }
+    byMonth[mk].push(m);
+  });
+
+  content.innerHTML = '';
+  monthOrder.forEach(function(mk) {
+    var items = byMonth[mk];
+    var parts = mk.split('-'), y=parts[0], mo=parseInt(parts[1]);
+    var section = document.createElement('div');
+    section.className = 'month-section';
+    var hdr = document.createElement('div');
+    hdr.className = 'month-header';
+    hdr.innerHTML = '<span class="month-header-title">'+y+'년 '+mo+'월</span><span class="month-count">· '+items.length+'끼 기록</span>';
+    section.appendChild(hdr);
+    var grid = document.createElement('div');
+    grid.className = 'month-grid';
+    items.forEach(function(meal) {
+      var thumb = document.createElement('div');
+      thumb.className = 'month-thumb';
+      var img = document.createElement('img');
+      img.src = meal.url; img.loading = 'lazy';
+      thumb.appendChild(img);
+      thumb.onclick = (function(u,k){ return function(){ openViewer(u,k); }; })(meal.url, meal.key);
+      grid.appendChild(thumb);
+    });
+    section.appendChild(grid);
+    content.appendChild(section);
+  });
+
+  var btn = document.getElementById('monthly-load-more');
+  if (btn) btn.style.display = hasMoreHistory ? 'block' : 'none';
+}
+
+/* ══ 시간대별 뷰 렌더 ══ */
+function renderTimeslotView(meals) {
+  var tabsEl = document.getElementById('timeslot-tabs');
+  if (!tabsEl) return;
+  tabsEl.innerHTML = '';
+  TIME_SLOTS.forEach(function(slot) {
+    var btn = document.createElement('button');
+    btn.className = 'ts-tab'+(slot.name===currentTimeslot?' active':'');
+    btn.textContent = slot.name;
+    btn.onclick = (function(name){ return function(){ currentTimeslot=name; renderTimeslotView(getCombinedMeals()); }; })(slot.name);
+    tabsEl.appendChild(btn);
+  });
+
+  var filtered = meals.filter(function(m){ return getTimeslot(m.ts)===currentTimeslot; });
+  filtered.sort(function(a,b){ return b.ts - a.ts; });
+
+  var countEl = document.getElementById('timeslot-count');
+  if (countEl) countEl.textContent = '총 '+filtered.length+'개 기록';
+
+  var grid = document.getElementById('timeslot-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'ts-empty';
+    empty.textContent = currentTimeslot+' 시간대 기록이 없어요';
+    grid.appendChild(empty);
+  } else {
+    filtered.forEach(function(meal) {
+      var thumb = document.createElement('div');
+      thumb.className = 'ts-thumb';
+      var img = document.createElement('img');
+      img.src = meal.url; img.loading = 'lazy';
+      thumb.appendChild(img);
+      thumb.onclick = (function(u,k){ return function(){ openViewer(u,k); }; })(meal.url, meal.key);
+      grid.appendChild(thumb);
+    });
+  }
+
+  var btn = document.getElementById('timeslot-load-more');
+  if (btn) btn.style.display = hasMoreHistory ? 'block' : 'none';
+}
 /* ══ 이미지 뷰어 ══ */
 function openViewer(url, mealKey) {
   document.getElementById('iv-img').src = url;
