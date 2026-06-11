@@ -342,42 +342,46 @@ input[type=text]:focus { border-color:var(--accent); }
 @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
 /* ══ 보기 모드 토글 ══ */
-.view-toggle { display:flex; gap:6px; padding:8px 14px 8px; flex-shrink:0; background:rgba(14,14,14,.96); border-bottom:1px solid var(--line); }
+.view-toggle { display:flex; gap:6px; padding:8px 14px; flex-shrink:0; background:rgba(14,14,14,.96); border-bottom:1px solid var(--line); }
 .view-btn { flex:1; padding:7px 4px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; }
 .view-btn.active { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); }
 
+/* 시간대별 서브탭 (항상 표시) */
+.timeslot-subtabs { display:flex; gap:6px; padding:8px 12px; overflow-x:auto; flex-shrink:0; background:rgba(14,14,14,.96); border-bottom:1px solid var(--line); scrollbar-width:none; }
+.timeslot-subtabs::-webkit-scrollbar { display:none; }
+.ts-tab { flex-shrink:0; padding:6px 13px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.ts-tab.active { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); }
+
 /* ══ 월별 그리드 ══ */
-.monthly-wrap { flex:1; overflow-y:auto; padding:14px 12px 180px; -webkit-overflow-scrolling:touch; display:none; }
-.month-section { margin-bottom:28px; }
-.month-header { display:flex; align-items:baseline; gap:7px; padding:4px 2px; margin-bottom:10px; }
+.monthly-wrap { flex:1; overflow-y:auto; padding:10px 12px 180px; -webkit-overflow-scrolling:touch; display:none; }
+.month-section { margin-bottom:6px; border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+.month-header { display:flex; align-items:center; gap:7px; padding:12px 14px; cursor:pointer; user-select:none; }
 .month-header-title { font-family:'Black Han Sans',sans-serif; font-size:14px; }
 .month-count { font-size:11px; color:var(--muted); }
+.month-toggle-icon { margin-left:auto; font-size:11px; color:var(--muted); transition:transform .22s; flex-shrink:0; }
+.month-section.collapsed .month-toggle-icon { transform:rotate(-90deg); }
+.month-body { padding:0 10px 10px; }
+.month-section.collapsed .month-body { display:none; }
 .month-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
-/* 사람별 소제목 */
-.side-sub-hdr { display:flex; align-items:center; gap:5px; padding:10px 2px 7px; }
+
+/* 사람별 소제목 & 아코디언 */
+.side-block { margin-bottom:8px; }
+.side-sub-hdr { display:flex; align-items:center; gap:5px; padding:8px 2px 6px; cursor:pointer; user-select:none; }
 .side-sub-hdr .ss-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .side-sub-hdr .ss-name { font-size:12px; font-family:'Black Han Sans',sans-serif; }
 .side-sub-hdr .ss-count { font-size:11px; color:var(--muted); }
+.side-toggle-icon { margin-left:auto; font-size:11px; color:var(--muted); transition:transform .22s; flex-shrink:0; }
+.side-block.collapsed .side-toggle-icon { transform:rotate(-90deg); }
+.side-block.collapsed .side-grid-wrap { display:none; }
 
-.month-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; position:relative; }
+.month-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; }
 .month-thumb:active { transform:scale(.95); }
 .month-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-/* 이미지 위에 그라디언트 오버레이로 워터마크 시각적 억제 */
-.month-thumb::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(14,14,14,.6) 0%, rgba(14,14,14,.15) 55%, transparent 80%); pointer-events:none; border-radius:6px; }
 
 /* ══ 시간대별 뷰 ══ */
 .timeslot-wrap { flex:1; overflow-y:auto; padding-bottom:180px; -webkit-overflow-scrolling:touch; display:none; flex-direction:column; }
-.timeslot-tabs { display:flex; gap:6px; padding:10px 12px 0; overflow-x:auto; flex-shrink:0; scrollbar-width:none; }
-.timeslot-tabs::-webkit-scrollbar { display:none; }
-.ts-tab { flex-shrink:0; padding:7px 14px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; white-space:nowrap; }
-.ts-tab.active { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); }
-.timeslot-count { font-size:12px; color:var(--muted); padding:8px 14px 2px; flex-shrink:0; }
+.timeslot-count { font-size:12px; color:var(--muted); padding:10px 14px 2px; flex-shrink:0; }
 .timeslot-body { display:flex; flex-direction:column; padding:0 12px; }
-.ts-side-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; margin-bottom:4px; }
-.ts-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; position:relative; }
-.ts-thumb:active { transform:scale(.95); }
-.ts-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-.ts-thumb::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(14,14,14,.6) 0%, rgba(14,14,14,.15) 55%, transparent 80%); pointer-events:none; border-radius:6px; }
 .ts-empty { text-align:center; color:var(--muted); font-size:13px; padding:40px 12px; }
 
 /* 더 보기 버튼 */
@@ -449,6 +453,8 @@ input[type=text]:focus { border-color:var(--accent); }
     <button class="view-btn" id="vbtn-monthly" onclick="setViewMode('monthly')">월별</button>
     <button class="view-btn" id="vbtn-timeslot" onclick="setViewMode('timeslot')">시간대별</button>
   </div>
+  <!-- 시간대별 서브탭 (항상 표시) -->
+  <div class="timeslot-subtabs" id="timeslot-subtabs"></div>
 
   <div class="tl-wrap" id="tl-wrap">
     <div class="tl-line"></div>
@@ -467,7 +473,6 @@ input[type=text]:focus { border-color:var(--accent); }
 
   <!-- 시간대별 뷰 -->
   <div class="timeslot-wrap" id="timeslot-wrap">
-    <div class="timeslot-tabs" id="timeslot-tabs"></div>
     <div class="timeslot-count" id="timeslot-count"></div>
     <div class="timeslot-body" id="timeslot-body"></div>
     <button class="load-more-btn" id="timeslot-load-more" onclick="loadMoreMeals()">이전 3개월 더 보기</button>
@@ -833,6 +838,7 @@ function initApp(sleepTime, wakeTime) {
   scheduleJudgeAtWakeTime(wakeTime);
   checkTimeWarning(sleepTime, wakeTime);
   initPush();
+  initTimeslotTabs();
 
   /* ── 댓글 알림 시스템 ── */
 
@@ -1154,20 +1160,53 @@ function loadMoreMeals() {
   });
 }
 
-/* ── 사람별 그리드 블록 생성 헬퍼 ── */
-function makeSideGrid(sideMeals, side, countUnit) {
+/* ── 시간대별 서브탭 초기화 (항상 표시) ── */
+function initTimeslotTabs() {
+  var el = document.getElementById('timeslot-subtabs');
+  if (!el) return;
+  el.innerHTML = '';
+  TIME_SLOTS.forEach(function(slot) {
+    var btn = document.createElement('button');
+    btn.className = 'ts-tab' + (slot.name === currentTimeslot ? ' active' : '');
+    btn.id = 'ts-stab-' + slot.name;
+    btn.textContent = slot.name;
+    btn.onclick = (function(name) { return function() { selectTimeslot(name); }; })(slot.name);
+    el.appendChild(btn);
+  });
+}
+
+function selectTimeslot(name) {
+  currentTimeslot = name;
+  document.querySelectorAll('#timeslot-subtabs .ts-tab').forEach(function(b) {
+    b.classList.toggle('active', b.id === 'ts-stab-' + name);
+  });
+  if (viewMode !== 'timeslot') {
+    setViewMode('timeslot');
+  } else {
+    renderTimeslotView(getCombinedMeals());
+  }
+}
+
+/* ── 사람별 그리드 블록 (아코디언) ── */
+function makeSideBlock(sideMeals, side, countUnit) {
   var name  = cachedNames[side] || (side==='left' ? '왼쪽' : '오른쪽');
   var color = side==='left' ? 'var(--left)' : 'var(--right)';
-  var wrap  = document.createElement('div');
+
+  var block = document.createElement('div');
+  block.className = 'side-block';
 
   var subHdr = document.createElement('div');
   subHdr.className = 'side-sub-hdr';
   subHdr.innerHTML =
     '<span class="ss-dot" style="background:'+color+'"></span>'
     +'<span class="ss-name" style="color:'+color+'">'+escStr(name)+'</span>'
-    +'<span class="ss-count">· '+sideMeals.length+countUnit+'</span>';
-  wrap.appendChild(subHdr);
+    +'<span class="ss-count">· '+sideMeals.length+countUnit+'</span>'
+    +'<span class="side-toggle-icon">▾</span>';
+  subHdr.onclick = function() { block.classList.toggle('collapsed'); };
+  block.appendChild(subHdr);
 
+  var gridWrap = document.createElement('div');
+  gridWrap.className = 'side-grid-wrap';
   var grid = document.createElement('div');
   grid.className = 'month-grid';
   sideMeals.forEach(function(meal) {
@@ -1179,8 +1218,9 @@ function makeSideGrid(sideMeals, side, countUnit) {
     thumb.onclick = (function(u,k){ return function(){ openViewer(u,k); }; })(meal.url, meal.key);
     grid.appendChild(thumb);
   });
-  wrap.appendChild(grid);
-  return wrap;
+  gridWrap.appendChild(grid);
+  block.appendChild(gridWrap);
+  return block;
 }
 
 /* ══ 월별 그리드 렌더 ══ */
@@ -1188,13 +1228,14 @@ function renderMonthlyView(meals) {
   var content = document.getElementById('monthly-content');
   if (!content) return;
 
+  var nowMk = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
   var byMonth = {}, monthOrder = [];
   var sorted = meals.slice().sort(function(a,b){ return b.ts - a.ts; });
   sorted.forEach(function(m) {
     var d = new Date(m.ts);
     var mk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     if (!byMonth[mk]) { byMonth[mk]={left:[],right:[]}; monthOrder.push(mk); }
-    byMonth[mk][m.side] && byMonth[mk][m.side].push(m);
+    if (byMonth[mk][m.side]) byMonth[mk][m.side].push(m);
   });
 
   content.innerHTML = '';
@@ -1202,21 +1243,28 @@ function renderMonthlyView(meals) {
     var items = byMonth[mk];
     var parts = mk.split('-'), y=parts[0], mo=parseInt(parts[1]);
     var total = (items.left||[]).length + (items.right||[]).length;
+    var isCurrentMonth = (mk === nowMk);
 
     var section = document.createElement('div');
-    section.className = 'month-section';
+    section.className = 'month-section' + (isCurrentMonth ? '' : ' collapsed');
 
     var hdr = document.createElement('div');
     hdr.className = 'month-header';
-    hdr.innerHTML = '<span class="month-header-title">'+y+'년 '+mo+'월</span><span class="month-count">· '+total+'끼 기록</span>';
+    hdr.innerHTML =
+      '<span class="month-header-title">'+y+'년 '+mo+'월</span>'
+      +'<span class="month-count">· '+total+'끼 기록</span>'
+      +'<span class="month-toggle-icon">▾</span>';
+    hdr.onclick = function() { section.classList.toggle('collapsed'); };
     section.appendChild(hdr);
 
+    var body = document.createElement('div');
+    body.className = 'month-body';
     ['left','right'].forEach(function(side) {
       var sideMeals = items[side] || [];
       if (!sideMeals.length) return;
-      section.appendChild(makeSideGrid(sideMeals, side, '끼'));
+      body.appendChild(makeSideBlock(sideMeals, side, '끼'));
     });
-
+    section.appendChild(body);
     content.appendChild(section);
   });
 
@@ -1226,17 +1274,6 @@ function renderMonthlyView(meals) {
 
 /* ══ 시간대별 뷰 렌더 ══ */
 function renderTimeslotView(meals) {
-  var tabsEl = document.getElementById('timeslot-tabs');
-  if (!tabsEl) return;
-  tabsEl.innerHTML = '';
-  TIME_SLOTS.forEach(function(slot) {
-    var btn = document.createElement('button');
-    btn.className = 'ts-tab'+(slot.name===currentTimeslot?' active':'');
-    btn.textContent = slot.name;
-    btn.onclick = (function(name){ return function(){ currentTimeslot=name; renderTimeslotView(getCombinedMeals()); }; })(slot.name);
-    tabsEl.appendChild(btn);
-  });
-
   var filtered = meals.filter(function(m){ return getTimeslot(m.ts)===currentTimeslot; });
   filtered.sort(function(a,b){ return b.ts - a.ts; });
 
@@ -1256,7 +1293,7 @@ function renderTimeslotView(meals) {
     ['left','right'].forEach(function(side) {
       var sideMeals = filtered.filter(function(m){ return m.side===side; });
       if (!sideMeals.length) return;
-      body.appendChild(makeSideGrid(sideMeals, side, '개'));
+      body.appendChild(makeSideBlock(sideMeals, side, '개'));
     });
   }
 
