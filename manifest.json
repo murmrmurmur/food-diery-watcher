@@ -4,8 +4,8 @@
   "description": "칼로리 말고 눈치로 다이어트",
   "start_url": "/food-diery-watcher/",
   "display": "standalone",
-  "background_color": "#0e0e0e",
-  "theme_color": "#0e0e0e",
+  "background_color": "#FFF8EE",
+  "theme_color": "#FFF8EE",
   "orientation": "portrait",
   "icons": [
     {
