@@ -238,7 +238,6 @@ input[type=text]:focus { border-color:var(--accent); }
 /* ══ 이미지 뷰어 ══ */
 .img-viewer-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.93); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; opacity:0; pointer-events:none; transition:opacity .22s; padding:56px 20px 36px; }
 .img-viewer-backdrop.open { opacity:1; pointer-events:all; }
-#iv-img { width:88vw; max-width:400px; aspect-ratio:1; object-fit:cover; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.8); flex-shrink:0; }
 .iv-comments { width:100%; max-width:400px; max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
 .iv-comment { background:rgba(255,255,255,.06); border-radius:10px; padding:8px 12px; font-size:13px; color:var(--text); line-height:1.5; }
 .iv-comment .cv-name-row { display:flex; align-items:center; gap:5px; margin-bottom:3px; }
@@ -249,10 +248,12 @@ input[type=text]:focus { border-color:var(--accent); }
 .iv-input-row button { background:var(--accent); border:none; border-radius:12px; color:#fff; font-family:'Black Han Sans',sans-serif; font-size:13px; padding:10px 16px; cursor:pointer; }
 .iv-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:14px; cursor:pointer; z-index:101; }
 .iv-delete { position:absolute; top:14px; left:14px; background:rgba(255,59,48,.15); border:1px solid rgba(255,59,48,.3); color:#ff3b30; border-radius:50%; width:36px; height:36px; font-size:13px; cursor:pointer; z-index:101; display:flex; align-items:center; justify-content:center; }
-/* [CHANGE] iv-meta always shown */
-#iv-meta { text-align:center; }
-#iv-meta .ivm-time { font-family:'Black Han Sans',sans-serif; font-size:18px; color:var(--text); }
-#iv-meta .ivm-menu { font-size:13px; color:var(--muted); margin-top:3px; }
+/* [CHANGE] iv-meta: overlay on image */
+#iv-img-wrap { position:relative; width:88vw; max-width:400px; aspect-ratio:1; flex-shrink:0; }
+#iv-img { width:100%; height:100%; object-fit:cover; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.8); display:block; }
+#iv-meta { position:absolute; bottom:0; left:0; right:0; padding:32px 12px 12px; background:linear-gradient(transparent,rgba(0,0,0,.75)); border-radius:0 0 20px 20px; text-align:center; pointer-events:none; }
+#iv-meta .ivm-time { font-family:'Black Han Sans',sans-serif; font-size:20px; color:#fff; display:block; }
+#iv-meta .ivm-menu { font-size:12px; color:rgba(255,255,255,.85); margin-top:2px; display:block; }
 
 /* ══ 슬라이드업 패널 공통 ══ */
 .panel-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:60; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s; }
@@ -367,13 +368,12 @@ input[type=text]:focus { border-color:var(--accent); }
 .side-block.collapsed .side-toggle-icon { transform:rotate(-90deg); }
 .side-block.collapsed .side-grid-wrap { display:none; }
 
-/* [CHANGE] 날짜 레이블 + 사진 묶음 */
-.thumb-wrap { display:flex; flex-direction:column; gap:1px; }
-.thumb-date { font-size:9px; color:var(--muted); text-align:center; padding-top:3px; line-height:1.2; }
-
-.month-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; }
+/* [CHANGE] 날짜 오버레이 */
+.thumb-wrap { display:flex; flex-direction:column; }
+.month-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; position:relative; }
 .month-thumb:active { transform:scale(.95); }
 .month-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.thumb-date { position:absolute; bottom:0; left:0; right:0; padding:10px 3px 3px; background:linear-gradient(transparent,rgba(0,0,0,.72)); font-size:8px; color:#fff; text-align:center; line-height:1.3; pointer-events:none; }
 
 /* ══ 시간대별 뷰 ══ */
 .timeslot-wrap { flex:1; overflow-y:auto; padding-bottom:180px; -webkit-overflow-scrolling:touch; display:none; flex-direction:column; }
@@ -507,8 +507,10 @@ input[type=text]:focus { border-color:var(--accent); }
 <div class="img-viewer-backdrop" id="img-viewer">
   <button class="iv-delete" id="iv-delete-btn" onclick="deleteMeal()">🗑</button>
   <button class="iv-close" onclick="closeViewer()">✕</button>
-  <img id="iv-img" src="" alt="">
-  <div id="iv-meta"></div>
+  <div id="iv-img-wrap">
+    <img id="iv-img" src="" alt="">
+    <div id="iv-meta"></div>
+  </div>
   <div class="iv-comments" id="iv-comments"></div>
   <div class="iv-input-row">
     <input type="text" id="iv-comment-input" placeholder="댓글 입력..." maxlength="50">
@@ -1001,20 +1003,18 @@ function makeSideBlock(sideMeals, side, countUnit) {
   grid.className='month-grid';
 
   sideMeals.forEach(function(meal) {
-    /* [CHANGE] 날짜 레이블 + 사진 묶음 */
     var wrap=document.createElement('div');
     wrap.className='thumb-wrap';
-
-    var label=document.createElement('div');
-    label.className='thumb-date';
-    label.textContent=fmtDate(meal.ts);
-    wrap.appendChild(label);
 
     var thumb=document.createElement('div');
     thumb.className='month-thumb';
     var img=document.createElement('img');
     img.src=meal.url; img.loading='lazy';
     thumb.appendChild(img);
+    var label=document.createElement('div');
+    label.className='thumb-date';
+    label.textContent=fmtDate(meal.ts);
+    thumb.appendChild(label);
     thumb.onclick=(function(u,k){ return function(){ openViewer(u,k); }; })(meal.url,meal.key);
     wrap.appendChild(thumb);
 
@@ -1084,54 +1084,33 @@ function renderMonthlyView(meals) {
   if (btn) btn.style.display=hasMoreHistory?'block':'none';
 }
 
-/* ══ 시간대별 뷰 렌더 (아코디언) ══ */
+/* ══ 시간대별 뷰 렌더 (탭 방식) ══ */
 function renderTimeslotView(meals) {
+  var filtered=meals.filter(function(m){ return getTimeslot(m.ts)===currentTimeslot; });
+  filtered.sort(function(a,b){ return b.ts-a.ts; });
+
+  var countEl=document.getElementById('timeslot-count');
+  if (countEl) countEl.textContent=currentTimeslot+' · 총 '+filtered.length+'개';
+
   var body=document.getElementById('timeslot-body');
   if (!body) return;
   body.innerHTML='';
 
-  var total=0;
-  TIME_SLOTS.forEach(function(slot) {
-    var filtered=meals.filter(function(m){ return getTimeslot(m.ts)===slot.name; });
-    if (!filtered.length) return;
-    total+=filtered.length;
-    filtered.sort(function(a,b){ return b.ts-a.ts; });
-
-    var section=document.createElement('div');
-    /* [CHANGE] 시간대 메뉴 첫 진입 시 현재 시간대만 펼침 */
-    section.className='ts-section'+(slot.name===currentTimeslot?'':' collapsed');
-
-    var hdr=document.createElement('div');
-    hdr.className='ts-section-header';
-    hdr.innerHTML=
-      '<span class="ts-section-title">'+slot.name+'</span>'
-      +'<span class="ts-section-count">· '+filtered.length+'개</span>'
-      +'<span class="ts-section-toggle">▾</span>';
-    hdr.onclick=function(){ section.classList.toggle('collapsed'); };
-    section.appendChild(hdr);
-
-    var sectionBody=document.createElement('div');
-    sectionBody.className='ts-section-body';
-
-    /* [CHANGE] 두 사람 나란히 */
+  if (!filtered.length) {
+    var empty=document.createElement('div');
+    empty.className='ts-empty';
+    empty.textContent=currentTimeslot+' 시간대 기록이 없어요';
+    body.appendChild(empty);
+  } else {
     var inner=document.createElement('div');
     inner.className='month-body-inner';
     ['left','right'].forEach(function(side) {
       var sideMeals=filtered.filter(function(m){ return m.side===side; });
-      if (!sideMeals.length) {
-        var empty=document.createElement('div');
-        inner.appendChild(empty);
-        return;
-      }
+      if (!sideMeals.length) { inner.appendChild(document.createElement('div')); return; }
       inner.appendChild(makeSideBlock(sideMeals, side, '개'));
     });
-    sectionBody.appendChild(inner);
-    section.appendChild(sectionBody);
-    body.appendChild(section);
-  });
-
-  var countEl=document.getElementById('timeslot-count');
-  if (countEl) countEl.textContent='총 '+total+'개 기록';
+    body.appendChild(inner);
+  }
 
   var btn=document.getElementById('timeslot-load-more');
   if (btn) btn.style.display=hasMoreHistory?'block':'none';
