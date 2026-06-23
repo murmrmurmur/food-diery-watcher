@@ -19,10 +19,10 @@
   --surface2: #202020;
   --left: #ff6b35;
   --right: #35c9ff;
-  --accent: #ff6b35;      /* 내 사이드 색 (initApp에서 동적 설정) */
+  --accent: #ff6b35;
   --accent-glow: rgba(255,107,53,.4);
   --accent-tint: rgba(255,107,53,.1);
-  --other: #35c9ff;       /* 상대방 사이드 색 (initApp에서 동적 설정) */
+  --other: #35c9ff;
   --other-glow: rgba(53,201,255,.4);
   --other-tint: rgba(53,201,255,.1);
   --line: #2a2a2a;
@@ -80,7 +80,6 @@ input[type=text]:focus { border-color:var(--accent); }
 /* ══ APP ══ */
 #app { display:none; flex-direction:column; height:100dvh; }
 
-/* 헤더 2줄 */
 .hdr {
   flex-shrink:0;
   background:rgba(14,14,14,.96); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
@@ -105,7 +104,6 @@ input[type=text]:focus { border-color:var(--accent); }
 .hdr-chip:active { opacity:.7; }
 .coin-badge { font-size:11px; color:var(--text); background:var(--surface2); border-radius:20px; padding:4px 11px; border:1px solid var(--line); white-space:nowrap; cursor:pointer; transition:border-color .18s; }
 .coin-badge:active { border-color:var(--accent); }
-/* 알림 뱃지 */
 .notif-badge {
   position:absolute; top:-5px; right:-5px;
   background:#ff3b30; color:#fff; border-radius:10px;
@@ -118,7 +116,6 @@ input[type=text]:focus { border-color:var(--accent); }
 
 /* ══ TIMELINE ══ */
 .tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:180px; -webkit-overflow-scrolling:touch; }
-/* 세로선: tl-wrap 기준 sticky처럼 동작하도록 별도 fixed 레이어로 처리 */
 .tl-wrap::before {
   content:'';
   position:fixed;
@@ -129,7 +126,6 @@ input[type=text]:focus { border-color:var(--accent); }
   pointer-events:none;
   z-index:0;
 }
-/* 기존 .tl-line은 숨김 처리 (HTML에 남아있으므로) */
 .tl-line { display:none; }
 .empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:100px 32px; color:var(--muted); text-align:center; }
 .empty-eye { font-size:48px; animation:blink 3.5s infinite; }
@@ -142,27 +138,17 @@ input[type=text]:focus { border-color:var(--accent); }
 
 .day-wrap { position:relative; }
 
-/* [FIX 3] 과식 경고: 왼쪽/오른쪽 각각 컬럼 안에 배치 */
 .warn-msg-left {
-  position:absolute;
-  left:0; width:50%;
-  padding-right:28px;
-  text-align:right;
-  font-size:11px; color:#ff5252;
-  letter-spacing:.3px; z-index:10;
-  line-height:1.5;
+  position:absolute; left:0; width:50%; padding-right:28px;
+  text-align:right; font-size:11px; color:#ff5252;
+  letter-spacing:.3px; z-index:10; line-height:1.5;
 }
 .warn-msg-right {
-  position:absolute;
-  right:0; width:50%;
-  padding-left:28px;
-  text-align:left;
-  font-size:11px; color:#ff5252;
-  letter-spacing:.3px; z-index:10;
-  line-height:1.5;
+  position:absolute; right:0; width:50%; padding-left:28px;
+  text-align:left; font-size:11px; color:#ff5252;
+  letter-spacing:.3px; z-index:10; line-height:1.5;
 }
 
-/* [FIX 2] 타임라인 카드 레이아웃 */
 .mrow { display:grid; grid-template-columns:1fr 20px 1fr; align-items:start; padding:0 14px; position:absolute; width:100%; animation:pop .3s ease forwards; opacity:0; pointer-events:none; }
 @keyframes pop { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .tdot { position:absolute; left:50%; top:22px; width:9px; height:9px; border-radius:50%; border:2px solid var(--bg); transform:translateX(-50%); z-index:3; }
@@ -176,11 +162,11 @@ input[type=text]:focus { border-color:var(--accent); }
   pointer-events:auto;
 }
 .mcrd:active { transform:scale(.96); }
-.mrow.ml .mcrd { justify-self:end; margin-right:14px; border-top-right-radius:3px; }
-.mrow.mr .mcrd { justify-self:start; margin-left:14px; border-top-left-radius:3px; }
+/* [CHANGE] uniform radius — removed border-top-right-radius and border-top-left-radius overrides */
+.mrow.ml .mcrd { justify-self:end; margin-right:14px; }
+.mrow.mr .mcrd { justify-self:start; margin-left:14px; }
 .mcrd img { width:100%; height:100%; object-fit:cover; display:block; }
 .mcrd.stacked { box-shadow:0 -6px 20px rgba(0,0,0,.8); }
-/* v2 사진 타임라인 카드 메타 오버레이 */
 .mcrd-meta {
   position:absolute; bottom:0; left:0; right:0;
   padding:18px 7px 7px;
@@ -193,7 +179,6 @@ input[type=text]:focus { border-color:var(--accent); }
 .mcrd-meta .meta-menu { opacity:.85; display:block; margin-top:1px; }
 .mrow-center { position:relative; }
 
-/* [FIX 5] 반응/댓글 있는 카드 상단 컬러 바 */
 .mcrd-bar {
   position:absolute; top:0; left:0; right:0; height:4px;
   border-radius:14px 14px 0 0; display:none;
@@ -213,7 +198,6 @@ input[type=text]:focus { border-color:var(--accent); }
   transition:transform .2s; z-index:30; white-space:nowrap;
 }
 .fab:active { transform:translateX(-50%) scale(.95); }
-/* 말풍선 경고 */
 .fab-bubble {
   position:fixed; left:50%; transform:translateX(-50%);
   bottom:104px;
@@ -265,8 +249,8 @@ input[type=text]:focus { border-color:var(--accent); }
 .iv-input-row button { background:var(--accent); border:none; border-radius:12px; color:#fff; font-family:'Black Han Sans',sans-serif; font-size:13px; padding:10px 16px; cursor:pointer; }
 .iv-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:14px; cursor:pointer; z-index:101; }
 .iv-delete { position:absolute; top:14px; left:14px; background:rgba(255,59,48,.15); border:1px solid rgba(255,59,48,.3); color:#ff3b30; border-radius:50%; width:36px; height:36px; font-size:13px; cursor:pointer; z-index:101; display:flex; align-items:center; justify-content:center; }
-/* v2 사진 뷰어 메타 */
-#iv-meta { display:none; text-align:center; }
+/* [CHANGE] iv-meta always shown */
+#iv-meta { text-align:center; }
 #iv-meta .ivm-time { font-family:'Black Han Sans',sans-serif; font-size:18px; color:var(--text); }
 #iv-meta .ivm-menu { font-size:13px; color:var(--muted); margin-top:3px; }
 
@@ -278,10 +262,8 @@ input[type=text]:focus { border-color:var(--accent); }
 .panel-handle { width:36px; height:4px; background:var(--line); border-radius:2px; margin:0 auto 16px; }
 .panel-title { font-family:'Black Han Sans',sans-serif; font-size:17px; margin-bottom:20px; }
 
-/* 설정 패널 */
 .setting-row { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
 .setting-save-btn { width:100%; padding:15px; border:none; border-radius:14px; background:var(--accent); color:#fff; font-family:'Black Han Sans',sans-serif; font-size:16px; cursor:pointer; margin-top:6px; }
-/* 알림 패널 */
 .notif-item { display:flex; align-items:center; gap:12px; background:var(--surface2); border-radius:12px; padding:12px; cursor:pointer; margin-bottom:8px; transition:opacity .15s; }
 .notif-item:active { opacity:.7; }
 .notif-thumb { width:40px; height:40px; border-radius:8px; object-fit:cover; flex-shrink:0; background:var(--line); }
@@ -294,7 +276,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .notif-arrow { font-size:11px; color:var(--muted); flex-shrink:0; }
 .notif-empty { text-align:center; color:var(--muted); font-size:13px; padding:32px 0; }
 
-/* 코인 패널 */
+/* ══ 클린데이 적금 패널 ══ */
 .coin-summary { background:var(--surface2); border-radius:18px; padding:20px; display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
 .coin-row { display:flex; justify-content:space-between; align-items:center; }
 .coin-label { font-size:12px; color:var(--muted); }
@@ -303,27 +285,6 @@ input[type=text]:focus { border-color:var(--accent); }
 .coin-val.rc { color:var(--right); }
 .coin-divider { height:1px; background:var(--line); }
 .coin-total { font-family:'Black Han Sans',sans-serif; font-size:22px; text-align:center; padding:6px 0; }
-.coin-sub { font-size:12px; color:var(--muted); text-align:center; margin-top:-4px; }
-.goal-menu-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-.goal-menu-btn {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:4px; padding:10px 6px; border-radius:14px;
-  border:2px solid var(--line); background:transparent;
-  color:var(--muted); font-family:'Gowun Dodum',sans-serif;
-  font-size:11px; cursor:pointer; transition:all .18s; text-align:center; line-height:1.3;
-}
-.goal-menu-btn .gm-emoji { font-size:22px; }
-.goal-menu-btn .gm-name { font-size:10px; }
-.goal-menu-btn .gm-price { font-size:10px; color:var(--muted); }
-.goal-menu-btn.sel {
-  border-color:var(--accent); background:var(--accent-tint);
-  color:var(--text);
-}
-.goal-menu-btn.sel .gm-price { color:var(--accent); }
-.goal-wrap { margin:2px 0 14px; }
-.goal-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px; }
-.goal-bg { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
-.goal-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--left),var(--right)); transition:width .6s ease; }
 .streak-row { display:flex; gap:10px; margin-bottom:14px; }
 .streak-card { flex:1; background:var(--surface2); border-radius:14px; padding:14px; text-align:center; }
 .streak-num { font-family:'Black Han Sans',sans-serif; font-size:28px; }
@@ -332,12 +293,23 @@ input[type=text]:focus { border-color:var(--accent); }
 .streak-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
 .section-lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
 
+/* 청구서 스타일 */
+.invoice-card { background:var(--surface2); border-radius:18px; padding:16px; margin-bottom:12px; }
+.invoice-title { font-family:'Black Han Sans',sans-serif; font-size:14px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.invoice-total { font-family:'Black Han Sans',sans-serif; font-size:22px; margin-bottom:8px; }
+.invoice-list { display:flex; flex-direction:column; gap:5px; max-height:140px; overflow-y:auto; }
+.invoice-item { display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:4px 0; border-bottom:1px solid var(--line); }
+.invoice-item:last-child { border-bottom:none; }
+.invoice-item .iv-date { color:var(--muted); }
+.invoice-item .iv-amount { font-family:'Black Han Sans',sans-serif; }
+.invoice-empty { font-size:12px; color:var(--muted); text-align:center; padding:12px 0; }
+.invoice-settle-hint { font-size:11px; color:var(--muted); text-align:center; margin-top:8px; }
+
 /* 달력 */
 .cal-month-title { font-family:'Black Han Sans',sans-serif; font-size:14px; text-align:center; margin-bottom:8px; color:var(--text); }
 .clean-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:0; margin-bottom:16px; }
 .cal-dow { height:24px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); }
 .cal-dow.sun { color:#ff5252; }
-/* 날짜 셀: 숫자+점을 하나의 셀에 */
 .cal-cell { display:flex; flex-direction:column; align-items:center; padding:3px 0; min-height:44px; }
 .cal-cell.empty { min-height:44px; }
 .cal-num { height:22px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--muted); width:22px; border-radius:50%; }
@@ -361,8 +333,9 @@ input[type=text]:focus { border-color:var(--accent); }
 .view-btn { flex:1; padding:7px 4px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; }
 .view-btn.active { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); }
 
-/* 시간대별 서브탭 (항상 표시) */
-.timeslot-subtabs { display:flex; gap:6px; padding:8px 12px; overflow-x:auto; flex-shrink:0; background:rgba(14,14,14,.96); border-bottom:1px solid var(--line); scrollbar-width:none; }
+/* [CHANGE] 시간대별 서브탭: 숨김 기본, timeslot 모드일 때만 표시 */
+.timeslot-subtabs { display:none; gap:6px; padding:8px 12px; overflow-x:auto; flex-shrink:0; background:rgba(14,14,14,.96); border-bottom:1px solid var(--line); scrollbar-width:none; }
+.timeslot-subtabs.visible { display:flex; }
 .timeslot-subtabs::-webkit-scrollbar { display:none; }
 .ts-tab { flex-shrink:0; padding:6px 13px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; white-space:nowrap; }
 .ts-tab.active { border-color:var(--accent); color:var(--accent); background:var(--accent-tint); }
@@ -375,19 +348,28 @@ input[type=text]:focus { border-color:var(--accent); }
 .month-count { font-size:11px; color:var(--muted); }
 .month-toggle-icon { margin-left:auto; font-size:11px; color:var(--muted); transition:transform .22s; flex-shrink:0; }
 .month-section.collapsed .month-toggle-icon { transform:rotate(-90deg); }
-.month-body { padding:0 10px 10px; }
+.month-body { padding:0 8px 10px; }
 .month-section.collapsed .month-body { display:none; }
-.month-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
+
+/* [CHANGE] 월별 body: 두 사람 나란히 */
+.month-body-inner { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+
+/* [CHANGE] 사진 그리드: 한 행 3장 */
+.month-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
 
 /* 사람별 소제목 & 아코디언 */
-.side-block { margin-bottom:8px; }
-.side-sub-hdr { display:flex; align-items:center; gap:5px; padding:8px 2px 6px; cursor:pointer; user-select:none; }
-.side-sub-hdr .ss-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-.side-sub-hdr .ss-name { font-size:12px; font-family:'Black Han Sans',sans-serif; }
-.side-sub-hdr .ss-count { font-size:11px; color:var(--muted); }
-.side-toggle-icon { margin-left:auto; font-size:11px; color:var(--muted); transition:transform .22s; flex-shrink:0; }
+.side-block { margin-bottom:0; }
+.side-sub-hdr { display:flex; align-items:center; gap:4px; padding:6px 2px 5px; cursor:pointer; user-select:none; }
+.side-sub-hdr .ss-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.side-sub-hdr .ss-name { font-size:11px; font-family:'Black Han Sans',sans-serif; }
+.side-sub-hdr .ss-count { font-size:10px; color:var(--muted); }
+.side-toggle-icon { margin-left:auto; font-size:10px; color:var(--muted); transition:transform .22s; flex-shrink:0; }
 .side-block.collapsed .side-toggle-icon { transform:rotate(-90deg); }
 .side-block.collapsed .side-grid-wrap { display:none; }
+
+/* [CHANGE] 날짜 레이블 + 사진 묶음 */
+.thumb-wrap { display:flex; flex-direction:column; gap:1px; }
+.thumb-date { font-size:9px; color:var(--muted); text-align:center; padding-top:3px; line-height:1.2; }
 
 .month-thumb { aspect-ratio:1; border-radius:6px; overflow:hidden; cursor:pointer; background:var(--surface2); transition:transform .15s; }
 .month-thumb:active { transform:scale(.95); }
@@ -398,6 +380,16 @@ input[type=text]:focus { border-color:var(--accent); }
 .timeslot-count { font-size:12px; color:var(--muted); padding:10px 14px 2px; flex-shrink:0; }
 .timeslot-body { display:flex; flex-direction:column; padding:0 12px; }
 .ts-empty { text-align:center; color:var(--muted); font-size:13px; padding:40px 12px; }
+
+/* [CHANGE] 시간대별 아코디언 섹션 (월별과 동일 스타일) */
+.ts-section { margin-bottom:6px; border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+.ts-section-header { display:flex; align-items:center; gap:7px; padding:12px 14px; cursor:pointer; user-select:none; }
+.ts-section-title { font-family:'Black Han Sans',sans-serif; font-size:14px; }
+.ts-section-count { font-size:11px; color:var(--muted); }
+.ts-section-toggle { margin-left:auto; font-size:11px; color:var(--muted); transition:transform .22s; flex-shrink:0; }
+.ts-section.collapsed .ts-section-toggle { transform:rotate(-90deg); }
+.ts-section-body { padding:0 8px 10px; }
+.ts-section.collapsed .ts-section-body { display:none; }
 
 /* 더 보기 버튼 */
 .load-more-btn { display:block; margin:20px auto 0; padding:10px 28px; border:1.5px solid var(--line); border-radius:20px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:13px; cursor:pointer; transition:all .18s; }
@@ -468,7 +460,7 @@ input[type=text]:focus { border-color:var(--accent); }
     <button class="view-btn" id="vbtn-monthly" onclick="setViewMode('monthly')">월별</button>
     <button class="view-btn" id="vbtn-timeslot" onclick="setViewMode('timeslot')">시간대별</button>
   </div>
-  <!-- 시간대별 서브탭 (항상 표시) -->
+  <!-- [CHANGE] 시간대별 서브탭: timeslot 모드일 때만 표시 -->
   <div class="timeslot-subtabs" id="timeslot-subtabs"></div>
 
   <div class="tl-wrap" id="tl-wrap">
@@ -553,37 +545,47 @@ input[type=text]:focus { border-color:var(--accent); }
   </div>
 </div>
 
-<!-- ══ 적금 패널 ══ -->
+<!-- ══ 클린데이 적금 패널 (REDESIGNED) ══ -->
 <div class="panel-backdrop" id="coin-panel">
   <div class="panel">
     <div class="panel-handle"></div>
-    <div class="panel-title">💰 클린데이 적금</div>
+    <div class="panel-title">💰 클린데이 청구서</div>
 
-    <!-- 목표 메뉴 선택 -->
-    <div class="section-lbl">이번달 목표</div>
-    <div class="goal-menu-grid" id="goal-menu-grid"></div>
-
-    <!-- 적금 현황 -->
-    <div class="coin-summary">
-      <div class="coin-row">
-        <span class="coin-label" id="cp-left-name">왼쪽</span>
-        <span class="coin-val lc" id="cp-left-coin">0원</span>
-      </div>
-      <div class="coin-row">
-        <span class="coin-label" id="cp-right-name">오른쪽</span>
-        <span class="coin-val rc" id="cp-right-coin">0원</span>
-      </div>
-      <div class="coin-divider"></div>
-      <div class="coin-total" id="cp-total">합산 0원</div>
-      <div class="coin-sub" style="margin-top:4px;font-size:11px">매일 기상 시간에 전날 목표 달성 여부가 표시됩니다</div>
+    <!-- 청구서 안내 -->
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+      내가 야식을 참으면 → 상대방 청구서에 기록돼요<br>
+      매월 말일에 청구서가 발행됩니다
     </div>
 
-    <div class="goal-wrap">
-      <div class="goal-labels"><span id="cp-goal-label">목표까지</span><span id="cp-goal-pct">0%</span></div>
-      <div class="goal-bg"><div class="goal-fill" id="cp-goal-bar" style="width:0%"></div></div>
+    <!-- 내 청구서 (상대방이 나에게 줘야 할 돈) -->
+    <div class="invoice-card" id="my-invoice-card">
+      <div class="invoice-title">
+        <span id="my-invoice-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>
+        <span id="my-invoice-title">내 청구서</span>
+        <span style="font-size:11px;color:var(--muted);font-family:'Gowun Dodum',sans-serif">(상대방이 나한테 낼 금액)</span>
+      </div>
+      <div class="invoice-total" id="my-invoice-total" style="color:var(--accent)">0원</div>
+      <div class="invoice-list" id="my-invoice-list">
+        <div class="invoice-empty">이번달 클린데이 없음</div>
+      </div>
     </div>
 
-    <div class="streak-row">
+    <!-- 상대방 청구서 (내가 상대방에게 줘야 할 돈) -->
+    <div class="invoice-card" id="other-invoice-card">
+      <div class="invoice-title">
+        <span id="other-invoice-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--other)"></span>
+        <span id="other-invoice-title">상대방 청구서</span>
+        <span style="font-size:11px;color:var(--muted);font-family:'Gowun Dodum',sans-serif">(내가 상대방한테 낼 금액)</span>
+      </div>
+      <div class="invoice-total" id="other-invoice-total" style="color:var(--other)">0원</div>
+      <div class="invoice-list" id="other-invoice-list">
+        <div class="invoice-empty">이번달 클린데이 없음</div>
+      </div>
+    </div>
+
+    <div class="invoice-settle-hint">💡 매월 1일에 전월 청구서가 확정됩니다</div>
+
+    <div class="streak-row" style="margin-top:14px">
       <div class="streak-card">
         <div class="streak-num lc" id="cp-left-streak">0</div>
         <div class="streak-lbl" id="cp-ls-name">왼쪽 연속</div>
@@ -594,13 +596,13 @@ input[type=text]:focus { border-color:var(--accent); }
       </div>
     </div>
 
-    <div class="section-lbl">이번달 클린데이 달력</div>
+    <div class="section-lbl" style="margin-top:14px">이번달 클린데이 달력</div>
     <div class="cal-month-title" id="cp-cal-month"></div>
     <div class="clean-calendar" id="cp-calendar"></div>
 
     <div class="section-lbl">상금 안내</div>
     <div class="bonus-list">
-      <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+500원</span></div>
+      <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+500원 청구</span></div>
       <div class="bonus-item"><span>3일 연속 클린</span><span class="bv">+500원 보너스</span></div>
       <div class="bonus-item"><span>7일 연속 클린</span><span class="bv">+1,500원 보너스</span></div>
       <div class="bonus-item"><span>커플 동시 클린</span><span class="bv">각 +500원 보너스</span></div>
@@ -627,57 +629,15 @@ var FIREBASE_CONFIG = {
 };
 var CLOUDINARY_CLOUD  = 'dqnt3ybt8';
 var CLOUDINARY_PRESET = 'diet_watch_unsigned';
-
-/* ══ Web Push VAPID 키 ══ */
 var VAPID_KEY = 'BDX_fg1_9bL-jteAwQYCz9vrnJw8CEc__FH_3g4XSPY5V3Rvj_t-GKg-saevPBZpDd1pKhI-vf3DfLypSXD8lWE';
 
 var WARNING_MSGS = [
-  '🔫 %s 그만 드세요',
-  '🚨 %s 오늘 몇 번째예요',
-  '👀 %s 이러다 큰일 나요',
-  '🤦 %s 진심이에요?',
-  '📢 %s 식욕을 다스리세요',
-  '🫵 %s 냉장고 문 닫으세요',
-  '😤 %s 위장이 울고 있어요',
-  '🙅 %s 배달앱 지워요 지금',
-  '🫃 %s 이 추세면 내일 큰일',
-  '💀 %s 야식의 결말을 봐요'
+  '🔫 %s 그만 드세요','🚨 %s 오늘 몇 번째예요','👀 %s 이러다 큰일 나요',
+  '🤦 %s 진심이에요?','📢 %s 식욕을 다스리세요','🫵 %s 냉장고 문 닫으세요',
+  '😤 %s 위장이 울고 있어요','🙅 %s 배달앱 지워요 지금','🫃 %s 이 추세면 내일 큰일','💀 %s 야식의 결말을 봐요'
 ];
 
-/* ── 목표 메뉴 정의 ── */
-var GOAL_MENUS = [
-  { emoji:'🌶',  name:'엽기떡볶이',      price:20000  },
-  { emoji:'🍗',  name:'보드람치킨&맥주', price:30000  },
-  { emoji:'🍕',  name:'리꼬피자',        price:50000  },
-  { emoji:'🍱',  name:'쿠우쿠우',        price:71800  },
-  { emoji:'🥩',  name:'송추가마골',      price:100000 },
-  { emoji:'✏️',  name:'직접입력',        price:-1, custom:true }
-];
-var cachedGoalPrice = 20000; /* 로컬 캐시 */
-var customGoalName = ''; /* 직접입력 목표 이름 */
-
-/* ── 상태 ── */
-var mySide = null, myName = '', roomId = '';
-var selFile = null, busy = false, db;
-var SAVE_KEY = 'diet_watch_v1';
-var currentMealKey = null, currentMealSide = null, currentMealUrl = null;
-var cachedNames = {};
-var reactionsCache = {};
-var commentsCache  = {};
-var mealsCache = {};       /* mealKey → {url, side, ts} */
-var unreadNotifs = [];     /* {mealKey, commenterName, commenterSide, text, ts} */
-var NOTIF_KEY = 'diet_notifs_v1';
-
-/* ── 모아보기 상태 ── */
-var viewMode = 'feed';
-var realtimeMeals  = [];   /* 최근 3개월 실시간 */
-var historicalMeals = [];  /* 이전 페이지네이션 */
-var oldestRealtimeTs = null;
-var loadingMore  = false;
-var hasMoreHistory = true;
-var currentTimeslot = '아침';
-var THREE_MONTHS_MS = 3 * 30 * 24 * 60 * 60 * 1000;
-
+/* ── 시간대 ── */
 var TIME_SLOTS = [
   { name:'아침', range:[6,9]   },
   { name:'오전', range:[9,11]  },
@@ -687,51 +647,35 @@ var TIME_SLOTS = [
   { name:'야식', range:[21,6]  }
 ];
 
-function getTimeslot(ts) {
-  var h = new Date(ts).getHours();
-  if (h >= 6  && h < 9 ) return '아침';
-  if (h >= 9  && h < 11) return '오전';
-  if (h >= 11 && h < 14) return '점심';
-  if (h >= 14 && h < 17) return '오후';
-  if (h >= 17 && h < 21) return '저녁';
-  return '야식';
-}
+/* ── 상태 ── */
+var mySide = null, myName = '', roomId = '';
+var selFile = null, busy = false, db;
+var SAVE_KEY = 'diet_watch_v1';
+var currentMealKey = null, currentMealSide = null, currentMealUrl = null;
+var cachedNames = {};
+var reactionsCache = {};
+var commentsCache  = {};
+var mealsCache = {};
+var unreadNotifs = [];
+var NOTIF_KEY = 'diet_notifs_v1';
+var cachedGoalPrice = 20000;
+var customGoalName = '';
 
-function getCombinedMeals() {
-  var combined = historicalMeals.concat(realtimeMeals);
-  combined.sort(function(a,b){ return a.ts - b.ts; });
-  return combined;
-}
+/* ── 모아보기 상태 ── */
+var viewMode = 'feed';
+var realtimeMeals  = [];
+var historicalMeals = [];
+var oldestRealtimeTs = null;
+var loadingMore  = false;
+var hasMoreHistory = true;
+var currentTimeslot = '아침';
+var THREE_MONTHS_MS = 3 * 30 * 24 * 60 * 60 * 1000;
 
-/* ══ 시간 입력 파싱 (숫자 4자리 → "HH:MM") ══ */
-function parseTimeInput(raw) {
-  var s = String(raw||'').replace(/\D/g,'').slice(0,4);
-  if (s.length < 3) return null;
-  var hh = parseInt(s.length===3 ? s.slice(0,1) : s.slice(0,2));
-  var mm = parseInt(s.length===3 ? s.slice(1)   : s.slice(2));
-  if (isNaN(hh)||isNaN(mm)||mm>59) return null;
-  return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
-}
-
-/* ── restore session ── */
-(function(){
-  try {
-    var s = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (!s) return;
-    document.getElementById('i-room').value  = s.room  || '';
-    document.getElementById('i-name').value  = s.name  || '';
-    document.getElementById('i-sleep').value = s.sleepRaw || '';
-    document.getElementById('i-wake').value  = s.wakeRaw  || '';
-    if (s.side) pickSide(s.side);
-    if (s.autoLogin && s.room && s.name && s.side) setTimeout(startApp, 80);
-  } catch(e){}
-})();
-
+/* ══ 입력 유효성 ══ */
 function pickSide(s) {
   mySide = s;
   document.getElementById('wb-left').className  = 'who-btn'+(s==='left' ?' sel-left' :'');
   document.getElementById('wb-right').className = 'who-btn'+(s==='right'?' sel-right':'');
-  /* 선택 즉시 setup 화면 accent 색 미리보기 */
   var ac = s==='right' ? '#35c9ff' : '#ff6b35';
   var ag = s==='right' ? 'rgba(53,201,255,.4)' : 'rgba(255,107,53,.4)';
   var at = s==='right' ? 'rgba(53,201,255,.1)' : 'rgba(255,107,53,.1)';
@@ -744,7 +688,6 @@ function pickSide(s) {
   document.documentElement.style.setProperty('--other', oc);
   document.documentElement.style.setProperty('--other-glow', og);
   document.documentElement.style.setProperty('--other-tint', ot);
-  /* start 버튼 색 */
   var sb = document.getElementById('btn-start');
   if(sb) sb.style.background = ac;
   chkValid();
@@ -754,10 +697,22 @@ function chkValid() {
   var n = document.getElementById('i-name').value.trim();
   document.getElementById('btn-start').disabled = !(r&&n&&mySide);
 }
-document.getElementById('i-room').addEventListener('input', chkValid);
-document.getElementById('i-name').addEventListener('input', chkValid);
+['i-room','i-name','i-sleep','i-wake'].forEach(function(id){
+  var el = document.getElementById(id);
+  if(el) el.addEventListener('input', chkValid);
+});
 
-/* ══ START ══ */
+function parseTimeInput(raw) {
+  var s = String(raw||'').replace(/\D/g,'').slice(0,4);
+  if (s.length < 3) return null;
+  var hh = parseInt(s.length===3 ? s.slice(0,1) : s.slice(0,2));
+  var mm = parseInt(s.length===3 ? s.slice(1)   : s.slice(2));
+  if (isNaN(hh)||isNaN(mm)||mm>59) return null;
+  return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+}
+
+function doLogout() { localStorage.removeItem(SAVE_KEY); location.reload(); }
+
 function startApp() {
   document.getElementById('err-msg').textContent = '';
   roomId = document.getElementById('i-room').value.trim().replace(/\s+/g,'_').toLowerCase();
@@ -780,184 +735,26 @@ function startApp() {
   document.getElementById('app').style.display   = 'flex';
   initApp(sleepTime, wakeTime);
 }
-function doLogout() { localStorage.removeItem(SAVE_KEY); location.reload(); }
 
-/* ══ INIT ══ */
-function initApp(sleepTime, wakeTime) {
-  /* --accent = 내 사이드 색, --other = 상대방 사이드 색 */
-  var accentColor = mySide==='right' ? '#35c9ff' : '#ff6b35';
-  var accentGlow  = mySide==='right' ? 'rgba(53,201,255,.4)' : 'rgba(255,107,53,.4)';
-  var accentTint  = mySide==='right' ? 'rgba(53,201,255,.1)' : 'rgba(255,107,53,.1)';
-  var otherColor  = mySide==='right' ? '#ff6b35' : '#35c9ff';
-  var otherGlow   = mySide==='right' ? 'rgba(255,107,53,.4)' : 'rgba(53,201,255,.4)';
-  var otherTint   = mySide==='right' ? 'rgba(255,107,53,.1)' : 'rgba(53,201,255,.1)';
-  document.documentElement.style.setProperty('--accent', accentColor);
-  document.documentElement.style.setProperty('--accent-glow', accentGlow);
-  document.documentElement.style.setProperty('--accent-tint', accentTint);
-  document.documentElement.style.setProperty('--other', otherColor);
-  document.documentElement.style.setProperty('--other-glow', otherGlow);
-  document.documentElement.style.setProperty('--other-tint', otherTint);
-  var fab = document.getElementById('fab-btn');
-  fab.style.background = accentColor;
-  fab.style.boxShadow  = '0 8px 28px '+accentGlow;
+function escStr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
-  db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime:sleepTime, wakeTime:wakeTime});
-
-  db.ref('rooms/'+roomId+'/names').on('value', function(snap) {
-    var v = snap.val()||{};
-    cachedNames = v;
-    document.getElementById('dn-left').textContent  = (v.left||'왼쪽')  + (mySide==='left' ?' (나)':'');
-    document.getElementById('dn-right').textContent = (v.right||'오른쪽')+ (mySide==='right'?' (나)':'');
-    document.getElementById('cp-left-name').textContent  = v.left  || '왼쪽';
-    document.getElementById('cp-right-name').textContent = v.right || '오른쪽';
-    document.getElementById('cp-ls-name').textContent = (v.left  ||'왼쪽') +' 연속';
-    document.getElementById('cp-rs-name').textContent = (v.right ||'오른쪽')+' 연속';
-  });
-
-  /* [FIX 5] 반응/댓글 실시간 캐시 + 타임라인 뱃지 업데이트 */
-  db.ref('rooms/'+roomId+'/reactions').on('value', function(snap) {
-    reactionsCache = snap.val()||{};
-    updateAllCardBars();
-  });
-  db.ref('rooms/'+roomId+'/comments').on('value', function(snap) {
-    commentsCache = snap.val()||{};
-    updateAllCardBars();
-  });
-
-  /* 최근 3개월치만 실시간 구독 */
-  realtimeMeals = []; historicalMeals = []; hasMoreHistory = true;
-  var recentCutoff = Date.now() - THREE_MONTHS_MS;
-  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(recentCutoff).on('value', function(snap) {
-    mealsCache = {};
-    /* historicalMeals의 mealsCache 복구 */
-    historicalMeals.forEach(function(m){ mealsCache[m.key]=m; });
-    realtimeMeals = [];
-    snap.forEach(function(c){ var v=c.val(); v.key=c.key; realtimeMeals.push(v); mealsCache[c.key]=v; });
-    if (realtimeMeals.length > 0) {
-      oldestRealtimeTs = realtimeMeals[0].ts;
-    } else {
-      oldestRealtimeTs = recentCutoff;
-    }
-    refreshViews();
-  });
-
-  /* monthlyGoal 캐시 */
-  db.ref('rooms/'+roomId+'/monthlyGoal').once('value', function(snap){
-    cachedGoalPrice = snap.val() || 20000;
-  });
-  db.ref('rooms/'+roomId+'/monthlyGoalName').once('value', function(snap){
-    customGoalName = snap.val() || '';
-  });
-  updateCoinDisplay();
-  judgeYesterday();
-  scheduleJudgeAtWakeTime(wakeTime);
-  checkTimeWarning(sleepTime, wakeTime);
-  initPush();
-  initTimeslotTabs();
-
-  /* ── 댓글 알림 시스템 ── */
-
-  /* 저장된 알림 불러오기 */
-  try {
-    var saved = JSON.parse(localStorage.getItem(NOTIF_KEY+'_'+roomId+'_'+mySide)||'[]');
-    unreadNotifs = Array.isArray(saved) ? saved : [];
-  } catch(e){ unreadNotifs=[]; }
-
-  /* 마지막 방문 시간 복원
-     lastVisitTs=0 이면 처음 설치(또는 홈화면 재설치로 localStorage 초기화)로 간주.
-     이 경우 과거 댓글을 전부 알림으로 띄우지 않도록 현재 시각으로 초기화. */
-  var LAST_VISIT_KEY = 'diet_lastvisit_'+roomId+'_'+mySide;
-  var lastVisitTs = parseInt(localStorage.getItem(LAST_VISIT_KEY)||'0');
-  if (!lastVisitTs) {
-    lastVisitTs = Date.now();
-    localStorage.setItem(LAST_VISIT_KEY, String(lastVisitTs));
-  }
-
-  function saveVisitTs() { localStorage.setItem(LAST_VISIT_KEY, String(Date.now())); }
-  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') saveVisitTs(); });
-  window.addEventListener('pagehide', saveVisitTs);
-
-  /* 이미 처리된 commentKey 집합 — 중복 토스트/뱃지 방지 */
-  var notifiedKeys = {};
-  unreadNotifs.forEach(function(n){ if(n.commentKey) notifiedKeys[n.commentKey]=true; });
-
-  updateNotifBadge();
-
-  function addNotif(mealKey, commentKey, c) {
-    if (notifiedKeys[commentKey]) return;
-    notifiedKeys[commentKey] = true;
-    unreadNotifs.unshift({mealKey:mealKey, commentKey:commentKey, name:c.name, side:c.side||'', text:c.text, ts:c.ts||Date.now(), read:false});
-    if(unreadNotifs.length>50) unreadNotifs.pop();
-    localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide, JSON.stringify(unreadNotifs));
-    updateNotifBadge();
-    showNotifToast('💬 '+c.name+': '+c.text);
-  }
-
-  /* realtimeReady 선언을 once() 호출보다 앞에 두어 호이스팅 혼선 방지 */
-  var realtimeReady = false;
-
-  /* 앱 시작 시: 지난 방문 이후 댓글 전체 스캔 */
-  db.ref('rooms/'+roomId+'/comments').once('value', function(snap) {
-    var allComments = snap.val()||{};
-    Object.keys(allComments).forEach(function(mealKey) {
-      var mealComments = allComments[mealKey]||{};
-      Object.keys(mealComments).forEach(function(ck) {
-        var c = mealComments[ck];
-        if (!c || !c.name || c.name === myName) return;
-        if ((c.ts||0) > lastVisitTs) addNotif(mealKey, ck, c);
-      });
-    });
-    /* 스캔 완료 후 실시간 감지 켬 */
-    realtimeReady = true;
-  });
-
-  /* 실시간: 앱이 열린 상태에서 새로 달리는 댓글만 감지.
-     child_added는 연결 시 기존 데이터를 전부 재전송하므로 사용하지 않음. */
-  db.ref('rooms/'+roomId+'/comments').on('child_changed', function(snap) {
-    if (!realtimeReady) return;
-    var mealKey = snap.key;
-    var mealComments = snap.val()||{};
-    Object.keys(mealComments).forEach(function(ck) {
-      var c = mealComments[ck];
-      if (!c || !c.name || c.name === myName) return;
-      addNotif(mealKey, ck, c);
-    });
-  });
+function getTimeslot(ts) {
+  var h = new Date(ts).getHours();
+  if (h >= 6  && h < 9 ) return '아침';
+  if (h >= 9  && h < 11) return '오전';
+  if (h >= 11 && h < 14) return '점심';
+  if (h >= 14 && h < 17) return '오후';
+  if (h >= 17 && h < 21) return '저녁';
+  return '야식';
 }
 
-/* [FIX 5] 타임라인 카드 상단 바 업데이트 */
-function updateAllCardBars() {
-  document.querySelectorAll('.mcrd[data-meal-key]').forEach(function(card) {
-    var key = card.getAttribute('data-meal-key');
-    var side = card.getAttribute('data-meal-side');
-    var hasReact = reactionsCache[key] && Object.keys(reactionsCache[key]).some(function(s){
-      return reactionsCache[key][s] && Object.keys(reactionsCache[key][s]).length > 0;
-    });
-    var hasComment = commentsCache[key] && Object.keys(commentsCache[key]).length > 0;
-    var bar = card.querySelector('.mcrd-bar');
-    if (bar) {
-      if (hasReact || hasComment) {
-        bar.classList.add('visible');
-        bar.classList.remove('left-bar','right-bar');
-        bar.classList.add(side+'-bar');
-      } else {
-        bar.classList.remove('visible');
-      }
-    }
-  });
+function getCombinedMeals() {
+  var combined = historicalMeals.concat(realtimeMeals);
+  combined.sort(function(a,b){ return a.ts - b.ts; });
+  return combined;
 }
 
-/* ══ TIMELINE ══
- * 규칙 (직전 카드 기준):
- * [같은 사이드]
- *   < 1시간  → 겹침 (STACK_GAP)
- *   >= 1시간 → 정상 간격 (CARD_H + NEXT_GAP)
- * [다른 사이드]
- *   < 1시간  → 겹침 (STACK_GAP)
- *   1~4시간  → 바로 밑 (CARD_H + NEXT_GAP)
- *   >= 4시간 → 더 밑 (CARD_H + FAR_GAP)
- */
+/* ══ 타임라인 렌더 ══ */
 function renderTimeline(meals) {
   var tl = document.getElementById('timeline');
   var empty = document.getElementById('emptystate');
@@ -979,151 +776,106 @@ function renderTimeline(meals) {
     tl.appendChild(div);
 
     var dayMeals = byDate[dateKey];
+    var CARD_H=172, PAD=12, STACK_GAP=85, NEXT_GAP=24, FAR_GAP=80;
+    var STACK_MS=60*60*1000, FAR_MS=4*60*60*1000;
+    var sorted = dayMeals.slice().sort(function(a,b){ return a.ts-b.ts; });
 
-    var CARD_H    = 172;
-    var PAD       = 12;
-    var STACK_GAP = 85;
-    var NEXT_GAP  = 24;
-    var FAR_GAP   = 80;
-    var STACK_MS  = 60 * 60 * 1000;
-    var FAR_MS    = 4  * 60 * 60 * 1000;
-
-    /* 좌우 합쳐서 시간순 정렬 */
-    var sorted = dayMeals.slice().sort(function(a,b){ return a.ts - b.ts; });
-
-    var posMap   = {};
-    var prevTs   = null;
-    var prevY    = null;
-    var prevSide = null;
-    var SAME_TS  = 60 * 1000; /* 1분 이내 = 동일 시간으로 간주 → 나란히 */
-
+    var posMap={}, prevTs=null, prevY=null, prevSide=null;
+    var SAME_TS=60*1000;
     sorted.forEach(function(m) {
       var y;
-      if (prevTs === null) {
-        y = PAD;
-      } else {
-        var dt       = m.ts - prevTs;
-        var sameSide = m.side === prevSide;
-        if (dt <= SAME_TS && !sameSide) {
-          /* 다른 사이드이고 1분 이내 → 동시 취식, 같은 Y에 나란히 */
-          y = prevY;
-        } else if (dt < STACK_MS) {
-          /* 1시간 이내 → 겹침 */
-          y = prevY + STACK_GAP;
-        } else if (!sameSide && dt >= FAR_MS) {
-          /* 다른 사이드 4시간 이상 → 더 밑 */
-          y = prevY + CARD_H + FAR_GAP;
-        } else {
-          /* 같은 사이드 1시간+, 또는 다른 사이드 1~4시간 → 바로 밑 */
-          y = prevY + CARD_H + NEXT_GAP;
-        }
+      if (prevTs===null) { y=PAD; }
+      else {
+        var dt=m.ts-prevTs, sameSide=m.side===prevSide;
+        if (dt<=SAME_TS&&!sameSide) { y=prevY; }
+        else if (dt<STACK_MS) { y=prevY+STACK_GAP; }
+        else if (!sameSide&&dt>=FAR_MS) { y=prevY+CARD_H+FAR_GAP; }
+        else { y=prevY+CARD_H+NEXT_GAP; }
       }
-      posMap[m.key] = y;
-      prevTs   = m.ts;
-      prevY    = y;
-      prevSide = m.side;
+      posMap[m.key]=y; prevTs=m.ts; prevY=y; prevSide=m.side;
     });
 
-    /* 스택 여부: 같은 사이드에서 Y 차이가 CARD_H 미만 */
-    var stackedKeys = {};
+    var stackedKeys={};
     ['left','right'].forEach(function(side) {
-      var sideItems = sorted.filter(function(m){ return m.side===side; });
-      for (var si=1; si<sideItems.length; si++) {
-        var dy = posMap[sideItems[si].key] - posMap[sideItems[si-1].key];
-        if (dy < CARD_H) stackedKeys[sideItems[si].key] = true;
+      var si=sorted.filter(function(m){ return m.side===side; });
+      for (var i=1;i<si.length;i++) {
+        if (posMap[si[i].key]-posMap[si[i-1].key]<CARD_H) stackedKeys[si[i].key]=true;
       }
     });
 
-    /* z-index: 시간순 */
-    var zMap = {};
-    sorted.forEach(function(m, idx){ zMap[m.key] = idx + 2; });
+    var zMap={};
+    sorted.forEach(function(m,idx){ zMap[m.key]=idx+2; });
 
-    /* day-wrap 높이 */
-    var maxTop = PAD;
+    var maxTop=PAD;
     Object.values(posMap).forEach(function(t){ if(t>maxTop) maxTop=t; });
-    var DAY_H = maxTop + CARD_H + PAD + 40;
+    var DAY_H=maxTop+CARD_H+PAD+40;
 
-    var wrap = document.createElement('div');
-    wrap.className = 'day-wrap';
-    wrap.style.height = DAY_H+'px';
+    var wrap=document.createElement('div');
+    wrap.className='day-wrap'; wrap.style.height=DAY_H+'px';
     tl.appendChild(wrap);
 
-    /* 과식 경고: 좌우 각각 마지막 카드 다음에 배치 */
     ['left','right'].forEach(function(side) {
-      var sideItems = sorted.filter(function(m){ return m.side===side; });
-      if (sideItems.length >= 5) {
-        var lastCard = sideItems[sideItems.length-1];
-        var warnTop  = posMap[lastCard.key] + CARD_H + 16;
-        var warnEl   = document.createElement('div');
-        warnEl.className = side==='left' ? 'warn-msg-left' : 'warn-msg-right';
-        warnEl.style.top = warnTop+'px';
-        /* 경고 문구: lastCard.key 해시 기반으로 고정 — 렌더마다 바뀌지 않도록 */
-        var warnIdx = lastCard.key.split('').reduce(function(a,c){ return a+c.charCodeAt(0); }, 0) % WARNING_MSGS.length;
-        warnEl.textContent = WARNING_MSGS[warnIdx]
-          .replace('%s', cachedNames[side]||(side==='left'?'왼쪽':'오른쪽'));
+      var sideItems=sorted.filter(function(m){ return m.side===side; });
+      if (sideItems.length>=5) {
+        var lastCard=sideItems[sideItems.length-1];
+        var warnTop=posMap[lastCard.key]+CARD_H+16;
+        var warnEl=document.createElement('div');
+        warnEl.className=side==='left'?'warn-msg-left':'warn-msg-right';
+        warnEl.style.top=warnTop+'px';
+        var warnIdx=lastCard.key.split('').reduce(function(a,c){ return a+c.charCodeAt(0); },0)%WARNING_MSGS.length;
+        warnEl.textContent=WARNING_MSGS[warnIdx].replace('%s',cachedNames[side]||(side==='left'?'왼쪽':'오른쪽'));
         wrap.appendChild(warnEl);
       }
     });
 
-    /* 카드 렌더 */
     dayMeals.forEach(function(m) {
-      var top = posMap[m.key];
-      if (top === undefined) top = PAD;
-      var isStacked    = !!stackedKeys[m.key];
-      var barColorClass = m.side==='left' ? 'left-bar' : 'right-bar';
-      var zIdx          = zMap[m.key] || 2;
+      var top=posMap[m.key]; if(top===undefined) top=PAD;
+      var isStacked=!!stackedKeys[m.key];
+      var barColorClass=m.side==='left'?'left-bar':'right-bar';
+      var zIdx=zMap[m.key]||2;
 
-      var card = document.createElement('div');
-      card.className = 'mcrd' + (isStacked?' stacked':'');
-      card.setAttribute('data-meal-key', m.key);
-      card.setAttribute('data-meal-side', m.side);
-      card.style.zIndex = zIdx;
-      card.onclick = function(){ openViewer(m.url, m.key); };
+      var card=document.createElement('div');
+      card.className='mcrd'+(isStacked?' stacked':'');
+      card.setAttribute('data-meal-key',m.key);
+      card.setAttribute('data-meal-side',m.side);
+      card.style.zIndex=zIdx;
+      card.onclick=function(){ openViewer(m.url,m.key); };
 
-      var bar = document.createElement('div');
-      bar.className = 'mcrd-bar ' + barColorClass;
-      var hasReact = reactionsCache[m.key] && Object.keys(reactionsCache[m.key]).some(function(s){
-        return reactionsCache[m.key][s] && Object.keys(reactionsCache[m.key][s]).length>0;
-      });
-      var hasComment = commentsCache[m.key] && Object.keys(commentsCache[m.key]).length>0;
-      if (hasReact || hasComment) bar.classList.add('visible');
+      var bar=document.createElement('div');
+      bar.className='mcrd-bar '+barColorClass;
+      var hasReact=reactionsCache[m.key]&&Object.keys(reactionsCache[m.key]).some(function(s){ return reactionsCache[m.key][s]&&Object.keys(reactionsCache[m.key][s]).length>0; });
+      var hasComment=commentsCache[m.key]&&Object.keys(commentsCache[m.key]).length>0;
+      if(hasReact||hasComment) bar.classList.add('visible');
       card.appendChild(bar);
 
-      var img = document.createElement('img');
-      img.src = m.url;
-      img.loading = 'lazy';
+      var img=document.createElement('img'); img.src=m.url; img.loading='lazy';
       card.appendChild(img);
 
-      /* v2: 워터마크 없는 사진 → CSS 오버레이로 시간+메뉴 표시 */
-      if (m.v === 2) {
-        var hhmm = new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
-        var metaDiv = document.createElement('div');
-        metaDiv.className = 'mcrd-meta';
-        metaDiv.innerHTML = '<span class="meta-time">'+hhmm+'</span>'
-          + (m.menu ? '<span class="meta-menu">'+escStr(m.menu)+'</span>' : '');
+      if (m.v===2) {
+        var hhmm=new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+        var metaDiv=document.createElement('div');
+        metaDiv.className='mcrd-meta';
+        metaDiv.innerHTML='<span class="meta-time">'+hhmm+'</span>'+(m.menu?'<span class="meta-menu">'+escStr(m.menu)+'</span>':'');
         card.appendChild(metaDiv);
       }
 
-      var center = '<div class="mrow-center"><div class="tdot"></div></div>';
-      var blank  = '<div></div>';
-
-      var row = document.createElement('div');
-      row.className = 'mrow '+(m.side==='left'?'ml':'mr');
-      row.style.top = top+'px';
-      row.style.zIndex = zIdx;
+      var center='<div class="mrow-center"><div class="tdot"></div></div>';
+      var blank='<div></div>';
+      var row=document.createElement('div');
+      row.className='mrow '+(m.side==='left'?'ml':'mr');
+      row.style.top=top+'px'; row.style.zIndex=zIdx;
 
       if (m.side==='left') {
-        var leftCell = document.createElement('div');
+        var leftCell=document.createElement('div');
         leftCell.style.display='flex'; leftCell.style.justifyContent='flex-end';
         leftCell.appendChild(card);
-        row.innerHTML = '';
-        row.appendChild(leftCell);
-        row.insertAdjacentHTML('beforeend', center+blank);
+        row.innerHTML=''; row.appendChild(leftCell);
+        row.insertAdjacentHTML('beforeend',center+blank);
       } else {
-        var rightCell = document.createElement('div');
+        var rightCell=document.createElement('div');
         rightCell.style.display='flex'; rightCell.style.justifyContent='flex-start';
         rightCell.appendChild(card);
-        row.innerHTML = blank+center;
+        row.innerHTML=blank+center;
         row.appendChild(rightCell);
       }
       wrap.appendChild(row);
@@ -1131,119 +883,144 @@ function renderTimeline(meals) {
   });
 
   updateAllCardBars();
-
   requestAnimationFrame(function() {
-    var tw = document.getElementById('tl-wrap');
-    tw.scrollTop = tw.scrollHeight;
+    var tw=document.getElementById('tl-wrap');
+    tw.scrollTop=tw.scrollHeight;
   });
 }
 
-
-function escStr(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function updateAllCardBars() {
+  document.querySelectorAll('.mcrd[data-meal-key]').forEach(function(card) {
+    var key=card.getAttribute('data-meal-key');
+    var side=card.getAttribute('data-meal-side');
+    var hasReact=reactionsCache[key]&&Object.keys(reactionsCache[key]).some(function(s){ return reactionsCache[key][s]&&Object.keys(reactionsCache[key][s]).length>0; });
+    var hasComment=commentsCache[key]&&Object.keys(commentsCache[key]).length>0;
+    var bar=card.querySelector('.mcrd-bar');
+    if (bar) {
+      if (hasReact||hasComment) { bar.classList.add('visible'); bar.classList.remove('left-bar','right-bar'); bar.classList.add(side+'-bar'); }
+      else { bar.classList.remove('visible'); }
+    }
+  });
+}
 
 /* ══ 보기 모드 ══ */
 function refreshViews() {
-  var combined = getCombinedMeals();
-  if (viewMode === 'feed') renderTimeline(combined);
-  else if (viewMode === 'monthly') renderMonthlyView(combined);
-  else if (viewMode === 'timeslot') renderTimeslotView(combined);
+  var combined=getCombinedMeals();
+  if (viewMode==='feed') renderTimeline(combined);
+  else if (viewMode==='monthly') renderMonthlyView(combined);
+  else if (viewMode==='timeslot') renderTimeslotView(combined);
 }
 
 function setViewMode(mode) {
-  viewMode = mode;
-  document.getElementById('vbtn-feed').classList.toggle('active', mode==='feed');
-  document.getElementById('vbtn-monthly').classList.toggle('active', mode==='monthly');
-  document.getElementById('vbtn-timeslot').classList.toggle('active', mode==='timeslot');
+  viewMode=mode;
+  document.getElementById('vbtn-feed').classList.toggle('active',mode==='feed');
+  document.getElementById('vbtn-monthly').classList.toggle('active',mode==='monthly');
+  document.getElementById('vbtn-timeslot').classList.toggle('active',mode==='timeslot');
   document.getElementById('tl-wrap').style.display       = mode==='feed'     ? ''     : 'none';
   document.getElementById('monthly-wrap').style.display  = mode==='monthly'  ? 'block': 'none';
   document.getElementById('timeslot-wrap').style.display = mode==='timeslot' ? 'flex' : 'none';
+  /* [CHANGE] 서브탭은 timeslot 모드일 때만 표시 */
+  var subtabs=document.getElementById('timeslot-subtabs');
+  if (subtabs) subtabs.classList.toggle('visible', mode==='timeslot');
   refreshViews();
 }
 
 function loadMoreMeals() {
-  if (loadingMore || !hasMoreHistory) return;
-  loadingMore = true;
-  var btns = document.querySelectorAll('.load-more-btn');
+  if (loadingMore||!hasMoreHistory) return;
+  loadingMore=true;
+  var btns=document.querySelectorAll('.load-more-btn');
   btns.forEach(function(b){ b.disabled=true; b.textContent='불러오는 중...'; });
-
-  var endTs = (oldestRealtimeTs || Date.now()) - 1;
-  if (historicalMeals.length > 0) endTs = Math.min(endTs, historicalMeals[0].ts - 1);
-  var startTs = endTs - THREE_MONTHS_MS;
-
-  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(startTs).endAt(endTs).once('value', function(snap) {
-    var fetched = [];
+  var endTs=(oldestRealtimeTs||Date.now())-1;
+  if (historicalMeals.length>0) endTs=Math.min(endTs,historicalMeals[0].ts-1);
+  var startTs=endTs-THREE_MONTHS_MS;
+  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(startTs).endAt(endTs).once('value',function(snap){
+    var fetched=[];
     snap.forEach(function(c){ var v=c.val(); v.key=c.key; fetched.push(v); mealsCache[c.key]=v; });
-    if (fetched.length === 0) {
-      hasMoreHistory = false;
-    } else {
-      historicalMeals = fetched.concat(historicalMeals);
-      historicalMeals.sort(function(a,b){ return a.ts - b.ts; });
-    }
-    loadingMore = false;
-    refreshViews();
-    var label = hasMoreHistory ? '이전 3개월 더 보기' : '더 이상 없어요';
+    if (fetched.length===0) { hasMoreHistory=false; }
+    else { historicalMeals=fetched.concat(historicalMeals); historicalMeals.sort(function(a,b){ return a.ts-b.ts; }); }
+    loadingMore=false; refreshViews();
+    var label=hasMoreHistory?'이전 3개월 더 보기':'더 이상 없어요';
     btns.forEach(function(b){ b.disabled=!hasMoreHistory; b.textContent=label; });
   });
 }
 
-/* ── 시간대별 서브탭 초기화 (항상 표시) ── */
+/* ── 시간대별 서브탭 초기화 ── */
 function initTimeslotTabs() {
-  var el = document.getElementById('timeslot-subtabs');
+  var el=document.getElementById('timeslot-subtabs');
   if (!el) return;
-  el.innerHTML = '';
+  el.innerHTML='';
   TIME_SLOTS.forEach(function(slot) {
-    var btn = document.createElement('button');
-    btn.className = 'ts-tab' + (slot.name === currentTimeslot ? ' active' : '');
-    btn.id = 'ts-stab-' + slot.name;
-    btn.textContent = slot.name;
-    btn.onclick = (function(name) { return function() { selectTimeslot(name); }; })(slot.name);
+    var btn=document.createElement('button');
+    btn.className='ts-tab'+(slot.name===currentTimeslot?' active':'');
+    btn.id='ts-stab-'+slot.name;
+    btn.textContent=slot.name;
+    btn.onclick=(function(name){ return function(){ selectTimeslot(name); }; })(slot.name);
     el.appendChild(btn);
   });
 }
 
 function selectTimeslot(name) {
-  currentTimeslot = name;
-  document.querySelectorAll('#timeslot-subtabs .ts-tab').forEach(function(b) {
-    b.classList.toggle('active', b.id === 'ts-stab-' + name);
+  currentTimeslot=name;
+  document.querySelectorAll('#timeslot-subtabs .ts-tab').forEach(function(b){
+    b.classList.toggle('active',b.id==='ts-stab-'+name);
   });
-  if (viewMode !== 'timeslot') {
-    setViewMode('timeslot');
-  } else {
-    renderTimeslotView(getCombinedMeals());
-  }
+  if (viewMode!=='timeslot') { setViewMode('timeslot'); }
+  else { renderTimeslotView(getCombinedMeals()); }
 }
 
-/* ── 사람별 그리드 블록 (아코디언) ── */
+/* ── 날짜 포맷 mm/dd (요일) ── */
+function fmtDate(ts) {
+  var d=new Date(ts);
+  var mm=String(d.getMonth()+1).padStart(2,'0');
+  var dd=String(d.getDate()).padStart(2,'0');
+  var dow=['일','월','화','수','목','금','토'][d.getDay()];
+  return mm+'/'+dd+' ('+dow+')';
+}
+
+/* ── 사람별 그리드 블록 (날짜 레이블 포함) ── */
 function makeSideBlock(sideMeals, side, countUnit) {
-  var name  = cachedNames[side] || (side==='left' ? '왼쪽' : '오른쪽');
-  var color = side==='left' ? 'var(--left)' : 'var(--right)';
+  var name=cachedNames[side]||(side==='left'?'왼쪽':'오른쪽');
+  var color=side==='left'?'var(--left)':'var(--right)';
 
-  var block = document.createElement('div');
-  block.className = 'side-block';
+  var block=document.createElement('div');
+  block.className='side-block';
 
-  var subHdr = document.createElement('div');
-  subHdr.className = 'side-sub-hdr';
-  subHdr.innerHTML =
+  var subHdr=document.createElement('div');
+  subHdr.className='side-sub-hdr';
+  subHdr.innerHTML=
     '<span class="ss-dot" style="background:'+color+'"></span>'
     +'<span class="ss-name" style="color:'+color+'">'+escStr(name)+'</span>'
     +'<span class="ss-count">· '+sideMeals.length+countUnit+'</span>'
     +'<span class="side-toggle-icon">▾</span>';
-  subHdr.onclick = function() { block.classList.toggle('collapsed'); };
+  subHdr.onclick=function(){ block.classList.toggle('collapsed'); };
   block.appendChild(subHdr);
 
-  var gridWrap = document.createElement('div');
-  gridWrap.className = 'side-grid-wrap';
-  var grid = document.createElement('div');
-  grid.className = 'month-grid';
+  var gridWrap=document.createElement('div');
+  gridWrap.className='side-grid-wrap';
+  var grid=document.createElement('div');
+  grid.className='month-grid';
+
   sideMeals.forEach(function(meal) {
-    var thumb = document.createElement('div');
-    thumb.className = 'month-thumb';
-    var img = document.createElement('img');
-    img.src = meal.url; img.loading = 'lazy';
+    /* [CHANGE] 날짜 레이블 + 사진 묶음 */
+    var wrap=document.createElement('div');
+    wrap.className='thumb-wrap';
+
+    var label=document.createElement('div');
+    label.className='thumb-date';
+    label.textContent=fmtDate(meal.ts);
+    wrap.appendChild(label);
+
+    var thumb=document.createElement('div');
+    thumb.className='month-thumb';
+    var img=document.createElement('img');
+    img.src=meal.url; img.loading='lazy';
     thumb.appendChild(img);
-    thumb.onclick = (function(u,k){ return function(){ openViewer(u,k); }; })(meal.url, meal.key);
-    grid.appendChild(thumb);
+    thumb.onclick=(function(u,k){ return function(){ openViewer(u,k); }; })(meal.url,meal.key);
+    wrap.appendChild(thumb);
+
+    grid.appendChild(wrap);
   });
+
   gridWrap.appendChild(grid);
   block.appendChild(gridWrap);
   return block;
@@ -1251,191 +1028,202 @@ function makeSideBlock(sideMeals, side, countUnit) {
 
 /* ══ 월별 그리드 렌더 ══ */
 function renderMonthlyView(meals) {
-  var content = document.getElementById('monthly-content');
+  var content=document.getElementById('monthly-content');
   if (!content) return;
 
-  var nowMk = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
-  var byMonth = {}, monthOrder = [];
-  var sorted = meals.slice().sort(function(a,b){ return b.ts - a.ts; });
+  var byMonth={}, monthOrder=[];
+  var sorted=meals.slice().sort(function(a,b){ return b.ts-a.ts; });
   sorted.forEach(function(m) {
-    var d = new Date(m.ts);
-    var mk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var d=new Date(m.ts);
+    var mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     if (!byMonth[mk]) { byMonth[mk]={left:[],right:[]}; monthOrder.push(mk); }
     if (byMonth[mk][m.side]) byMonth[mk][m.side].push(m);
   });
 
-  content.innerHTML = '';
+  content.innerHTML='';
   monthOrder.forEach(function(mk) {
-    var items = byMonth[mk];
-    var parts = mk.split('-'), y=parts[0], mo=parseInt(parts[1]);
-    var total = (items.left||[]).length + (items.right||[]).length;
-    var isCurrentMonth = (mk === nowMk);
+    var items=byMonth[mk];
+    var parts=mk.split('-'), y=parts[0], mo=parseInt(parts[1]);
+    var total=(items.left||[]).length+(items.right||[]).length;
 
-    var section = document.createElement('div');
-    section.className = 'month-section' + (isCurrentMonth ? '' : ' collapsed');
+    var section=document.createElement('div');
+    /* [CHANGE] 모두 접힌 상태로 시작 */
+    section.className='month-section collapsed';
 
-    var hdr = document.createElement('div');
-    hdr.className = 'month-header';
-    hdr.innerHTML =
+    var hdr=document.createElement('div');
+    hdr.className='month-header';
+    hdr.innerHTML=
       '<span class="month-header-title">'+y+'년 '+mo+'월</span>'
       +'<span class="month-count">· '+total+'끼 기록</span>'
       +'<span class="month-toggle-icon">▾</span>';
-    hdr.onclick = function() { section.classList.toggle('collapsed'); };
+    hdr.onclick=function(){ section.classList.toggle('collapsed'); };
     section.appendChild(hdr);
 
-    var body = document.createElement('div');
-    body.className = 'month-body';
+    var body=document.createElement('div');
+    body.className='month-body';
+
+    /* [CHANGE] 두 사람 나란히 */
+    var inner=document.createElement('div');
+    inner.className='month-body-inner';
     ['left','right'].forEach(function(side) {
-      var sideMeals = items[side] || [];
-      if (!sideMeals.length) return;
-      body.appendChild(makeSideBlock(sideMeals, side, '끼'));
+      var sideMeals=items[side]||[];
+      if (!sideMeals.length) {
+        /* 빈 칸 유지 */
+        var empty=document.createElement('div');
+        inner.appendChild(empty);
+        return;
+      }
+      inner.appendChild(makeSideBlock(sideMeals, side, '끼'));
     });
+    body.appendChild(inner);
     section.appendChild(body);
     content.appendChild(section);
   });
 
-  var btn = document.getElementById('monthly-load-more');
-  if (btn) btn.style.display = hasMoreHistory ? 'block' : 'none';
+  var btn=document.getElementById('monthly-load-more');
+  if (btn) btn.style.display=hasMoreHistory?'block':'none';
 }
 
-/* ══ 시간대별 뷰 렌더 ══ */
+/* ══ 시간대별 뷰 렌더 (아코디언) ══ */
 function renderTimeslotView(meals) {
-  var filtered = meals.filter(function(m){ return getTimeslot(m.ts)===currentTimeslot; });
-  filtered.sort(function(a,b){ return b.ts - a.ts; });
-
-  var countEl = document.getElementById('timeslot-count');
-  if (countEl) countEl.textContent = '총 '+filtered.length+'개 기록';
-
-  var body = document.getElementById('timeslot-body');
+  var body=document.getElementById('timeslot-body');
   if (!body) return;
-  body.innerHTML = '';
+  body.innerHTML='';
 
-  if (filtered.length === 0) {
-    var empty = document.createElement('div');
-    empty.className = 'ts-empty';
-    empty.textContent = currentTimeslot+' 시간대 기록이 없어요';
-    body.appendChild(empty);
-  } else {
+  var total=0;
+  TIME_SLOTS.forEach(function(slot) {
+    var filtered=meals.filter(function(m){ return getTimeslot(m.ts)===slot.name; });
+    if (!filtered.length) return;
+    total+=filtered.length;
+    filtered.sort(function(a,b){ return b.ts-a.ts; });
+
+    var section=document.createElement('div');
+    /* [CHANGE] 시간대 메뉴 첫 진입 시 현재 시간대만 펼침 */
+    section.className='ts-section'+(slot.name===currentTimeslot?'':' collapsed');
+
+    var hdr=document.createElement('div');
+    hdr.className='ts-section-header';
+    hdr.innerHTML=
+      '<span class="ts-section-title">'+slot.name+'</span>'
+      +'<span class="ts-section-count">· '+filtered.length+'개</span>'
+      +'<span class="ts-section-toggle">▾</span>';
+    hdr.onclick=function(){ section.classList.toggle('collapsed'); };
+    section.appendChild(hdr);
+
+    var sectionBody=document.createElement('div');
+    sectionBody.className='ts-section-body';
+
+    /* [CHANGE] 두 사람 나란히 */
+    var inner=document.createElement('div');
+    inner.className='month-body-inner';
     ['left','right'].forEach(function(side) {
-      var sideMeals = filtered.filter(function(m){ return m.side===side; });
-      if (!sideMeals.length) return;
-      body.appendChild(makeSideBlock(sideMeals, side, '개'));
+      var sideMeals=filtered.filter(function(m){ return m.side===side; });
+      if (!sideMeals.length) {
+        var empty=document.createElement('div');
+        inner.appendChild(empty);
+        return;
+      }
+      inner.appendChild(makeSideBlock(sideMeals, side, '개'));
     });
-  }
+    sectionBody.appendChild(inner);
+    section.appendChild(sectionBody);
+    body.appendChild(section);
+  });
 
-  var btn = document.getElementById('timeslot-load-more');
-  if (btn) btn.style.display = hasMoreHistory ? 'block' : 'none';
+  var countEl=document.getElementById('timeslot-count');
+  if (countEl) countEl.textContent='총 '+total+'개 기록';
+
+  var btn=document.getElementById('timeslot-load-more');
+  if (btn) btn.style.display=hasMoreHistory?'block':'none';
 }
+
 /* ══ 이미지 뷰어 ══ */
 function openViewer(url, mealKey) {
-  document.getElementById('iv-img').src = url;
-  currentMealKey = mealKey;
-  currentMealUrl = url;
-  var meal = mealsCache[mealKey]||{};
-  currentMealSide = meal.side || '';
-  var delBtn = document.getElementById('iv-delete-btn');
-  if (delBtn) delBtn.style.display = (currentMealSide === mySide) ? 'flex' : 'none';
-  var sendBtn = document.getElementById('iv-send-btn');
-  if (sendBtn) sendBtn.style.background = 'var(--accent)';
-  /* v2: 시간+메뉴를 UI 텍스트로 표시 */
-  var metaEl = document.getElementById('iv-meta');
+  document.getElementById('iv-img').src=url;
+  currentMealKey=mealKey; currentMealUrl=url;
+  var meal=mealsCache[mealKey]||{};
+  currentMealSide=meal.side||'';
+  var delBtn=document.getElementById('iv-delete-btn');
+  if (delBtn) delBtn.style.display=(currentMealSide===mySide)?'flex':'none';
+  var sendBtn=document.getElementById('iv-send-btn');
+  if (sendBtn) sendBtn.style.background='var(--accent)';
+
+  /* [CHANGE] 항상 시간+메뉴 표시 */
+  var metaEl=document.getElementById('iv-meta');
   if (metaEl) {
-    if (meal.v === 2) {
-      var hhmm = new Date(meal.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
-      metaEl.innerHTML = '<div class="ivm-time">'+hhmm+'</div>'
-        + (meal.menu ? '<div class="ivm-menu">'+escStr(meal.menu)+'</div>' : '');
-      metaEl.style.display = '';
+    if (meal.ts) {
+      var hhmm=new Date(meal.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+      metaEl.innerHTML='<div class="ivm-time">'+hhmm+'</div>'
+        +(meal.menu?'<div class="ivm-menu">'+escStr(meal.menu)+'</div>':'');
     } else {
-      metaEl.style.display = 'none';
+      metaEl.innerHTML='';
     }
   }
+
   loadViewerData(mealKey);
   document.getElementById('img-viewer').classList.add('open');
 }
 function closeViewer() { document.getElementById('img-viewer').classList.remove('open'); currentMealKey=null; }
 document.getElementById('img-viewer').addEventListener('click',function(e){ if(e.target===this) closeViewer(); });
 
-
-/* ══ 이미지 뷰어 ══ */
-
 function loadViewerData(mealKey) {
-  db.ref('rooms/'+roomId+'/comments/'+mealKey).once('value', function(snap) {
-    var list = Object.values(snap.val()||{}).sort(function(a,b){ return a.ts-b.ts; });
-    var el   = document.getElementById('iv-comments');
-    el.innerHTML = list.map(function(c){
-      var side = c.side || (cachedNames.left===c.name ? 'left' : 'right');
-      var color = side==='left' ? 'var(--left)' : 'var(--right)';
+  db.ref('rooms/'+roomId+'/comments/'+mealKey).once('value',function(snap){
+    var list=Object.values(snap.val()||{}).sort(function(a,b){ return a.ts-b.ts; });
+    var el=document.getElementById('iv-comments');
+    el.innerHTML=list.map(function(c){
+      var side=c.side||(cachedNames.left===c.name?'left':'right');
+      var color=side==='left'?'var(--left)':'var(--right)';
       return '<div class="iv-comment">'
         +'<div class="cv-name-row">'
         +'<div class="cv-dot" style="background:'+color+'"></div>'
         +'<span class="cv-name" style="color:'+color+'">'+(c.name||'')+'</span>'
-        +'</div>'
-        +(c.text||'')+'</div>';
+        +'</div>'+(c.text||'')+'</div>';
     }).join('');
-    el.scrollTop = el.scrollHeight;
+    el.scrollTop=el.scrollHeight;
   });
 }
+
 function postComment() {
-  var input = document.getElementById('iv-comment-input');
-  var text  = input.value.trim();
+  var input=document.getElementById('iv-comment-input');
+  var text=input.value.trim();
   if (!text||!currentMealKey) return;
   db.ref('rooms/'+roomId+'/comments/'+currentMealKey).push({name:myName,side:mySide,text:text,ts:Date.now()})
-    .then(function(){
-      input.value='';
-      loadViewerData(currentMealKey);
-      sendPushToOther('💬 '+myName+'이 댓글을 달았어요', text);
-    });
+    .then(function(){ input.value=''; loadViewerData(currentMealKey); sendPushToOther('💬 '+myName+'이 댓글을 달았어요',text); });
 }
 
 /* ══ 삭제 ══ */
 function deleteMeal() {
-  if (!currentMealKey || currentMealSide !== mySide) return;
+  if (!currentMealKey||currentMealSide!==mySide) return;
   if (!confirm('이 사진을 삭제할까요?')) return;
-  var key = currentMealKey;
+  var key=currentMealKey;
   closeViewer();
-  /* mealsCache에서 즉시 제거 — 클린데이 재판정 등에서 삭제된 항목이 집계되지 않도록 */
   delete mealsCache[key];
-  /* Firebase 삭제 */
   Promise.all([
     db.ref('rooms/'+roomId+'/meals/'+key).remove(),
     db.ref('rooms/'+roomId+'/reactions/'+key).remove(),
     db.ref('rooms/'+roomId+'/comments/'+key).remove()
   ]).then(function() {
-    /* 삭제 완료 후 클린데이 재판정 (오늘 / 어제) */
-    rejudgeCleanDay(new Date());                              /* 오늘 */
-    var yest = new Date(); yest.setDate(yest.getDate()-1);
-    rejudgeCleanDay(yest);                                    /* 어제 */
+    rejudgeCleanDay(new Date());
+    var yest=new Date(); yest.setDate(yest.getDate()-1);
+    rejudgeCleanDay(yest);
   });
-  /* Cloudinary는 서버사이드 API 필요 — 파일 자체는 남지만 앱에서는 안 보임 */
 }
 
-/* 삭제 후 특정 날짜 클린데이 재판정 (코인은 건드리지 않고 cleanDays만 갱신) */
-/* Firebase에서 직접 조회 — mealsCache 타이밍 문제 방지 */
 function rejudgeCleanDay(dateObj) {
-  var dk = dateObj.toISOString().slice(0,10);
-  db.ref('rooms/'+roomId+'/settings/'+mySide).once('value', function(snap) {
-    var st = (snap.val()||{}).sleepTime||'24:00';
-    var sm = timeToMinutes(st), cm = sm - 240;
-    /* nightCutMs: 취침 4시간 전. cm이 음수(자정 전)인 경우 전날로 넘어가므로 날짜 기준 ms로 정확 계산 */
-    var dayRef   = new Date(dateObj); dayRef.setHours(0,0,0,0);
-    var dayEnd   = new Date(dateObj); dayEnd.setHours(23,59,59,999);
-    var nightCutMs = dayRef.getTime() + cm * 60 * 1000; /* cm이 음수면 자정 이전 = 전날 밤 → OK */
-    /* Firebase에서 직접 읽어서 판정 — 삭제 직후 mealsCache가 아직 갱신 안 됐을 수 있음 */
-    db.ref('rooms/'+roomId+'/meals').once('value', function(snap2) {
-      var late = false;
-      snap2.forEach(function(c) {
-        var m = c.val();
-        if (m.side===mySide && m.ts>=nightCutMs && m.ts<=dayEnd.getTime()) late = true;
-      });
-      var isClean = !late;
+  var dk=dateObj.toISOString().slice(0,10);
+  db.ref('rooms/'+roomId+'/settings/'+mySide).once('value',function(snap){
+    var st=(snap.val()||{}).sleepTime||'24:00';
+    var sm=timeToMinutes(st), cm=sm-240;
+    var dayRef=new Date(dateObj); dayRef.setHours(0,0,0,0);
+    var dayEnd=new Date(dateObj); dayEnd.setHours(23,59,59,999);
+    var nightCutMs=dayRef.getTime()+cm*60*1000;
+    db.ref('rooms/'+roomId+'/meals').once('value',function(snap2){
+      var late=false;
+      snap2.forEach(function(c){ var m=c.val(); if(m.side===mySide&&m.ts>=nightCutMs&&m.ts<=dayEnd.getTime()) late=true; });
+      var isClean=!late;
       db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(isClean);
-      /* judgeKey 초기화: 다음 앱 실행 시 judgeYesterday()가 재판정할 수 있도록 */
-      var judgeKey = 'diet_judge_'+roomId+'_'+mySide+'_'+dk;
-      if (isClean) {
-        /* 클린으로 바뀐 경우 — 다음 기상 때 코인 지급을 위해 judgeKey 삭제 */
-        localStorage.removeItem(judgeKey);
-      }
-      /* 비클린으로 바뀐 경우는 judgeKey 유지 (이미 코인 지급했다면 취소 불가 — 코인 차감은 미구현) */
+      var judgeKey='diet_judge_'+roomId+'_'+mySide+'_'+dk;
+      if (isClean) localStorage.removeItem(judgeKey);
     });
   });
 }
@@ -1443,12 +1231,11 @@ function rejudgeCleanDay(dateObj) {
 /* ══ 업로드 ══ */
 function openModal() {
   selFile=null; document.getElementById('notetxt').value='';
-  var pb = document.getElementById('prevbox');
+  var pb=document.getElementById('prevbox');
   pb.innerHTML='<span id="prev-icon">📷</span><input type="file" id="fileinput" accept="image/*" capture="environment" style="display:none">';
-  document.getElementById('fileinput').onchange = fileChosen;
-  /* 올리기 버튼 side 색상 */
-  var btn = document.getElementById('postbtn');
-  if (btn) btn.style.background = 'var(--accent)';
+  document.getElementById('fileinput').onchange=fileChosen;
+  var btn=document.getElementById('postbtn');
+  if (btn) btn.style.background='var(--accent)';
   document.getElementById('backdrop').classList.add('open');
 }
 function closeModal() { document.getElementById('backdrop').classList.remove('open'); }
@@ -1469,14 +1256,12 @@ function fileChosen(e) {
   r.readAsDataURL(f);
 }
 
-/* [FIX 6] 워터마크: MAX=900, JPEG 0.85 */
-/* 리사이즈만 (워터마크 없이) — v2 방식 */
 function resizeImage(file, cb) {
   var reader=new FileReader();
   reader.onload=function(ev){
     var img=new Image();
     img.onload=function(){
-      var MAX=900, w=img.width, h=img.height;
+      var MAX=900,w=img.width,h=img.height;
       if(w>MAX||h>MAX){ if(w>=h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
       var c=document.createElement('canvas'); c.width=w; c.height=h;
       c.getContext('2d').drawImage(img,0,0,w,h);
@@ -1504,8 +1289,8 @@ function doPost() {
     })
     .then(function(ref){ return db.ref('rooms/'+roomId+'/meals/'+ref.key+'/key').set(ref.key); })
     .then(function(){
-      var menuTxt = menuText ? ' ('+menuText+')' : '';
-      sendPushToOther('👁 '+myName+'이(가) 먹었어요!', menuText ? myName+menuTxt+' 먹음' : myName+'이 식사 사진을 올렸어요');
+      var menuTxt=menuText?' ('+menuText+')':'';
+      sendPushToOther('👁 '+myName+'이(가) 먹었어요!',menuText?myName+menuTxt+' 먹음':myName+'이 식사 사진을 올렸어요');
       donePost(btn);
     })
     .catch(function(e){ alert('올리기 실패: '+e.message); donePost(btn); });
@@ -1534,243 +1319,179 @@ function saveSettings() {
   closeSettingPanel(); showNotifToast('✅ 설정이 저장됐어요');
 }
 
-/* ══ 적금 패널 ══ */
+/* ══ 클린데이 적금 패널 (청구서 방식) ══ */
 function openCoinPanel() {
-  /* 목표 메뉴 그리드 렌더 */
-  db.ref('rooms/'+roomId+'/monthlyGoal').once('value', function(snapG){
-    var goalPrice = snapG.val() || 20000;
-    cachedGoalPrice = goalPrice;
-    db.ref('rooms/'+roomId+'/monthlyGoalName').once('value', function(snapN){
-      customGoalName = snapN.val() || '';
-      renderGoalMenuGrid(goalPrice);
-    });
-  });
-  /* 적금 현황 */
-  db.ref('rooms/'+roomId+'/coins').once('value',function(snap){
-    var d=snap.val()||{};
-    var lw=d.left||0, rw=d.right||0, total=lw+rw;
-    document.getElementById('cp-left-coin').textContent=lw.toLocaleString()+'원';
-    document.getElementById('cp-right-coin').textContent=rw.toLocaleString()+'원';
-    document.getElementById('cp-total').textContent='합산 '+total.toLocaleString()+'원';
-    updateGoalBar(total, cachedGoalPrice);
-  });
+  /* 스트릭 */
   db.ref('rooms/'+roomId+'/streaks').once('value',function(snap){
     var s=snap.val()||{};
     document.getElementById('cp-left-streak').textContent=s.left||0;
     document.getElementById('cp-right-streak').textContent=s.right||0;
   });
+
+  /* 청구서 계산: 이번달 clean days 기반 */
+  var now=new Date();
+  var y=now.getFullYear(), mo=now.getMonth();
+  var prefix=y+'-'+String(mo+1).padStart(2,'0');
+
+  /* 내 청구서 = 상대방의 clean days (상대방이 성공할수록 내가 낼 금액) */
+  /* 상대방 청구서 = 내 clean days (내가 성공할수록 상대방이 낼 금액) */
+  var otherSide=mySide==='left'?'right':'left';
+
+  var leftData={}, rightData={};
+  function buildInvoices() {
+    /* 상대방 청구서(내가 내야 할): 상대방 clean days */
+    var otherCleans=mySide==='left'?rightData:leftData;
+    /* 내 청구서(상대방이 내야 할): 내 clean days */
+    var myCleans=mySide==='left'?leftData:rightData;
+
+    renderInvoice('my-invoice', myCleans, 'var(--accent)');
+    renderInvoice('other-invoice', otherCleans, 'var(--other)');
+  }
+
+  db.ref('rooms/'+roomId+'/cleanDays/left').once('value',function(snap){
+    leftData=snap.val()||{};
+    db.ref('rooms/'+roomId+'/cleanDays/right').once('value',function(snap2){
+      rightData=snap2.val()||{};
+      buildInvoices();
+    });
+  });
+
+  /* 이름 업데이트 */
+  var myName2=cachedNames[mySide]||(mySide==='left'?'왼쪽':'오른쪽');
+  var otherName=cachedNames[otherSide]||(otherSide==='left'?'왼쪽':'오른쪽');
+  var myDot=document.getElementById('my-invoice-dot');
+  var otherDot=document.getElementById('other-invoice-dot');
+  if (myDot) myDot.style.background=mySide==='left'?'var(--left)':'var(--right)';
+  if (otherDot) otherDot.style.background=otherSide==='left'?'var(--left)':'var(--right)';
+  var myTitleEl=document.getElementById('my-invoice-title');
+  var otherTitleEl=document.getElementById('other-invoice-title');
+  if (myTitleEl) myTitleEl.textContent=myName2+'의 청구서';
+  if (otherTitleEl) otherTitleEl.textContent=otherName+'의 청구서';
+
   buildCalendar();
   document.getElementById('coin-panel').classList.add('open');
 }
 
-function updateGoalBar(total, goalPrice) {
-  if (!goalPrice || goalPrice <= 0) return;
-  var pct = Math.min(Math.round(total / goalPrice * 100), 100);
-  document.getElementById('cp-goal-pct').textContent = pct+'%';
-  document.getElementById('cp-goal-bar').style.width = pct+'%';
-  var menu = GOAL_MENUS.find(function(m){ return !m.custom && m.price===goalPrice; });
-  var label = menu ? menu.name+' '+menu.emoji+' 목표까지' : (customGoalName ? customGoalName+' ✏️ 목표까지' : goalPrice.toLocaleString()+'원 목표까지');
-  document.getElementById('cp-goal-label').textContent = label;
-}
+function renderInvoice(idPrefix, cleanData, color) {
+  var now=new Date();
+  var y=now.getFullYear(), mo=now.getMonth();
+  var prefix=y+'-'+String(mo+1).padStart(2,'0');
+  var days=new Date(y,mo+1,0).getDate();
 
-function renderGoalMenuGrid(currentGoalPrice) {
-  var grid = document.getElementById('goal-menu-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  /* 직접입력 외 메뉴가 currentGoalPrice와 일치하는지 */
-  var isCustom = !GOAL_MENUS.some(function(m){ return !m.custom && m.price===currentGoalPrice; });
-  GOAL_MENUS.forEach(function(menu) {
-    var btn = document.createElement('button');
-    var isSel = menu.custom ? isCustom : menu.price===currentGoalPrice;
-    btn.className = 'goal-menu-btn' + (isSel?' sel':'');
-    if (menu.custom) {
-      /* 직접입력 버튼 */
-      var dispName  = isCustom ? (customGoalName || '직접입력') : '직접 입력';
-      var dispPrice = isCustom ? currentGoalPrice.toLocaleString()+'원' : '';
-      btn.innerHTML =
-        '<span class="gm-emoji">'+menu.emoji+'</span>'+
-        '<span class="gm-name">'+dispName+'</span>'+
-        '<span class="gm-price">'+dispPrice+'</span>';
-      btn.onclick = function() {
-        var nameRaw = prompt('목표 이름을 입력하세요\n(예: 오마카세, 제주도 여행)');
-        if (nameRaw === null) return;
-        var nameVal = nameRaw.trim();
-        if (!nameVal) { alert('목표 이름을 입력해주세요'); return; }
-        var priceRaw = prompt('목표 금액을 입력하세요\n(원 단위 숫자만, 예: 150000)');
-        if (priceRaw === null) return;
-        var val = parseInt(priceRaw.replace(/[^0-9]/g,''));
-        if (!val || val < 500) { alert('500원 이상의 금액을 입력해주세요'); return; }
-        customGoalName = nameVal;
-        cachedGoalPrice = val;
-        db.ref('rooms/'+roomId+'/monthlyGoal').set(val);
-        db.ref('rooms/'+roomId+'/monthlyGoalName').set(nameVal);
-        renderGoalMenuGrid(val);
-        db.ref('rooms/'+roomId+'/coins').once('value', function(snap){
-          var d=snap.val()||{};
-          updateGoalBar((d.left||0)+(d.right||0), val);
-        });
-        showNotifToast('🎯 목표: '+nameVal+' ('+val.toLocaleString()+'원)으로 변경됐어요!');
-      };
-    } else {
-      btn.innerHTML =
-        '<span class="gm-emoji">'+menu.emoji+'</span>'+
-        '<span class="gm-name">'+menu.name+'</span>'+
-        '<span class="gm-price">'+menu.price.toLocaleString()+'원</span>';
-      btn.onclick = function() {
-        if (menu.price === cachedGoalPrice) return;
-        cachedGoalPrice = menu.price;
-        db.ref('rooms/'+roomId+'/monthlyGoal').set(menu.price);
-        renderGoalMenuGrid(menu.price);
-        db.ref('rooms/'+roomId+'/coins').once('value', function(snap){
-          var d=snap.val()||{};
-          updateGoalBar((d.left||0)+(d.right||0), menu.price);
-        });
-        showNotifToast('🎯 목표가 '+menu.name+' ('+menu.price.toLocaleString()+'원)으로 변경됐어요!');
-      };
+  var items=[];
+  var total=0;
+  for (var d=1;d<=days;d++) {
+    var dk=prefix+'-'+String(d).padStart(2,'0');
+    if (cleanData[dk]===true) {
+      /* 기본 500원 (보너스는 addCoin에서 처리, 여기서는 기본만 표시) */
+      var amt=500;
+      items.push({date:dk, amount:amt});
+      total+=amt;
     }
-    grid.appendChild(btn);
+  }
+
+  var totalEl=document.getElementById(idPrefix+'-total');
+  var listEl=document.getElementById(idPrefix+'-list');
+  if (totalEl) { totalEl.textContent=total.toLocaleString()+'원'; totalEl.style.color=color; }
+  if (!listEl) return;
+  if (!items.length) {
+    listEl.innerHTML='<div class="invoice-empty">이번달 클린데이 없음</div>';
+    return;
+  }
+  listEl.innerHTML='';
+  items.forEach(function(item) {
+    var d=new Date(item.date);
+    var dow=['일','월','화','수','목','금','토'][d.getDay()];
+    var mo2=d.getMonth()+1, day=d.getDate();
+    var el=document.createElement('div');
+    el.className='invoice-item';
+    el.innerHTML='<span class="iv-date">'+mo2+'/'+day+' ('+dow+') 클린</span><span class="iv-amount" style="color:'+color+'">+'+item.amount.toLocaleString()+'원</span>';
+    listEl.appendChild(el);
   });
 }
+
 function closeCoinPanel() { document.getElementById('coin-panel').classList.remove('open'); }
 document.getElementById('coin-panel').addEventListener('click',function(e){ if(e.target===this) closeCoinPanel(); });
 
-/* 달력: 양쪽 cleanDays 동시 로드 후 점 표시 */
+/* ══ 달력 ══ */
 function buildCalendar() {
-  var cal   = document.getElementById('cp-calendar');
-  var now   = new Date();
-  var y     = now.getFullYear();
-  var mo    = now.getMonth();
-  var today = now.getDate();
-  var days  = new Date(y, mo+1, 0).getDate();
-
-  var monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  document.getElementById('cp-cal-month').textContent = y+'년 '+monthNames[mo];
-
-  /* 1일 요일 offset (월=0 기준) */
-  var firstDow = new Date(y, mo, 1).getDay();
-  var offset   = (firstDow === 0) ? 6 : firstDow - 1;
-
-  /* 전체 그리드 한 번에 구성 */
-  cal.innerHTML = '';
-
-  /* 요일 헤더 7개 */
-  ['월','화','수','목','금','토','일'].forEach(function(d, i) {
-    var el = document.createElement('div');
-    el.className = 'cal-dow' + (i===6?' sun':'');
-    el.textContent = d;
-    cal.appendChild(el);
+  var cal=document.getElementById('cp-calendar');
+  var now=new Date();
+  var y=now.getFullYear(), mo=now.getMonth(), today=now.getDate();
+  var days=new Date(y,mo+1,0).getDate();
+  var monthNames=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cp-cal-month').textContent=y+'년 '+monthNames[mo];
+  var firstDow=new Date(y,mo,1).getDay();
+  var offset=(firstDow===0)?6:firstDow-1;
+  cal.innerHTML='';
+  ['월','화','수','목','금','토','일'].forEach(function(d,i){
+    var el=document.createElement('div');
+    el.className='cal-dow'+(i===6?' sun':'');
+    el.textContent=d; cal.appendChild(el);
   });
-
-  /* 빈칸 */
-  for (var b=0; b<offset; b++) {
-    var blank = document.createElement('div');
-    blank.className = 'cal-cell empty';
-    cal.appendChild(blank);
+  for (var b=0;b<offset;b++) {
+    var blank=document.createElement('div'); blank.className='cal-cell empty'; cal.appendChild(blank);
   }
-
-  /* 날짜 셀 전부 생성 */
-  for (var d=1; d<=days; d++) {
-    var cell = document.createElement('div');
-    cell.className = 'cal-cell';
-    cell.id = 'cal-cell-'+d;
-
-    var num = document.createElement('div');
-    num.className = 'cal-num' + (d===today?' today':'') + (d>today?' future':'');
-    num.textContent = d;
-    cell.appendChild(num);
-
-    var dots = document.createElement('div');
-    dots.className = 'cal-dots';
-    dots.id = 'cal-dots-'+d;
-    cell.appendChild(dots);
-
-    cal.appendChild(cell);
+  for (var d=1;d<=days;d++) {
+    var cell=document.createElement('div');
+    cell.className='cal-cell'; cell.id='cal-cell-'+d;
+    var num=document.createElement('div');
+    num.className='cal-num'+(d===today?' today':'')+(d>today?' future':'');
+    num.textContent=d; cell.appendChild(num);
+    var dots=document.createElement('div'); dots.className='cal-dots'; dots.id='cal-dots-'+d;
+    cell.appendChild(dots); cal.appendChild(cell);
   }
-
-  /* 양쪽 cleanDays 동시 fetch */
   var leftData={}, rightData={};
   function renderDots(){
-    for (var d=1; d<=today; d++) {
-      var dotsEl = document.getElementById('cal-dots-'+d);
-      if (!dotsEl) continue;
-      dotsEl.innerHTML = '';
-      var key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-      var lv = leftData[key], rv = rightData[key];
-      /* 왼쪽: 클린만 주황 점 */
-      if (lv === true) {
-        var ld = document.createElement('div');
-        ld.className = 'cal-dot left-clean';
-        dotsEl.appendChild(ld);
+    for (var d=1;d<=today;d++) {
+      var dotsEl=document.getElementById('cal-dots-'+d);
+      if (!dotsEl) continue; dotsEl.innerHTML='';
+      var key=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      if (leftData[key]===true) {
+        var ld=document.createElement('div'); ld.className='cal-dot left-clean'; dotsEl.appendChild(ld);
       }
-      /* 오른쪽: 클린만 파랑 점 */
-      if (rv === true) {
-        var rd = document.createElement('div');
-        rd.className = 'cal-dot right-clean';
-        dotsEl.appendChild(rd);
+      if (rightData[key]===true) {
+        var rd=document.createElement('div'); rd.className='cal-dot right-clean'; dotsEl.appendChild(rd);
       }
     }
   }
-
-  db.ref('rooms/'+roomId+'/cleanDays/left').once('value', function(snap){
-    leftData = snap.val()||{};
-    db.ref('rooms/'+roomId+'/cleanDays/right').once('value', function(snap2){
-      rightData = snap2.val()||{};
-      renderDots();
+  db.ref('rooms/'+roomId+'/cleanDays/left').once('value',function(snap){
+    leftData=snap.val()||{};
+    db.ref('rooms/'+roomId+'/cleanDays/right').once('value',function(snap2){
+      rightData=snap2.val()||{}; renderDots();
     });
   });
 }
 
 /* ══ 시간 경고 말풍선 ══ */
 function timeToMinutes(str){ var p=(str||'24:00').split(':'); return parseInt(p[0])*60+parseInt(p[1]||0); }
-
 var _warnSleepTime='24:00', _warnWakeTime='07:30';
-
 function checkTimeWarning(sleepTime,wakeTime){
-  _warnSleepTime = sleepTime;
-  _warnWakeTime  = wakeTime;
+  _warnSleepTime=sleepTime; _warnWakeTime=wakeTime;
   updateFabBubble();
-  /* 1분마다 재체크 */
-  setInterval(updateFabBubble, 60000);
+  setInterval(updateFabBubble,60000);
 }
-
 function updateFabBubble(){
-  var existing = document.getElementById('fab-bubble');
-  var now = new Date(), nm = now.getHours()*60+now.getMinutes();
-  var sm  = timeToMinutes(_warnSleepTime);
-  var wm  = timeToMinutes(_warnWakeTime);
-  var dm  = sm - 240;
-  var sideColor = mySide==='right' ? 'var(--right)' : 'var(--accent)';
-
+  var existing=document.getElementById('fab-bubble');
+  var now=new Date(), nm=now.getHours()*60+now.getMinutes();
+  var sm=timeToMinutes(_warnSleepTime), wm=timeToMinutes(_warnWakeTime), dm=sm-240;
+  var sideColor=mySide==='right'?'var(--right)':'var(--accent)';
   var isSleepTime;
-  if(sm>=1440){
-    isSleepTime = (nm >= 1440) || (nm < wm);
-  } else {
-    isSleepTime = (nm >= sm) || (nm < wm);
-  }
-  var isNightSnack = !isSleepTime && nm >= dm && nm < Math.min(sm, 1440);
-
-  var msg = null;
-  if(isSleepTime)   msg = '😴 지금 자야 할 시간이에요';
-  else if(isNightSnack) msg = '🍽 잠들기 4시간 전! 야식 참아요';
-
-  if(!msg){
-    if(existing) existing.remove();
-    return;
-  }
-
+  if(sm>=1440){ isSleepTime=(nm>=1440)||(nm<wm); }
+  else { isSleepTime=(nm>=sm)||(nm<wm); }
+  var isNightSnack=!isSleepTime&&nm>=dm&&nm<Math.min(sm,1440);
+  var msg=null;
+  if(isSleepTime) msg='😴 지금 자야 할 시간이에요';
+  else if(isNightSnack) msg='🍽 잠들기 4시간 전! 야식 참아요';
+  if(!msg){ if(existing) existing.remove(); return; }
   if(!existing){
-    existing = document.createElement('div');
-    existing.id = 'fab-bubble';
-    existing.className = 'fab-bubble';
+    existing=document.createElement('div');
+    existing.id='fab-bubble'; existing.className='fab-bubble';
     document.body.appendChild(existing);
   }
-  existing.textContent = msg;
-  existing.style.borderColor = sideColor;
-  existing.style.setProperty('--bubble-color', sideColor);
-  /* ::after 꼬리 색상 — CSS 변수로 제어 */
-  existing.style.cssText += ';border-color:'+sideColor;
-  /* 꼬리 색은 인라인 스타일로 직접 제어 불가능하므로 data-color 클래스 활용 */
-  existing.setAttribute('data-side', mySide);
+  existing.textContent=msg;
+  existing.style.cssText+=';border-color:'+sideColor;
+  existing.setAttribute('data-side',mySide);
 }
 
 function showToast(msg){
@@ -1788,97 +1509,71 @@ function showNotifToast(msg){
 
 /* ══ 알림 패널 ══ */
 function updateNotifBadge() {
-  var badge = document.getElementById('notif-badge');
+  var badge=document.getElementById('notif-badge');
   if (!badge) return;
-  var unread = unreadNotifs.filter(function(n){ return !n.read; });
-  if (unread.length > 0) {
-    badge.textContent = unread.length > 9 ? '9+' : unread.length;
-    badge.classList.add('show');
-  } else {
-    badge.classList.remove('show');
-  }
+  var unread=unreadNotifs.filter(function(n){ return !n.read; });
+  if (unread.length>0) { badge.textContent=unread.length>9?'9+':unread.length; badge.classList.add('show'); }
+  else { badge.classList.remove('show'); }
 }
 function openNotifPanel() {
-  var list = document.getElementById('notif-list');
-  var toShow = unreadNotifs.filter(function(n){ return !n.read; });
+  var list=document.getElementById('notif-list');
+  var toShow=unreadNotifs.filter(function(n){ return !n.read; });
   if (!toShow.length) {
-    list.innerHTML = '<div class="notif-empty">새 알림이 없어요 👁</div>';
+    list.innerHTML='<div class="notif-empty">새 알림이 없어요 👁</div>';
   } else {
-    list.innerHTML = '';
+    list.innerHTML='';
     toShow.slice(0,30).forEach(function(n) {
-      var meal = mealsCache[n.mealKey]||{};
-      var color = (n.side==='left'||cachedNames.left===n.name) ? 'var(--left)' : 'var(--right)';
-      var timeAgo = formatTimeAgo(n.ts);
-      var item = document.createElement('div');
-      item.className = 'notif-item';
-      item.innerHTML = (meal.url
-        ? '<img class="notif-thumb" src="'+escStr(meal.url)+'" loading="lazy">'
-        : '<div class="notif-thumb"></div>')
+      var meal=mealsCache[n.mealKey]||{};
+      var color=(n.side==='left'||cachedNames.left===n.name)?'var(--left)':'var(--right)';
+      var timeAgo=formatTimeAgo(n.ts);
+      var item=document.createElement('div');
+      item.className='notif-item';
+      item.innerHTML=(meal.url?'<img class="notif-thumb" src="'+escStr(meal.url)+'" loading="lazy">':'<div class="notif-thumb"></div>')
         +'<div class="notif-info">'
-        +'<div class="notif-who">'
-        +'<div class="notif-dot" style="background:'+color+'"></div>'
+        +'<div class="notif-who"><div class="notif-dot" style="background:'+color+'"></div>'
         +'<span class="notif-name" style="color:'+color+'">'+escStr(n.name)+'</span>'
-        +'<span class="notif-time">· '+timeAgo+'</span>'
-        +'</div>'
-        +'<div class="notif-text">'+escStr(n.text)+'</div>'
-        +'</div>'
+        +'<span class="notif-time">· '+timeAgo+'</span></div>'
+        +'<div class="notif-text">'+escStr(n.text)+'</div></div>'
         +'<div class="notif-arrow">›</div>';
-      item.onclick = function() {
-        closeNotifPanel();
-        if (meal.url) openViewer(meal.url, n.mealKey);
-      };
+      item.onclick=function(){ closeNotifPanel(); if(meal.url) openViewer(meal.url,n.mealKey); };
       list.appendChild(item);
     });
   }
   unreadNotifs.forEach(function(n){ n.read=true; });
-  localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide, JSON.stringify(unreadNotifs));
+  localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide,JSON.stringify(unreadNotifs));
   updateNotifBadge();
   document.getElementById('notif-panel').classList.add('open');
 }
 function closeNotifPanel() { document.getElementById('notif-panel').classList.remove('open'); }
-document.addEventListener('DOMContentLoaded', function(){
-  var np = document.getElementById('notif-panel');
-  if(np) np.addEventListener('click', function(e){ if(e.target===this) closeNotifPanel(); });
+document.addEventListener('DOMContentLoaded',function(){
+  var np=document.getElementById('notif-panel');
+  if(np) np.addEventListener('click',function(e){ if(e.target===this) closeNotifPanel(); });
 });
 function formatTimeAgo(ts) {
   if(!ts) return '';
-  var diff = Date.now()-ts;
-  var m = Math.floor(diff/60000);
-  if(m<1) return '방금';
-  if(m<60) return m+'분 전';
-  var h = Math.floor(m/60);
-  if(h<24) return h+'시간 전';
+  var diff=Date.now()-ts, m=Math.floor(diff/60000);
+  if(m<1) return '방금'; if(m<60) return m+'분 전';
+  var h=Math.floor(m/60); if(h<24) return h+'시간 전';
   return Math.floor(h/24)+'일 전';
 }
 
 /* ══ 클린데이 코인 ══ */
-
-/* 매일 기상 시간에 전날 목표 달성 여부 판정 스케줄링 */
 function scheduleJudgeAtWakeTime(wakeTime){
-  var now = new Date();
-  var wm  = timeToMinutes(wakeTime||'07:30');
-  var wakeH = Math.floor(wm/60), wakeM = wm%60;
-  /* 오늘 기상 시각 */
-  var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), wakeH, wakeM, 0, 0);
-  /* 이미 지났으면 내일 기상 시각으로 */
-  if (target <= now) target.setDate(target.getDate()+1);
-  var ms = target.getTime() - now.getTime();
-  setTimeout(function(){
-    judgeYesterday();
-    /* 이후 매 24시간마다 반복 */
-    setInterval(judgeYesterday, 24*60*60*1000);
-  }, ms);
+  var now=new Date(), wm=timeToMinutes(wakeTime||'07:30');
+  var wakeH=Math.floor(wm/60), wakeM=wm%60;
+  var target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),wakeH,wakeM,0,0);
+  if (target<=now) target.setDate(target.getDate()+1);
+  var ms=target.getTime()-now.getTime();
+  setTimeout(function(){ judgeYesterday(); setInterval(judgeYesterday,24*60*60*1000); },ms);
 }
 
 function judgeYesterday(){
   var yest=new Date(); yest.setDate(yest.getDate()-1);
   var dk=yest.toISOString().slice(0,10);
-  /* 같은 기기에서 이미 처리했으면 스킵 (중복 방지) */
   var judgeKey='diet_judge_'+roomId+'_'+mySide+'_'+dk;
   if(localStorage.getItem(judgeKey)) return;
   db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).once('value',function(snap){
-    /* cleanDays에 이미 값이 있어도 judgeKey가 없으면(삭제 후 재판정 대기 상태) 재처리 */
-    if(snap.val()!==null && localStorage.getItem(judgeKey)){ return; }
+    if(snap.val()!==null&&localStorage.getItem(judgeKey)){ return; }
     if(snap.val()!==null){ localStorage.setItem(judgeKey,'1'); return; }
     db.ref('rooms/'+roomId+'/settings/'+mySide).once('value',function(snap2){
       var st=(snap2.val()||{}).sleepTime||'24:00';
@@ -1893,11 +1588,10 @@ function judgeYesterday(){
         localStorage.setItem(judgeKey,'1');
         if(isClean){
           addCoin(dk);
-          /* 얼마 적립됐는지 toast로 표시 */
           db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snapSt){
-            var st=snapSt.val()||0;  /* addCoin 실행 후이므로 이미 +1된 값 */
-            var bonusWon=st%7===0?1500:st%3===0?500:0, totalWon=500+bonusWon;
-            var msg='✨ 어제 클린데이! +'+totalWon.toLocaleString()+'원 적립 💰';
+            var st2=snapSt.val()||0;
+            var bonusWon=st2%7===0?1500:st2%3===0?500:0, totalWon=500+bonusWon;
+            var msg='✨ 어제 클린데이! 상대방 청구서에 +'+totalWon.toLocaleString()+'원 💰';
             if(bonusWon>0) msg+=' ('+bonusWon.toLocaleString()+'원 보너스!)';
             showToast(msg);
           });
@@ -1909,98 +1603,191 @@ function judgeYesterday(){
     });
   });
 }
+
 function addCoin(dk){
-  db.ref('rooms/'+roomId+'/coins/'+mySide).once('value',function(snap){
+  /* [CHANGE] 코인은 상대방 계정에 적립 (내가 성공 → 상대방이 내는 구조) */
+  var otherSide=mySide==='left'?'right':'left';
+  db.ref('rooms/'+roomId+'/coins/'+otherSide).once('value',function(snap){
     var cur=snap.val()||0;
     db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snap2){
       var ns=(snap2.val()||0)+1;
-      /* 원 단위: 기본 500원, 3일 연속 +500원, 7일 연속 +1500원 */
-      var bonusWon = ns%7===0?1500 : ns%3===0?500 : 0;
-      var earnedWon = 500 + bonusWon;
-      db.ref('rooms/'+roomId+'/coins/'+mySide).set(cur+earnedWon);
+      var bonusWon=ns%7===0?1500:ns%3===0?500:0;
+      var earnedWon=500+bonusWon;
+      db.ref('rooms/'+roomId+'/coins/'+otherSide).set(cur+earnedWon);
       db.ref('rooms/'+roomId+'/streaks/'+mySide).set(ns);
-      var other=mySide==='left'?'right':'left';
-      db.ref('rooms/'+roomId+'/cleanDays/'+other+'/'+dk).once('value',function(snap3){
+      /* 커플 동시 클린 보너스 */
+      db.ref('rooms/'+roomId+'/cleanDays/'+otherSide+'/'+dk).once('value',function(snap3){
         if(snap3.val()===true){
-          /* 커플 동시 클린 +500원 */
           db.ref('rooms/'+roomId+'/coins/'+mySide).once('value',function(snapNow){
             db.ref('rooms/'+roomId+'/coins/'+mySide).set((snapNow.val()||0)+500);
             updateCoinDisplay();
           });
-        } else {
-          updateCoinDisplay();
-        }
+        } else { updateCoinDisplay(); }
       });
     });
   });
 }
+
 function updateCoinDisplay(){
   db.ref('rooms/'+roomId+'/coins').once('value',function(snap){
     var d=snap.val()||{};
     var lw=d.left||0, rw=d.right||0, total=lw+rw;
-    /* 헤더: 합산 금액 표시 */
     document.getElementById('my-coin').textContent='💰 '+total.toLocaleString()+'원';
-    /* 코인 패널이 열려있으면 패널도 동시 갱신 */
-    var panel=document.getElementById('coin-panel');
-    if(panel && panel.classList.contains('open')){
-      document.getElementById('cp-left-coin').textContent=lw.toLocaleString()+'원';
-      document.getElementById('cp-right-coin').textContent=rw.toLocaleString()+'원';
-      document.getElementById('cp-total').textContent='합산 '+total.toLocaleString()+'원';
-      updateGoalBar(total, cachedGoalPrice);
-    }
   });
 }
 
-/* ══ Web Push 알림 ══ */
+/* ══ Web Push ══ */
 function urlB64ToUint8Array(b64) {
-  var pad = '='.repeat((4 - b64.length % 4) % 4);
-  var raw = atob((b64 + pad).replace(/-/g,'+').replace(/_/g,'/'));
-  var arr = new Uint8Array(raw.length);
-  for (var i=0; i<raw.length; i++) arr[i] = raw.charCodeAt(i);
+  var pad='='.repeat((4-b64.length%4)%4);
+  var raw=atob((b64+pad).replace(/-/g,'+').replace(/_/g,'/'));
+  var arr=new Uint8Array(raw.length);
+  for (var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
   return arr;
 }
-
 function initPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!('serviceWorker' in navigator)||!('PushManager' in window)) return;
   navigator.serviceWorker.register('/food-diery-watcher/sw-push.js')
-    .then(function(reg) {
-      /* SW에 방 정보 전달 */
-      function sendInit(sw) {
-        /* lastVisitTs 기준으로 SW에 전달 — 앱 내부 알림 스캔과 동일한 기준점 사용 */
-        var swTs = parseInt(localStorage.getItem('diet_lastvisit_'+roomId+'_'+mySide)||'0') || Date.now();
-        sw.postMessage({ type:'INIT', roomId:roomId, side:mySide, ts:swTs });
+    .then(function(reg){
+      function sendInit(sw){
+        var swTs=parseInt(localStorage.getItem('diet_lastvisit_'+roomId+'_'+mySide)||'0')||Date.now();
+        sw.postMessage({type:'INIT',roomId:roomId,side:mySide,ts:swTs});
       }
-      var sw = reg.active || reg.waiting || reg.installing;
-      if (sw) sendInit(sw);
-      navigator.serviceWorker.addEventListener('controllerchange', function() {
-        if (navigator.serviceWorker.controller) sendInit(navigator.serviceWorker.controller);
+      var sw=reg.active||reg.waiting||reg.installing;
+      if(sw) sendInit(sw);
+      navigator.serviceWorker.addEventListener('controllerchange',function(){
+        if(navigator.serviceWorker.controller) sendInit(navigator.serviceWorker.controller);
       });
       return requestPushPermission(reg);
     })
-    .catch(function(e) { console.warn('[Push] SW 실패:', e); });
+    .catch(function(e){ console.warn('[Push] SW 실패:',e); });
 }
-
 function requestPushPermission(reg) {
-  return Notification.requestPermission().then(function(perm) {
-    if (perm !== 'granted') return;
-    return reg.pushManager.subscribe({
-      userVisibleOnly:      true,
-      applicationServerKey: urlB64ToUint8Array(VAPID_KEY)
-    }).then(function(sub) {
-      db.ref('rooms/'+roomId+'/pushSubs/'+mySide).set(JSON.stringify(sub.toJSON()));
-    });
-  }).catch(function(e) { console.warn('[Push] 구독 오류:', e); });
+  return Notification.requestPermission().then(function(perm){
+    if(perm!=='granted') return;
+    return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(VAPID_KEY)})
+      .then(function(sub){ db.ref('rooms/'+roomId+'/pushSubs/'+mySide).set(JSON.stringify(sub.toJSON())); });
+  }).catch(function(e){ console.warn('[Push] 구독 오류:',e); });
+}
+function sendPushToOther(title,body) {
+  var toSide=mySide==='left'?'right':'left';
+  fetch('https://food-diary-push.paso0101.workers.dev/notify',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({roomId:roomId,toSide:toSide,title:title,body:body})
+  }).catch(function(e){ console.warn('[Push] Worker 호출 실패:',e); });
 }
 
-function sendPushToOther(title, body) {
-  var toSide = mySide === 'left' ? 'right' : 'left';
-  /* Cloudflare Worker로 직접 전송 */
-  fetch('https://food-diary-push.paso0101.workers.dev/notify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ roomId: roomId, toSide: toSide, title: title, body: body })
-  }).catch(function(e) { console.warn('[Push] Worker 호출 실패:', e); });
+/* ══ initApp ══ */
+function initApp(sleepTime,wakeTime) {
+  var accentColor=mySide==='right'?'#35c9ff':'#ff6b35';
+  var accentGlow=mySide==='right'?'rgba(53,201,255,.4)':'rgba(255,107,53,.4)';
+  var accentTint=mySide==='right'?'rgba(53,201,255,.1)':'rgba(255,107,53,.1)';
+  var otherColor=mySide==='right'?'#ff6b35':'#35c9ff';
+  var otherGlow=mySide==='right'?'rgba(255,107,53,.4)':'rgba(53,201,255,.4)';
+  var otherTint=mySide==='right'?'rgba(255,107,53,.1)':'rgba(53,201,255,.1)';
+  document.documentElement.style.setProperty('--accent',accentColor);
+  document.documentElement.style.setProperty('--accent-glow',accentGlow);
+  document.documentElement.style.setProperty('--accent-tint',accentTint);
+  document.documentElement.style.setProperty('--other',otherColor);
+  document.documentElement.style.setProperty('--other-glow',otherGlow);
+  document.documentElement.style.setProperty('--other-tint',otherTint);
+  var fab=document.getElementById('fab-btn');
+  fab.style.background=accentColor;
+  fab.style.boxShadow='0 8px 28px '+accentGlow;
+
+  db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
+  db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime:sleepTime,wakeTime:wakeTime});
+
+  db.ref('rooms/'+roomId+'/names').on('value',function(snap){
+    var v=snap.val()||{};
+    cachedNames=v;
+    document.getElementById('dn-left').textContent=(v.left||'왼쪽')+(mySide==='left'?' (나)':'');
+    document.getElementById('dn-right').textContent=(v.right||'오른쪽')+(mySide==='right'?' (나)':'');
+  });
+
+  db.ref('rooms/'+roomId+'/reactions').on('value',function(snap){ reactionsCache=snap.val()||{}; updateAllCardBars(); });
+  db.ref('rooms/'+roomId+'/comments').on('value',function(snap){ commentsCache=snap.val()||{}; updateAllCardBars(); });
+
+  realtimeMeals=[]; historicalMeals=[]; hasMoreHistory=true;
+  var recentCutoff=Date.now()-THREE_MONTHS_MS;
+  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(recentCutoff).on('value',function(snap){
+    mealsCache={};
+    historicalMeals.forEach(function(m){ mealsCache[m.key]=m; });
+    realtimeMeals=[];
+    snap.forEach(function(c){ var v=c.val(); v.key=c.key; realtimeMeals.push(v); mealsCache[c.key]=v; });
+    oldestRealtimeTs=realtimeMeals.length>0?realtimeMeals[0].ts:recentCutoff;
+    refreshViews();
+  });
+
+  updateCoinDisplay();
+  judgeYesterday();
+  scheduleJudgeAtWakeTime(wakeTime);
+  checkTimeWarning(sleepTime,wakeTime);
+  initPush();
+  initTimeslotTabs();
+
+  try {
+    var saved=JSON.parse(localStorage.getItem(NOTIF_KEY+'_'+roomId+'_'+mySide)||'[]');
+    unreadNotifs=Array.isArray(saved)?saved:[];
+  } catch(e){ unreadNotifs=[]; }
+
+  var LAST_VISIT_KEY='diet_lastvisit_'+roomId+'_'+mySide;
+  var lastVisitTs=parseInt(localStorage.getItem(LAST_VISIT_KEY)||'0');
+  if (!lastVisitTs) { lastVisitTs=Date.now(); localStorage.setItem(LAST_VISIT_KEY,String(lastVisitTs)); }
+  function saveVisitTs(){ localStorage.setItem(LAST_VISIT_KEY,String(Date.now())); }
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') saveVisitTs(); });
+  window.addEventListener('pagehide',saveVisitTs);
+
+  var notifiedKeys={};
+  unreadNotifs.forEach(function(n){ if(n.commentKey) notifiedKeys[n.commentKey]=true; });
+  updateNotifBadge();
+
+  function addNotif(mealKey,commentKey,c) {
+    if(notifiedKeys[commentKey]) return;
+    notifiedKeys[commentKey]=true;
+    unreadNotifs.unshift({mealKey:mealKey,commentKey:commentKey,name:c.name,side:c.side||'',text:c.text,ts:c.ts||Date.now(),read:false});
+    if(unreadNotifs.length>50) unreadNotifs.pop();
+    localStorage.setItem(NOTIF_KEY+'_'+roomId+'_'+mySide,JSON.stringify(unreadNotifs));
+    updateNotifBadge();
+    showNotifToast('💬 '+c.name+': '+c.text);
+  }
+
+  var realtimeReady=false;
+  db.ref('rooms/'+roomId+'/comments').once('value',function(snap){
+    var allComments=snap.val()||{};
+    Object.keys(allComments).forEach(function(mealKey){
+      var mealComments=allComments[mealKey]||{};
+      Object.keys(mealComments).forEach(function(ck){
+        var c=mealComments[ck];
+        if(!c||!c.name||c.name===myName) return;
+        if((c.ts||0)>lastVisitTs) addNotif(mealKey,ck,c);
+      });
+    });
+    realtimeReady=true;
+  });
+  db.ref('rooms/'+roomId+'/comments').on('child_changed',function(snap){
+    if(!realtimeReady) return;
+    var mealKey=snap.key, mealComments=snap.val()||{};
+    Object.keys(mealComments).forEach(function(ck){
+      var c=mealComments[ck];
+      if(!c||!c.name||c.name===myName) return;
+      addNotif(mealKey,ck,c);
+    });
+  });
 }
+
+/* ══ 자동 로그인 ══ */
+(function(){
+  try {
+    var s=JSON.parse(localStorage.getItem(SAVE_KEY));
+    if(!s) return;
+    document.getElementById('i-room').value=s.room||'';
+    document.getElementById('i-name').value=s.name||'';
+    document.getElementById('i-sleep').value=s.sleepRaw||'';
+    document.getElementById('i-wake').value=s.wakeRaw||'';
+    if(s.side) pickSide(s.side);
+    if(s.autoLogin&&s.room&&s.name&&s.side) setTimeout(startApp,80);
+  } catch(e){}
+})();
 </script>
 </body>
 </html>
