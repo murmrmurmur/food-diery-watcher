@@ -488,6 +488,36 @@ input[type=text]:focus { border-color:var(--accent); }
   cursor:pointer; transition:all .18s;
 }
 .auth-tab.active { background:var(--accent); color:#fff; font-weight:700; }
+
+/* ══ 청구서 전체화면 ══ */
+#invoice-screen {
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  background:var(--bg); z-index:200; overflow:hidden;
+}
+.inv-hdr {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px 12px;
+  border-bottom:1.3px dashed var(--line);
+  flex-shrink:0; background:rgba(255,248,238,.97);
+}
+.inv-back-btn {
+  border:1.3px solid var(--ink-line); border-radius:12px 16px 13px 15px;
+  background:var(--surface); color:var(--text);
+  font-family:'Gowun Dodum',sans-serif; font-size:13px;
+  padding:6px 12px; cursor:pointer; flex-shrink:0;
+}
+.inv-back-btn:active { border-color:var(--accent); }
+.inv-hdr-title { font-family:'Gaegu',cursive; font-size:17px; flex:1; }
+.inv-goal-badge {
+  font-family:'Gaegu',cursive; font-size:12px; color:var(--muted);
+  border:1.3px dashed var(--muted); border-radius:10px 14px 11px 13px;
+  padding:3px 10px; white-space:nowrap;
+}
+.inv-body { flex:1; overflow-y:auto; padding:14px 16px 100px; -webkit-overflow-scrolling:touch; }
+.inv-section-lbl { font-family:'Gaegu',cursive; font-size:13px; color:var(--muted); margin:16px 0 6px; }
+/* 설정 패널 goalAmount 행 */
+.setting-goal-hint { font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -687,19 +717,27 @@ input[type=text]:focus { border-color:var(--accent); }
       <input type="text" id="s-wake" placeholder="숫자 4자리  예: 0730" maxlength="4" inputmode="numeric">
     </div>
     <div id="setting-time-hint" class="field-hint" style="margin-bottom:12px">숫자만 — 예) 자정=2400, 오전7시반=0730</div>
+    <div id="setting-goal-row" class="setting-row">
+      <div class="lbl">공동 목표금액</div>
+      <input type="number" id="s-goal" placeholder="예: 30000" min="0" step="1000" inputmode="numeric">
+    </div>
+    <div id="setting-goal-hint" class="setting-goal-hint">두 사람 합산 모금 목표금액 (한 명이 바꾸면 공유돼요)</div>
     <button id="setting-save-btn" class="setting-save-btn" onclick="saveSettings()">저장</button>
     <button class="modal-cancel" style="margin-top:12px" onclick="closeSettingPanel()">닫기</button>
   </div>
 </div>
 
-<!-- ══ 클린데이 적금 패널 (REDESIGNED) ══ -->
-<div class="panel-backdrop" id="coin-panel">
-  <div class="panel">
-    <div class="panel-handle"></div>
-    <div class="panel-title">💰 클린데이 청구서</div>
+<!-- ══ 청구서 전체화면 ══ -->
+<div id="invoice-screen" style="display:none">
+  <div class="inv-hdr">
+    <button class="inv-back-btn" onclick="closeInvoiceScreen()">← 돌아가기</button>
+    <div class="inv-hdr-title">💰 클린데이 청구서</div>
+    <div class="inv-goal-badge" id="inv-goal-badge">목표 미설정</div>
+  </div>
+  <div class="inv-body">
 
     <!-- 청구서 안내 -->
-    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
       내가 야식을 참으면 → 상대방 청구서에 기록돼요<br>
       매월 말일에 청구서가 발행됩니다
     </div>
@@ -743,11 +781,11 @@ input[type=text]:focus { border-color:var(--accent); }
       </div>
     </div>
 
-    <div class="section-lbl" style="margin-top:14px">이번달 클린데이 달력</div>
+    <div class="inv-section-lbl">이번달 클린데이 달력</div>
     <div class="cal-month-title" id="cp-cal-month"></div>
     <div class="clean-calendar" id="cp-calendar"></div>
 
-    <div class="section-lbl">상금 안내</div>
+    <div class="inv-section-lbl">상금 안내</div>
     <div class="bonus-list">
       <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+500원 청구</span></div>
       <div class="bonus-item"><span>3일 연속 클린</span><span class="bv">+500원 보너스</span></div>
@@ -755,7 +793,6 @@ input[type=text]:focus { border-color:var(--accent); }
       <div class="bonus-item"><span>커플 동시 클린</span><span class="bv">각 +500원 보너스</span></div>
     </div>
 
-    <button class="modal-cancel" style="margin-top:20px" onclick="closeCoinPanel()">닫기</button>
   </div>
 </div>
 
@@ -1739,6 +1776,11 @@ function openSettingPanel() {
   ['setting-sleep-row','setting-wake-row','setting-time-hint','setting-save-btn'].forEach(function(id){
     document.getElementById(id).style.display = isGuest ? 'none' : '';
   });
+  /* goalAmount 로드 */
+  document.getElementById('s-goal').value='';
+  db.ref('rooms/'+roomId+'/settings/goalAmount').once('value',function(snap){
+    var v=snap.val(); if(v) document.getElementById('s-goal').value=v;
+  });
   document.getElementById('setting-panel').classList.add('open');
 }
 function closeSettingPanel() { document.getElementById('setting-panel').classList.remove('open'); }
@@ -1754,7 +1796,13 @@ function saveSettings() {
   localStorage.setItem(SAVE_KEY,JSON.stringify(saved));
   if (mySide!=='guest') {
     db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime,wakeTime});
-    // 이름 변경
+    /* goalAmount 저장 (공유값 — 두 사람 공통) */
+    var goalRaw=document.getElementById('s-goal').value.trim();
+    var goalAmt=parseInt(goalRaw,10);
+    if (!isNaN(goalAmt) && goalAmt>=0) {
+      db.ref('rooms/'+roomId+'/settings/goalAmount').set(goalAmt);
+    }
+    /* 이름 변경 */
     if (newName && newName!==myName) {
       myName=newName;
       db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
@@ -1764,44 +1812,23 @@ function saveSettings() {
   closeSettingPanel(); showNotifToast('✅ 설정이 저장됐어요');
 }
 
-/* ══ 클린데이 적금 패널 (청구서 방식) ══ */
-function openCoinPanel() {
+/* ══ 청구서 화면 (뷰 전환 방식) ══ */
+function openCoinPanel() { openInvoiceScreen(); }
+
+function openInvoiceScreen() {
   /* 스트릭 */
   db.ref('rooms/'+roomId+'/streaks').once('value',function(snap){
     var s=snap.val()||{};
     document.getElementById('cp-left-streak').textContent=s.left||0;
     document.getElementById('cp-right-streak').textContent=s.right||0;
+    var lsn=document.getElementById('cp-ls-name'), rsn=document.getElementById('cp-rs-name');
+    if(lsn) lsn.textContent=(cachedNames['left']||'왼쪽')+' 연속';
+    if(rsn) rsn.textContent=(cachedNames['right']||'오른쪽')+' 연속';
   });
 
-  /* 청구서 계산: 이번달 clean days 기반 */
-  var now=new Date();
-  var y=now.getFullYear(), mo=now.getMonth();
-  var prefix=y+'-'+String(mo+1).padStart(2,'0');
-
-  /* 내 청구서 = 상대방의 clean days (상대방이 성공할수록 내가 낼 금액) */
-  /* 상대방 청구서 = 내 clean days (내가 성공할수록 상대방이 낼 금액) */
   var otherSide=mySide==='left'?'right':'left';
 
-  var leftData={}, rightData={};
-  function buildInvoices() {
-    /* 상대방 청구서(내가 내야 할): 상대방 clean days */
-    var otherCleans=mySide==='left'?rightData:leftData;
-    /* 내 청구서(상대방이 내야 할): 내 clean days */
-    var myCleans=mySide==='left'?leftData:rightData;
-
-    renderInvoice('my-invoice', myCleans, 'var(--accent)');
-    renderInvoice('other-invoice', otherCleans, 'var(--other)');
-  }
-
-  db.ref('rooms/'+roomId+'/cleanDays/left').once('value',function(snap){
-    leftData=snap.val()||{};
-    db.ref('rooms/'+roomId+'/cleanDays/right').once('value',function(snap2){
-      rightData=snap2.val()||{};
-      buildInvoices();
-    });
-  });
-
-  /* 이름 업데이트 */
+  /* 이름/색 업데이트 */
   var myName2=cachedNames[mySide]||(mySide==='left'?'왼쪽':'오른쪽');
   var otherName=cachedNames[otherSide]||(otherSide==='left'?'왼쪽':'오른쪽');
   var myDot=document.getElementById('my-invoice-dot');
@@ -1813,9 +1840,37 @@ function openCoinPanel() {
   if (myTitleEl) myTitleEl.textContent=myName2+'의 청구서';
   if (otherTitleEl) otherTitleEl.textContent=otherName+'의 청구서';
 
+  /* 청구서 계산 */
+  var leftData={}, rightData={};
+  function buildInvoices() {
+    var otherCleans=mySide==='left'?rightData:leftData;
+    var myCleans=mySide==='left'?leftData:rightData;
+    renderInvoice('my-invoice', myCleans, 'var(--accent)');
+    renderInvoice('other-invoice', otherCleans, 'var(--other)');
+  }
+  db.ref('rooms/'+roomId+'/cleanDays/left').once('value',function(snap){
+    leftData=snap.val()||{};
+    db.ref('rooms/'+roomId+'/cleanDays/right').once('value',function(snap2){
+      rightData=snap2.val()||{};
+      buildInvoices();
+    });
+  });
+
+  /* 목표금액 뱃지 */
+  db.ref('rooms/'+roomId+'/settings/goalAmount').once('value',function(snap){
+    var v=snap.val();
+    var badge=document.getElementById('inv-goal-badge');
+    if(badge) badge.textContent=v?'목표 '+Number(v).toLocaleString()+'원':'목표 미설정';
+  });
+
   buildCalendar();
-  document.getElementById('coin-panel').classList.add('open');
+  document.getElementById('invoice-screen').style.display='flex';
 }
+
+function closeInvoiceScreen() {
+  document.getElementById('invoice-screen').style.display='none';
+}
+function closeCoinPanel() { closeInvoiceScreen(); }
 
 function renderInvoice(idPrefix, cleanData, color) {
   var now=new Date();
@@ -1855,8 +1910,6 @@ function renderInvoice(idPrefix, cleanData, color) {
   });
 }
 
-function closeCoinPanel() { document.getElementById('coin-panel').classList.remove('open'); }
-document.getElementById('coin-panel').addEventListener('click',function(e){ if(e.target===this) closeCoinPanel(); });
 
 /* ══ 달력 ══ */
 function buildCalendar() {
