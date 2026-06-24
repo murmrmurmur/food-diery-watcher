@@ -1563,17 +1563,41 @@ function doPost() {
   var menuText=document.getElementById('notetxt').value.trim(), ts=Date.now();
   resizeImage(selFile,function(dataUrl){
     var fd=new FormData(); fd.append('file',dataUrl); fd.append('upload_preset',CLOUDINARY_PRESET);
+    // 1) Cloudinary 업로드 1회
     fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
     .then(function(r){ return r.json(); })
     .then(function(data){
       if(!data.secure_url) throw new Error(data.error?data.error.message:'업로드 실패');
-      return db.ref('rooms/'+roomId+'/meals').push({side:mySide,url:data.secure_url,ts:ts,menu:menuText||null,v:2});
-    })
-    .then(function(ref){ return db.ref('rooms/'+roomId+'/meals/'+ref.key+'/key').set(ref.key); })
-    .then(function(){
-      var menuTxt=menuText?' ('+menuText+')':'';
-      sendPushToOther('👁 '+myName+'이(가) 먹었어요!',menuText?myName+menuTxt+' 먹음':myName+'이 식사 사진을 올렸어요');
-      donePost(btn);
+      var url=data.secure_url;
+      // 2) 내가 참여(left/right)인 모든 방 조회
+      var roomsRef = currentUid
+        ? db.ref('users/'+currentUid+'/rooms').once('value')
+        : Promise.resolve(null);
+      return roomsRef.then(function(snap){
+        var allRooms={};
+        if(snap&&snap.val()) allRooms=snap.val();
+        // 현재 방이 목록에 없는 경우 보정
+        if(!allRooms[roomId]) allRooms[roomId]={role:mySide};
+        // guest 방 제외
+        var targets=Object.keys(allRooms).filter(function(code){
+          return (allRooms[code].role||'guest')!=='guest';
+        });
+        if(!targets.length) targets=[roomId];
+        // 3) 각 방에 push (실패해도 나머지 계속)
+        var writes=targets.map(function(code){
+          var role=allRooms[code]?allRooms[code].role:mySide;
+          return db.ref('rooms/'+code+'/meals')
+            .push({side:role,url:url,ts:ts,menu:menuText||null,v:2})
+            .then(function(ref){ return db.ref('rooms/'+code+'/meals/'+ref.key+'/key').set(ref.key); })
+            .catch(function(e){ console.warn('방 '+code+' 업로드 실패',e); return null; });
+        });
+        return Promise.all(writes).then(function(){
+          var menuTxt=menuText?' ('+menuText+')':'';
+          sendPushToOther('👁 '+myName+'이(가) 먹었어요!',menuText?myName+menuTxt+' 먹음':myName+'이 식사 사진을 올렸어요');
+          if(targets.length>1) showToast('✅ '+targets.length+'개 방에 기록됐어요');
+          donePost(btn);
+        });
+      });
     })
     .catch(function(e){ alert('올리기 실패: '+e.message); donePost(btn); });
   });
