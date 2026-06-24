@@ -2014,6 +2014,9 @@ function initApp(sleepTime,wakeTime) {
     fab.style.display='none';
     document.body.classList.add('guest-mode');
   } else {
+    // 방 전환 시 이전 guest 상태 초기화
+    fab.style.display='';
+    document.body.classList.remove('guest-mode');
     fab.style.background=accentColor;
     fab.style.boxShadow='0 5px 0 var(--ink-line)';
   }
