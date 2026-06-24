@@ -96,7 +96,25 @@ input[type=text]:focus { border-color:var(--accent); }
   display:flex; flex-direction:column; gap:7px; z-index:40;
 }
 .hdr-row1 { display:flex; align-items:center; justify-content:space-between; }
-.hdr-row2 { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+.hdr-row2 { display:flex; align-items:center; gap:5px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+.hdr-row2::-webkit-scrollbar { display:none; }
+.hdr-row3 { display:flex; align-items:center; justify-content:flex-end; gap:5px; }
+.hdr-nav-btn {
+  font-size:12px; color:var(--muted); background:none; border:none;
+  font-family:'Gowun Dodum',sans-serif; padding:5px 9px;
+  border-radius:12px 16px 13px 15px; cursor:pointer; white-space:nowrap;
+  transition:all .18s; flex-shrink:0;
+}
+.hdr-nav-btn.active { background:var(--accent); color:#fff; font-weight:700; }
+.hdr-nav-btn:active { opacity:.7; }
+.hdr-sub-btn {
+  font-size:11px; color:var(--text);
+  background:var(--surface); border-radius:16px 12px 18px 14px;
+  padding:3px 10px; border:1.3px dashed var(--muted); white-space:nowrap; cursor:pointer;
+  font-family:'Gowun Dodum',sans-serif; transition:all .18s; flex-shrink:0;
+}
+.hdr-sub-btn:active { opacity:.7; }
+.hdr-row3 .hdr-sub-btn { font-size:10px; padding:2px 8px; }
 .hdr-title { font-family:'Gaegu',cursive; font-size:14px; letter-spacing:.5px; }
 .hdr-names { display:flex; gap:8px; align-items:center; }
 .n-badge { display:flex; align-items:center; gap:5px; font-size:11px; }
@@ -392,10 +410,12 @@ input[type=text]:focus { border-color:var(--accent); }
 .notif-toast { position:fixed; top:88px; left:50%; transform:translateX(-50%); background:var(--surface); border:1.5px solid var(--other); border-radius:18px 14px 20px 16px; padding:11px 16px; font-size:13px; color:var(--text); text-align:center; z-index:91; box-shadow:0 4px 0 rgba(90,75,62,.12); max-width:320px; line-height:1.6; animation:slideDown .3s ease; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
-/* ══ 보기 모드 토글 ══ */
-.view-toggle { display:flex; gap:6px; padding:8px 14px; flex-shrink:0; background:rgba(255,248,238,.96); border-bottom:1.3px dashed var(--line); }
-.view-btn { flex:1; padding:7px 4px; border:1.3px solid var(--ink-line); border-radius:13px 17px 14px 18px; background:var(--surface); color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:all .18s; }
-.view-btn.active { border-color:var(--ink-line); color:#fff; background:var(--accent); }
+/* ══ 모아보기 서브탭 ══ */
+.gallery-subtabs { display:none; gap:6px; padding:6px 14px; overflow-x:auto; flex-shrink:0; background:rgba(255,248,238,.96); border-bottom:1.3px dashed var(--line); scrollbar-width:none; }
+.gallery-subtabs.visible { display:flex; }
+.gallery-subtabs::-webkit-scrollbar { display:none; }
+.gallery-tab { flex-shrink:0; padding:6px 13px; border:1.3px dashed var(--muted); border-radius:14px; background:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:12px; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.gallery-tab.active { border:1.3px solid var(--accent); color:var(--accent); font-weight:700; background:var(--accent-tint); }
 
 /* [CHANGE] 시간대별 서브탭: 숨김 기본, timeslot 모드일 때만 표시 */
 .timeslot-subtabs { display:none; gap:6px; padding:8px 12px; overflow-x:auto; flex-shrink:0; background:rgba(255,248,238,.96); border-bottom:1.3px dashed var(--line); scrollbar-width:none; }
@@ -655,24 +675,28 @@ input[type=text]:focus { border-color:var(--accent); }
       </div>
     </div>
     <div class="hdr-row2">
+      <button class="hdr-nav-btn active" id="vbtn-feed" onclick="setViewMode('feed')">타임라인</button>
+      <button class="hdr-nav-btn" id="vbtn-gallery" onclick="setViewMode('gallery')">모아보기</button>
       <div class="coin-badge" id="my-coin" onclick="openCoinPanel()">💰 0원</div>
       <div class="hdr-chip" id="notif-chip" onclick="openNotifPanel()">
         🔔 알림
         <div class="notif-badge" id="notif-badge"></div>
       </div>
       <div class="hdr-chip" onclick="openSettingPanel()">⚙️ 설정</div>
-      <div class="hdr-chip" onclick="goToRoomList()">🚪 방 이동</div>
-      <div class="hdr-chip" onclick="doLogout()">로그아웃</div>
+    </div>
+    <div class="hdr-row3">
+      <div class="hdr-sub-btn" onclick="goToRoomList()">🚪 방 이동</div>
+      <div class="hdr-sub-btn" onclick="doLogout()">로그아웃</div>
     </div>
   </div>
 
-  <!-- 보기 모드 토글 -->
-  <div class="view-toggle" id="view-toggle">
-    <button class="view-btn active" id="vbtn-feed" onclick="setViewMode('feed')">타임라인</button>
-    <button class="view-btn" id="vbtn-monthly" onclick="setViewMode('monthly')">월별</button>
-    <button class="view-btn" id="vbtn-timeslot" onclick="setViewMode('timeslot')">시간대별</button>
+  <!-- 모아보기 서브탭 -->
+  <div class="gallery-subtabs" id="gallery-subtabs">
+    <button class="gallery-tab active" id="gtab-monthly" onclick="setGalleryTab('monthly')">📅 월별 식단</button>
+    <button class="gallery-tab" id="gtab-timeslot" onclick="setGalleryTab('timeslot')">🕐 시간대별</button>
+    <button class="gallery-tab" id="gtab-workout" onclick="setGalleryTab('workout')">🏃 운동</button>
   </div>
-  <!-- [CHANGE] 시간대별 서브탭: timeslot 모드일 때만 표시 -->
+  <!-- 시간대별 서브탭 -->
   <div class="timeslot-subtabs" id="timeslot-subtabs"></div>
 
   <div id="views-container">
@@ -1417,19 +1441,49 @@ function refreshViews() {
 }
 
 function setViewMode(mode) {
+  /* 'gallery' 진입 시 기본 월별로 */
+  if (mode==='gallery') { setViewMode('monthly'); return; }
   viewMode=mode;
-  document.getElementById('vbtn-feed').classList.toggle('active',mode==='feed');
-  document.getElementById('vbtn-monthly').classList.toggle('active',mode==='monthly');
-  document.getElementById('vbtn-timeslot').classList.toggle('active',mode==='timeslot');
+  var isGallery=(mode==='monthly'||mode==='timeslot');
+  document.getElementById('vbtn-feed').classList.toggle('active', mode==='feed');
+  document.getElementById('vbtn-gallery').classList.toggle('active', isGallery);
   document.getElementById('tl-wrap').style.display       = mode==='feed'     ? ''     : 'none';
   document.getElementById('monthly-wrap').style.display  = mode==='monthly'  ? 'block': 'none';
   document.getElementById('timeslot-wrap').style.display = mode==='timeslot' ? 'flex' : 'none';
-  // 타임라인 외 뷰에서는 가운데 세로선 숨김
   document.getElementById('views-container').classList.toggle('no-center-line', mode!=='feed');
-  /* [CHANGE] 서브탭은 timeslot 모드일 때만 표시 */
+  /* 모아보기 서브탭 */
+  var galleryTabs=document.getElementById('gallery-subtabs');
+  if (galleryTabs) galleryTabs.classList.toggle('visible', isGallery);
+  /* 시간대별 서브탭은 timeslot 모드일 때만 */
   var subtabs=document.getElementById('timeslot-subtabs');
   if (subtabs) subtabs.classList.toggle('visible', mode==='timeslot');
+  /* gallery-tab active 동기화 */
+  if (mode==='monthly') {
+    document.getElementById('gtab-monthly').classList.add('active');
+    document.getElementById('gtab-timeslot').classList.remove('active');
+    document.getElementById('gtab-workout').classList.remove('active');
+  } else if (mode==='timeslot') {
+    document.getElementById('gtab-monthly').classList.remove('active');
+  }
   refreshViews();
+}
+
+function setGalleryTab(tab) {
+  if (tab==='monthly') {
+    setViewMode('monthly');
+  } else if (tab==='timeslot') {
+    /* 식단 시간대별 — 운동 탭 해제 후 진입 */
+    if (currentTimeslot==='🏃운동') currentTimeslot=null;
+    setViewMode('timeslot');
+    /* 서브탭 active 동기화: gtab-timeslot */
+    document.getElementById('gtab-timeslot').classList.add('active');
+    document.getElementById('gtab-workout').classList.remove('active');
+  } else if (tab==='workout') {
+    selectTimeslot('🏃운동');
+    setViewMode('timeslot');
+    document.getElementById('gtab-timeslot').classList.remove('active');
+    document.getElementById('gtab-workout').classList.add('active');
+  }
 }
 
 function loadMoreMeals() {
