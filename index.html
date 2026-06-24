@@ -55,14 +55,14 @@ body { overflow:hidden; min-height:100dvh; overflow-x:hidden; }
 .setup-card { background:var(--surface); border-radius:28px 24px 30px 26px; border:1.5px solid var(--ink-line); padding:22px 20px; width:100%; max-width:360px; display:flex; flex-direction:column; gap:15px; box-shadow:0 6px 0 rgba(90,75,62,.1); }
 .field { display:flex; flex-direction:column; gap:6px; }
 .lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
-input[type=text] {
+input[type=text], input[type=email], input[type=password] {
   width:100%; background:var(--surface2);
   border:1.3px solid var(--ink-line); border-radius:13px 11px 14px 12px;
   color:var(--text); font-family:'Gowun Dodum',sans-serif;
-  font-size:16px; padding:12px 16px; outline:none;
-  transition:border-color .2s; -webkit-appearance:none;
+  font-size:16px; padding:14px 16px; outline:none;
+  transition:border-color .2s; -webkit-appearance:none; box-sizing:border-box;
 }
-input[type=text]:focus { border-color:var(--accent); }
+input[type=text]:focus, input[type=email]:focus, input[type=password]:focus { border-color:var(--accent); }
 .who-grid, .time-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .who-btn {
   padding:14px 8px; border-radius:14px 18px 13px 16px;
