@@ -228,9 +228,11 @@ input[type=text]:focus { border-color:var(--accent); }
 .mcrd.workout-card::before { background:rgba(91,173,143,.45) !important; }
 /* 운동 뱃지 */
 .workout-badge {
-  position:absolute; top:6px; right:6px;
+  position:absolute; top:5px; right:5px;
   font-size:14px; line-height:1;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));
+  background:rgba(255,255,255,.85); border-radius:50%;
+  width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
   pointer-events:none; z-index:3;
 }
 .fab-bubble {
@@ -1368,6 +1370,7 @@ function makeSideBlock(sideMeals, side, countUnit) {
 
 /* ══ 월별 그리드 렌더 ══ */
 function renderMonthlyView(meals) {
+  meals = meals.filter(function(m){ return (m.type||'meal') !== 'workout'; });
   var content=document.getElementById('monthly-content');
   if (!content) return;
 
@@ -1560,7 +1563,7 @@ function openModal(type) {
   pb.innerHTML='<span id="prev-icon">'+(isWorkout?'🏃':'📷')+'</span><input type="file" id="fileinput" accept="image/*" capture="environment" style="display:none">';
   document.getElementById('fileinput').onchange=fileChosen;
   var titleEl=document.getElementById('modal-title');
-  if (titleEl) titleEl.textContent = isWorkout ? '운동 기록 🏃' : '뭐 먹어요? 🍽';
+  if (titleEl) titleEl.textContent = isWorkout ? '무슨 운동 해요? 🏃' : '뭐 먹어요? 🍽';
   document.getElementById('notetxt').placeholder = isWorkout ? '운동 종류 (예: 30분 런닝)' : '메뉴명 (예: 된장찌개 + 공기밥)';
   var btn=document.getElementById('postbtn');
   if (btn) btn.style.background = isWorkout ? '#5BAD8F' : 'var(--accent)';
