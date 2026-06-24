@@ -96,9 +96,14 @@ input[type=text]:focus { border-color:var(--accent); }
   display:flex; flex-direction:column; gap:7px; z-index:40;
 }
 .hdr-row1 { display:flex; align-items:center; justify-content:space-between; }
-.hdr-row2 { display:flex; align-items:center; gap:5px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
-.hdr-row2::-webkit-scrollbar { display:none; }
-.hdr-row3 { display:flex; align-items:center; justify-content:flex-end; gap:5px; }
+.hdr-row2 { display:flex; align-items:center; gap:5px; }
+.hdr-hamburger {
+  background:none; border:1.3px solid var(--ink-line);
+  border-radius:10px 13px 11px 12px; padding:4px 8px;
+  cursor:pointer; color:var(--text); font-size:15px; line-height:1;
+  transition:border-color .18s; flex-shrink:0;
+}
+.hdr-hamburger:active { border-color:var(--accent); }
 .hdr-nav-btn {
   font-size:12px; color:var(--muted); background:none; border:none;
   font-family:'Gowun Dodum',sans-serif; padding:5px 9px;
@@ -107,14 +112,37 @@ input[type=text]:focus { border-color:var(--accent); }
 }
 .hdr-nav-btn.active { background:var(--accent); color:#fff; font-weight:700; }
 .hdr-nav-btn:active { opacity:.7; }
-.hdr-sub-btn {
-  font-size:11px; color:var(--text);
-  background:var(--surface); border-radius:16px 12px 18px 14px;
-  padding:3px 10px; border:1.3px dashed var(--muted); white-space:nowrap; cursor:pointer;
-  font-family:'Gowun Dodum',sans-serif; transition:all .18s; flex-shrink:0;
+/* 오른쪽 슬라이드 메뉴 */
+.side-menu-overlay {
+  position:fixed; inset:0; z-index:150;
+  background:rgba(0,0,0,0); pointer-events:none;
+  transition:background .25s;
 }
-.hdr-sub-btn:active { opacity:.7; }
-.hdr-row3 .hdr-sub-btn { font-size:10px; padding:2px 8px; }
+.side-menu-overlay.open { background:rgba(0,0,0,.35); pointer-events:all; }
+.side-menu {
+  position:absolute; top:0; right:0; bottom:0;
+  width:220px; background:var(--bg);
+  border-left:1.5px solid var(--ink-line);
+  border-radius:18px 0 0 18px;
+  display:flex; flex-direction:column; gap:0;
+  padding:24px 0 40px;
+  transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:-4px 0 20px rgba(90,75,62,.12);
+}
+.side-menu-overlay.open .side-menu { transform:translateX(0); }
+.side-menu-title {
+  font-family:'Gaegu',cursive; font-size:16px; padding:0 20px 16px;
+  border-bottom:1.3px dashed var(--line); margin-bottom:8px;
+}
+.side-menu-item {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 20px; font-family:'Gowun Dodum',sans-serif; font-size:14px;
+  color:var(--text); cursor:pointer; transition:background .15s; border:none; background:none;
+  width:100%; text-align:left;
+}
+.side-menu-item:active { background:var(--surface2); }
+.side-menu-item .smi-icon { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
+.side-menu-divider { height:1px; background:var(--line); margin:4px 20px; }
 .hdr-title { font-family:'Gaegu',cursive; font-size:14px; letter-spacing:.5px; }
 .hdr-names { display:flex; gap:8px; align-items:center; }
 .n-badge { display:flex; align-items:center; gap:5px; font-size:11px; }
@@ -672,29 +700,20 @@ input[type=text]:focus { border-color:var(--accent); }
         <div class="n-badge"><div class="n-dot l"></div><span id="dn-left">—</span></div>
         <div class="hdr-vs">vs</div>
         <div class="n-badge"><div class="n-dot r"></div><span id="dn-right">—</span></div>
+        <button class="hdr-hamburger" onclick="openSideMenu()">☰</button>
       </div>
     </div>
     <div class="hdr-row2">
       <button class="hdr-nav-btn active" id="vbtn-feed" onclick="setViewMode('feed')">타임라인</button>
       <button class="hdr-nav-btn" id="vbtn-gallery" onclick="setViewMode('gallery')">모아보기</button>
       <div class="coin-badge" id="my-coin" onclick="openCoinPanel()">💰 0원</div>
-      <div class="hdr-chip" id="notif-chip" onclick="openNotifPanel()">
-        🔔 알림
-        <div class="notif-badge" id="notif-badge"></div>
-      </div>
-      <div class="hdr-chip" onclick="openSettingPanel()">⚙️ 설정</div>
-    </div>
-    <div class="hdr-row3">
-      <div class="hdr-sub-btn" onclick="goToRoomList()">🚪 방 이동</div>
-      <div class="hdr-sub-btn" onclick="doLogout()">로그아웃</div>
     </div>
   </div>
 
   <!-- 모아보기 서브탭 -->
   <div class="gallery-subtabs" id="gallery-subtabs">
     <button class="gallery-tab active" id="gtab-monthly" onclick="setGalleryTab('monthly')">📅 월별 식단</button>
-    <button class="gallery-tab" id="gtab-timeslot" onclick="setGalleryTab('timeslot')">🕐 시간대별</button>
-    <button class="gallery-tab" id="gtab-workout" onclick="setGalleryTab('workout')">🏃 운동</button>
+    <button class="gallery-tab" id="gtab-timeslot" onclick="setGalleryTab('timeslot')">🕐 시간대별 식단</button>
   </div>
   <!-- 시간대별 서브탭 -->
   <div class="timeslot-subtabs" id="timeslot-subtabs"></div>
@@ -904,6 +923,27 @@ input[type=text]:focus { border-color:var(--accent); }
     </div>
     <div class="invoice-settle-hint">💡 매월 1일에 전월 청구서가 확정됩니다</div>
 
+  </div>
+</div>
+
+<!-- ══ 오른쪽 슬라이드 메뉴 ══ -->
+<div class="side-menu-overlay" id="side-menu-overlay" onclick="closeSideMenu()">
+  <div class="side-menu" onclick="event.stopPropagation()">
+    <div class="side-menu-title">메뉴</div>
+    <button class="side-menu-item" id="smi-notif" onclick="closeSideMenu();openNotifPanel()">
+      <span class="smi-icon">🔔</span>알림
+      <div class="notif-badge" id="notif-badge" style="position:relative;top:0;right:0;margin-left:4px"></div>
+    </button>
+    <button class="side-menu-item" onclick="closeSideMenu();openSettingPanel()">
+      <span class="smi-icon">⚙️</span>설정
+    </button>
+    <div class="side-menu-divider"></div>
+    <button class="side-menu-item" onclick="closeSideMenu();goToRoomList()">
+      <span class="smi-icon">🚪</span>다른 방으로 이동
+    </button>
+    <button class="side-menu-item" onclick="closeSideMenu();doLogout()">
+      <span class="smi-icon">🚶</span>로그아웃
+    </button>
   </div>
 </div>
 
@@ -1461,9 +1501,9 @@ function setViewMode(mode) {
   if (mode==='monthly') {
     document.getElementById('gtab-monthly').classList.add('active');
     document.getElementById('gtab-timeslot').classList.remove('active');
-    document.getElementById('gtab-workout').classList.remove('active');
   } else if (mode==='timeslot') {
     document.getElementById('gtab-monthly').classList.remove('active');
+    document.getElementById('gtab-timeslot').classList.add('active');
   }
   refreshViews();
 }
@@ -1472,18 +1512,18 @@ function setGalleryTab(tab) {
   if (tab==='monthly') {
     setViewMode('monthly');
   } else if (tab==='timeslot') {
-    /* 식단 시간대별 — 운동 탭 해제 후 진입 */
     if (currentTimeslot==='🏃운동') currentTimeslot=null;
     setViewMode('timeslot');
-    /* 서브탭 active 동기화: gtab-timeslot */
     document.getElementById('gtab-timeslot').classList.add('active');
-    document.getElementById('gtab-workout').classList.remove('active');
-  } else if (tab==='workout') {
-    selectTimeslot('🏃운동');
-    setViewMode('timeslot');
-    document.getElementById('gtab-timeslot').classList.remove('active');
-    document.getElementById('gtab-workout').classList.add('active');
   }
+}
+
+/* ══ 슬라이드 메뉴 ══ */
+function openSideMenu() {
+  document.getElementById('side-menu-overlay').classList.add('open');
+}
+function closeSideMenu() {
+  document.getElementById('side-menu-overlay').classList.remove('open');
 }
 
 function loadMoreMeals() {
@@ -1518,13 +1558,7 @@ function initTimeslotTabs() {
     btn.onclick=(function(name){ return function(){ selectTimeslot(name); }; })(slot.name);
     el.appendChild(btn);
   });
-  // 운동 탭 (시간대 목록 끝에 추가)
-  var workoutBtn=document.createElement('button');
-  workoutBtn.className='ts-tab ts-tab-workout'+(currentTimeslot==='🏃운동'?' active':'');
-  workoutBtn.id='ts-stab-workout';
-  workoutBtn.textContent='🏃 운동';
-  workoutBtn.onclick=function(){ selectTimeslot('🏃운동'); };
-  el.appendChild(workoutBtn);
+  /* 운동 탭은 모아보기 > 🏃운동으로 이동됨 — 여기서는 표시 안 함 */
 }
 
 function selectTimeslot(name) {
