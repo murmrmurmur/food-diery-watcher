@@ -285,6 +285,10 @@ input[type=text]:focus { border-color:var(--accent); }
 .iv-input-row button { background:var(--accent); border:none; border-radius:12px; color:#fff; font-family:'Gaegu',cursive; font-size:13px; padding:10px 16px; cursor:pointer; }
 .iv-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:14px; cursor:pointer; z-index:101; }
 .iv-delete { position:absolute; top:14px; left:14px; background:rgba(255,59,48,.15); border:1px solid rgba(255,59,48,.3); color:#ff3b30; border-radius:50%; width:36px; height:36px; font-size:13px; cursor:pointer; z-index:101; display:flex; align-items:center; justify-content:center; }
+.iv-dislike { position:absolute; top:14px; right:56px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); border-radius:50%; width:36px; height:36px; font-size:16px; cursor:pointer; z-index:101; display:none; align-items:center; justify-content:center; transition:background .15s; }
+.iv-dislike.active { background:rgba(255,100,80,.3); border-color:rgba(255,100,80,.6); }
+/* 타임라인 카드 👎 뱃지 */
+.dislike-badge { position:absolute; bottom:5px; left:5px; font-size:13px; line-height:1; background:rgba(255,255,255,.85); border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.2); pointer-events:none; z-index:3; }
 /* [CHANGE] iv-meta: overlay on image */
 #iv-img-wrap { position:relative; width:88vw; max-width:400px; aspect-ratio:1; flex-shrink:0; }
 #iv-img { width:100%; height:100%; object-fit:cover; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.8); display:block; }
@@ -630,6 +634,7 @@ input[type=text]:focus { border-color:var(--accent); }
 <!-- ══ 이미지 뷰어 ══ -->
 <div class="img-viewer-backdrop" id="img-viewer">
   <button class="iv-delete" id="iv-delete-btn" onclick="deleteMeal()">🗑</button>
+  <button class="iv-dislike" id="iv-dislike-btn" onclick="toggleDislike()">👎</button>
   <button class="iv-close" onclick="closeViewer()">✕</button>
   <div id="iv-img-wrap">
     <img id="iv-img" src="" alt="">
@@ -929,6 +934,7 @@ var currentMealKey = null, currentMealSide = null, currentMealUrl = null;
 var cachedNames = {};
 var reactionsCache = {};
 var commentsCache  = {};
+var dislikeCache   = {};
 var mealsCache = {};
 var unreadNotifs = [];
 var NOTIF_KEY = 'diet_notifs_v1';
@@ -1230,6 +1236,16 @@ function updateAllCardBars() {
       if (hasReact||hasComment) { bar.classList.add('visible'); bar.classList.remove('left-bar','right-bar'); bar.classList.add(side+'-bar'); }
       else { bar.classList.remove('visible'); }
     }
+    // 👎 뱃지 추가/제거
+    var hasDislike=!!(dislikeCache[key]&&dislikeCache[key].by);
+    var existing=card.querySelector('.dislike-badge');
+    if (hasDislike && !existing) {
+      var badge=document.createElement('span');
+      badge.className='dislike-badge'; badge.textContent='👎';
+      card.appendChild(badge);
+    } else if (!hasDislike && existing) {
+      existing.remove();
+    }
   });
 }
 
@@ -1470,6 +1486,14 @@ function openViewer(url, mealKey) {
   currentMealSide=meal.side||'';
   var delBtn=document.getElementById('iv-delete-btn');
   if (delBtn) delBtn.style.display=(currentMealSide===mySide)?'flex':'none';
+  // 👎: 상대방 사진에만, guest는 불가
+  var dislikeBtn=document.getElementById('iv-dislike-btn');
+  if (dislikeBtn) {
+    var canDislike = mySide!=='guest' && currentMealSide!==mySide && currentMealSide!=='';
+    dislikeBtn.style.display=canDislike?'flex':'none';
+    var hasDislike=dislikeCache[mealKey]&&dislikeCache[mealKey].by;
+    dislikeBtn.classList.toggle('active', !!hasDislike);
+  }
   var sendBtn=document.getElementById('iv-send-btn');
   if (sendBtn) sendBtn.style.background='var(--accent)';
 
@@ -1514,6 +1538,18 @@ function postComment() {
   if (!text||!currentMealKey) return;
   db.ref('rooms/'+roomId+'/comments/'+currentMealKey).push({name:myName,side:mySide,text:text,ts:Date.now()})
     .then(function(){ input.value=''; loadViewerData(currentMealKey); sendPushToOther('💬 '+myName+'이 댓글을 달았어요',text); });
+}
+
+/* ══ 👎 토글 ══ */
+function toggleDislike() {
+  if (!currentMealKey || mySide==='guest') return;
+  var ref=db.ref('rooms/'+roomId+'/meals/'+currentMealKey+'/dislike');
+  var hasDislike=dislikeCache[currentMealKey]&&dislikeCache[currentMealKey].by;
+  if (hasDislike) {
+    ref.remove();
+  } else {
+    ref.set({by:currentUid||mySide, ts:Date.now()});
+  }
 }
 
 /* ══ 삭제 ══ */
@@ -2092,9 +2128,16 @@ function initApp(sleepTime,wakeTime) {
     mealsCache={};
     historicalMeals.forEach(function(m){ mealsCache[m.key]=m; });
     realtimeMeals=[];
-    snap.forEach(function(c){ var v=c.val(); v.key=c.key; realtimeMeals.push(v); mealsCache[c.key]=v; });
+    var newDislikeCache={};
+    snap.forEach(function(c){ var v=c.val(); v.key=c.key; realtimeMeals.push(v); mealsCache[c.key]=v; if(v.dislike) newDislikeCache[c.key]=v.dislike; });
+    dislikeCache=newDislikeCache;
     oldestRealtimeTs=realtimeMeals.length>0?realtimeMeals[0].ts:recentCutoff;
     refreshViews();
+    // 뷰어 열려있으면 👎 버튼 상태 갱신
+    if (currentMealKey) {
+      var btn=document.getElementById('iv-dislike-btn');
+      if (btn && btn.style.display!=='none') btn.classList.toggle('active',!!(dislikeCache[currentMealKey]&&dislikeCache[currentMealKey].by));
+    }
   });
 
   updateCoinDisplay();
