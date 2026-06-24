@@ -137,6 +137,7 @@ input[type=text]:focus { border-color:var(--accent); }
   pointer-events:none;
   z-index:0;
 }
+#views-container.no-center-line::before { display:none; }
 .tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:180px; -webkit-overflow-scrolling:touch; }
 .tl-line { display:none; }
 .empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:100px 32px; color:var(--muted); text-align:center; }
@@ -637,16 +638,16 @@ input[type=text]:focus { border-color:var(--accent); }
   <div class="panel">
     <div class="panel-handle"></div>
     <div class="panel-title">⚙️ 설정</div>
-    <div class="setting-row">
+    <div id="setting-sleep-row" class="setting-row">
       <div class="lbl">취침 시간</div>
       <input type="text" id="s-sleep" placeholder="숫자 4자리  예: 2400" maxlength="4" inputmode="numeric">
     </div>
-    <div class="setting-row">
+    <div id="setting-wake-row" class="setting-row">
       <div class="lbl">기상 시간</div>
       <input type="text" id="s-wake" placeholder="숫자 4자리  예: 0730" maxlength="4" inputmode="numeric">
     </div>
-    <div class="field-hint" style="margin-bottom:12px">숫자만 — 예) 자정=2400, 오전7시반=0730</div>
-    <button class="setting-save-btn" onclick="saveSettings()">저장</button>
+    <div id="setting-time-hint" class="field-hint" style="margin-bottom:12px">숫자만 — 예) 자정=2400, 오전7시반=0730</div>
+    <button id="setting-save-btn" class="setting-save-btn" onclick="saveSettings()">저장</button>
     <button class="modal-cancel" style="margin-top:12px" onclick="closeSettingPanel()">닫기</button>
   </div>
 </div>
@@ -1220,6 +1221,8 @@ function setViewMode(mode) {
   document.getElementById('tl-wrap').style.display       = mode==='feed'     ? ''     : 'none';
   document.getElementById('monthly-wrap').style.display  = mode==='monthly'  ? 'block': 'none';
   document.getElementById('timeslot-wrap').style.display = mode==='timeslot' ? 'flex' : 'none';
+  // 타임라인 외 뷰에서는 가운데 세로선 숨김
+  document.getElementById('views-container').classList.toggle('no-center-line', mode!=='feed');
   /* [CHANGE] 서브탭은 timeslot 모드일 때만 표시 */
   var subtabs=document.getElementById('timeslot-subtabs');
   if (subtabs) subtabs.classList.toggle('visible', mode==='timeslot');
@@ -1582,6 +1585,10 @@ function openSettingPanel() {
   var s=JSON.parse(localStorage.getItem(SAVE_KEY))||{};
   document.getElementById('s-sleep').value=s.sleepRaw||'';
   document.getElementById('s-wake').value=s.wakeRaw||'';
+  var isGuest = mySide==='guest';
+  ['setting-sleep-row','setting-wake-row','setting-time-hint','setting-save-btn'].forEach(function(id){
+    document.getElementById(id).style.display = isGuest ? 'none' : '';
+  });
   document.getElementById('setting-panel').classList.add('open');
 }
 function closeSettingPanel() { document.getElementById('setting-panel').classList.remove('open'); }
@@ -1752,6 +1759,7 @@ function checkTimeWarning(sleepTime,wakeTime){
 }
 function updateFabBubble(){
   var existing=document.getElementById('fab-bubble');
+  if (mySide==='guest') { if(existing) existing.remove(); return; }
   var now=new Date(), nm=now.getHours()*60+now.getMinutes();
   var sm=timeToMinutes(_warnSleepTime), wm=timeToMinutes(_warnWakeTime), dm=sm-240;
   var sideColor=mySide==='right'?'var(--right)':'var(--accent)';
