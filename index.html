@@ -183,15 +183,12 @@ input[type=text]:focus { border-color:var(--accent); }
 }
 .mrow.ml .mcrd::before { background:rgba(255,148,102,.45); transform:translateX(-50%) rotate(-4deg); }
 .mrow.mr .mcrd::before { background:rgba(98,195,232,.45); transform:translateX(-50%) rotate(4deg); }
-/* 댓글 있는 카드: 테이프 노란색으로 */
-.mrow.ml .mcrd.has-comment::before { background:rgba(255,210,60,.75); }
-.mrow.mr .mcrd.has-comment::before { background:rgba(255,210,60,.75); }
-/* 💬 댓글 뱃지 */
+/* 💬 댓글 뱃지 — 좌상단 */
 .comment-badge {
   position:absolute; top:5px; left:5px;
   font-size:10px; font-family:'Gaegu',cursive; font-weight:700;
   background:rgba(255,255,255,.88); border-radius:10px;
-  padding:1px 5px; line-height:1.6;
+  padding:2px 6px; line-height:1.6;
   box-shadow:0 1px 3px rgba(0,0,0,.18);
   pointer-events:none; z-index:3; color:var(--text);
   white-space:nowrap;
@@ -293,6 +290,8 @@ input[type=text]:focus { border-color:var(--accent); }
 .iv-comment .cv-name-row { display:flex; align-items:center; gap:5px; margin-bottom:3px; }
 .iv-comment .cv-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 .iv-comment .cv-name { font-size:10px; font-family:'Gaegu',cursive; }
+.iv-comment .cv-del { margin-left:auto; background:none; border:none; color:rgba(255,255,255,.35); font-size:11px; cursor:pointer; padding:0 2px; line-height:1; }
+.iv-comment .cv-del:hover { color:rgba(255,80,80,.7); }
 .iv-input-row { display:flex; gap:8px; width:100%; max-width:400px; }
 .iv-input-row input { flex:1; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:12px; color:var(--text); font-family:'Gowun Dodum',sans-serif; font-size:14px; padding:10px 14px; outline:none; -webkit-appearance:none; }
 .iv-input-row button { background:var(--accent); border:none; border-radius:12px; color:#fff; font-family:'Gaegu',cursive; font-size:13px; padding:10px 16px; cursor:pointer; }
@@ -301,7 +300,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .iv-dislike { position:absolute; top:14px; right:56px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); border-radius:50%; width:36px; height:36px; font-size:16px; cursor:pointer; z-index:101; display:none; align-items:center; justify-content:center; transition:background .15s; }
 .iv-dislike.active { background:rgba(255,100,80,.3); border-color:rgba(255,100,80,.6); }
 /* 타임라인 카드 👎 뱃지 */
-.dislike-badge { position:absolute; bottom:5px; left:5px; font-size:13px; line-height:1; background:rgba(255,255,255,.85); border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.2); pointer-events:none; z-index:3; }
+.dislike-badge { position:absolute; top:30px; right:5px; font-size:13px; line-height:1; background:rgba(255,255,255,.85); border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.2); pointer-events:none; z-index:3; }
 /* [CHANGE] iv-meta: overlay on image */
 #iv-img-wrap { position:relative; width:88vw; max-width:400px; aspect-ratio:1; flex-shrink:0; }
 #iv-img { width:100%; height:100%; object-fit:cover; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.8); display:block; }
@@ -675,6 +674,10 @@ input[type=text]:focus { border-color:var(--accent); }
   <div class="panel">
     <div class="panel-handle"></div>
     <div class="panel-title">⚙️ 설정</div>
+    <div class="setting-row">
+      <div class="lbl">내 이름</div>
+      <input type="text" id="s-name" placeholder="이름" maxlength="10">
+    </div>
     <div id="setting-sleep-row" class="setting-row">
       <div class="lbl">취침 시간</div>
       <input type="text" id="s-sleep" placeholder="숫자 4자리  예: 2400" maxlength="4" inputmode="numeric">
@@ -1261,7 +1264,7 @@ function updateAllCardBars() {
     }
     // 댓글 테이프 색 + 💬 뱃지
     var commentCount=commentsCache[key]?Object.keys(commentsCache[key]).length:0;
-    card.classList.toggle('has-comment', commentCount>0);
+    // has-comment 클래스는 테이프 색 변경에 더 이상 사용 안 함 (뱃지만)
     var existingCbadge=card.querySelector('.comment-badge');
     if (commentCount>0 && !existingCbadge) {
       var cbadge=document.createElement('span');
@@ -1543,19 +1546,30 @@ document.getElementById('img-viewer').addEventListener('click',function(e){ if(e
 
 function loadViewerData(mealKey) {
   db.ref('rooms/'+roomId+'/comments/'+mealKey).once('value',function(snap){
-    var list=Object.values(snap.val()||{}).sort(function(a,b){ return a.ts-b.ts; });
+    var raw=snap.val()||{};
+    var list=Object.entries(raw).map(function(e){ return Object.assign({_key:e[0]},e[1]); }).sort(function(a,b){ return a.ts-b.ts; });
     var el=document.getElementById('iv-comments');
-    el.innerHTML=list.map(function(c){
+    el.innerHTML='';
+    list.forEach(function(c){
       var side=c.side||(cachedNames.left===c.name?'left':'right');
       var color=side==='left'?'var(--left)':'var(--right)';
-      return '<div class="iv-comment">'
-        +'<div class="cv-name-row">'
+      var isMine=c.name===myName&&c.side===mySide;
+      var div=document.createElement('div');
+      div.className='iv-comment';
+      div.innerHTML='<div class="cv-name-row">'
         +'<div class="cv-dot" style="background:'+color+'"></div>'
         +'<span class="cv-name" style="color:'+color+'">'+(c.name||'')+'</span>'
-        +'</div>'+(c.text||'')+'</div>';
-    }).join('');
+        +(isMine?'<button class="cv-del" onclick="deleteComment(\''+mealKey+'\',\''+c._key+'\')">✕</button>':'')
+        +'</div>'+(c.text||'');
+      el.appendChild(div);
+    });
     el.scrollTop=el.scrollHeight;
   });
+}
+
+function deleteComment(mealKey, commentKey) {
+  db.ref('rooms/'+roomId+'/comments/'+mealKey+'/'+commentKey).remove()
+    .then(function(){ loadViewerData(mealKey); });
 }
 
 function postComment() {
@@ -1718,6 +1732,7 @@ function donePost(btn){ busy=false; btn.innerHTML='올리기'; btn.disabled=fals
 /* ══ 설정 패널 ══ */
 function openSettingPanel() {
   var s=JSON.parse(localStorage.getItem(SAVE_KEY))||{};
+  document.getElementById('s-name').value=myName||'';
   document.getElementById('s-sleep').value=s.sleepRaw||'';
   document.getElementById('s-wake').value=s.wakeRaw||'';
   var isGuest = mySide==='guest';
@@ -1729,6 +1744,7 @@ function openSettingPanel() {
 function closeSettingPanel() { document.getElementById('setting-panel').classList.remove('open'); }
 document.getElementById('setting-panel').addEventListener('click',function(e){ if(e.target===this) closeSettingPanel(); });
 function saveSettings() {
+  var newName=document.getElementById('s-name').value.trim();
   var sleepRaw=document.getElementById('s-sleep').value.trim();
   var wakeRaw=document.getElementById('s-wake').value.trim();
   var sleepTime=parseTimeInput(sleepRaw)||'24:00';
@@ -1736,7 +1752,15 @@ function saveSettings() {
   var saved=JSON.parse(localStorage.getItem(SAVE_KEY))||{};
   Object.assign(saved,{sleepTime,wakeTime,sleepRaw,wakeRaw});
   localStorage.setItem(SAVE_KEY,JSON.stringify(saved));
-  if (mySide!=='guest') db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime,wakeTime});
+  if (mySide!=='guest') {
+    db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime,wakeTime});
+    // 이름 변경
+    if (newName && newName!==myName) {
+      myName=newName;
+      db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
+      if (currentUid) db.ref('users/'+currentUid+'/profile/name').set(myName);
+    }
+  }
   closeSettingPanel(); showNotifToast('✅ 설정이 저장됐어요');
 }
 
