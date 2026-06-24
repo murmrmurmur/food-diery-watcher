@@ -238,10 +238,11 @@ input[type=text]:focus { border-color:var(--accent); }
 .fab-missed:active { background:#d4952a; }
 /* 수동입력 뱃지 */
 .missed-badge {
-  position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
-  font-size:9px; background:rgba(232,168,56,.9); color:#fff;
-  border-radius:4px; padding:1px 4px; pointer-events:none; z-index:3;
-  font-family:'Gowun Dodum',sans-serif; white-space:nowrap; letter-spacing:.2px;
+  position:absolute; top:4px; left:50%; transform:translateX(-50%);
+  font-size:12px; line-height:1;
+  background:rgba(255,255,255,.85); border-radius:50%;
+  width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.2); pointer-events:none; z-index:3;
 }
 /* 운동 카드 테이프 색 */
 .mcrd.workout-card::before { background:rgba(91,173,143,.45) !important; }
