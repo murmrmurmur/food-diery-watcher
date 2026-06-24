@@ -438,6 +438,8 @@ input[type=text]:focus { border-color:var(--accent); }
 .room-card-role.right { color:var(--right); }
 .room-card-role.guest { color:#9C8FD0; }
 .room-card-arrow { font-size:18px; color:var(--muted); }
+.room-card-last { border-color:var(--accent); }
+.room-last-badge { font-family:'Gaegu',cursive; font-size:11px; background:var(--accent); color:#fff; border-radius:6px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
 
 /* ══ AUTH ══ */
 #auth-screen {
@@ -743,13 +745,15 @@ function showRoomList(rooms) {
   container.innerHTML = '';
   var roleLabel = { left:'🍊 왼쪽', right:'🫐 오른쪽', guest:'👀 구경' };
   var roleClass = { left:'left', right:'right', guest:'guest' };
+  var saved = JSON.parse(localStorage.getItem(SAVE_KEY)) || {};
+  var lastRoom = saved.lastRoom || '';
   Object.keys(rooms).forEach(function(code) {
     var role = rooms[code].role || 'guest';
     var card = document.createElement('div');
-    card.className = 'room-card';
+    card.className = 'room-card' + (code === lastRoom ? ' room-card-last' : '');
     card.innerHTML =
       '<div class="room-card-info">' +
-        '<div class="room-card-code">🚪 ' + escStr(code) + '</div>' +
+        '<div class="room-card-code">🚪 ' + escStr(code) + (code === lastRoom ? ' <span class="room-last-badge">최근</span>' : '') + '</div>' +
         '<div class="room-card-role ' + roleClass[role] + '">' + (roleLabel[role]||role) + '</div>' +
       '</div>' +
       '<div class="room-card-arrow">›</div>';
@@ -763,26 +767,40 @@ function enterRoom(code, role) {
   var s = JSON.parse(localStorage.getItem(SAVE_KEY)) || {};
   roomId = code;
   mySide = role;
-  myName = s.name || '';
-  var sleepTime = s.sleepTime || '24:00';
-  var wakeTime  = s.wakeTime  || '07:30';
-  // 저장된 프로필 이름이 없으면 Firebase에서 가져옴
-  function proceed() {
+  myName = '';
+
+  // 프로필 이름을 항상 Firebase에서 가져와 방 전환 시 이름 잔류 방지
+  function fetchNameThenSettings() {
+    var nameRef = currentUid
+      ? db.ref('users/' + currentUid + '/profile/name').once('value')
+      : Promise.resolve({ val: function(){ return ''; } });
+    nameRef.then(function(snap) {
+      myName = (snap && snap.val()) || '';
+      // 방별 sleepTime/wakeTime을 Firebase에서 읽고, 없으면 localStorage → 기본값
+      if (mySide !== 'guest') {
+        db.ref('rooms/' + roomId + '/settings/' + mySide).once('value', function(snapSet) {
+          var cfg = snapSet.val() || {};
+          var sleepTime = cfg.sleepTime || s.sleepTime || '24:00';
+          var wakeTime  = cfg.wakeTime  || s.wakeTime  || '07:30';
+          proceed(sleepTime, wakeTime);
+        });
+      } else {
+        proceed(s.sleepTime || '24:00', s.wakeTime || '07:30');
+      }
+    });
+  }
+
+  function proceed(sleepTime, wakeTime) {
+    // lastRoom만 갱신 (autoLogin 플래그 제거 — 재실행 시 방 리스트를 보여주는 것이 기본)
     localStorage.setItem(SAVE_KEY, JSON.stringify(Object.assign(s, {
-      room:roomId, side:mySide, autoLogin:true
+      lastRoom: roomId, lastSide: mySide
     })));
     document.getElementById('room-list-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     initApp(sleepTime, wakeTime);
   }
-  if (!myName && currentUid) {
-    db.ref('users/' + currentUid + '/profile/name').once('value', function(snap) {
-      myName = snap.val() || '';
-      proceed();
-    });
-  } else {
-    proceed();
-  }
+
+  fetchNameThenSettings();
 }
 
 function goToSetup() {
@@ -1006,9 +1024,9 @@ function doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw) {
   var btn   = document.getElementById('btn-start');
   btn.disabled = false;
   localStorage.setItem(SAVE_KEY, JSON.stringify({
-    room:roomId, name:myName, side:mySide,
+    lastRoom:roomId, lastSide:mySide,
     sleepTime:sleepTime, wakeTime:wakeTime,
-    sleepRaw:sleepRaw, wakeRaw:wakeRaw, autoLogin:true
+    sleepRaw:sleepRaw, wakeRaw:wakeRaw
   }));
   // users/{uid}/rooms/{방코드} 에 역할 저장
   if (currentUid) {
@@ -2073,15 +2091,12 @@ function initApp(sleepTime,wakeTime) {
     if (user) {
       currentUid = user.uid;
       document.getElementById('auth-screen').style.display = 'none';
-      // setup 폼 복원 (방 개설 화면용)
+      // setup 폼 복원 (방 개설 화면 sleepTime/wakeTime만)
       try {
         var s = JSON.parse(localStorage.getItem(SAVE_KEY));
         if (s) {
-          document.getElementById('i-room').value  = s.room    || '';
-          document.getElementById('i-name').value  = s.name    || '';
-          document.getElementById('i-sleep').value = s.sleepRaw|| '';
-          document.getElementById('i-wake').value  = s.wakeRaw || '';
-          if (s.side) pickSide(s.side);
+          document.getElementById('i-sleep').value = s.sleepRaw || '';
+          document.getElementById('i-wake').value  = s.wakeRaw  || '';
         }
       } catch(e){}
       // 방 목록 확인
