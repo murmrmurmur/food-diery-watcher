@@ -416,6 +416,29 @@ input[type=text]:focus { border-color:var(--accent); }
 .load-more-btn:active { border-color:var(--accent); color:var(--accent); }
 .load-more-btn:disabled { opacity:.4; cursor:not-allowed; }
 
+/* ══ 방 리스트 ══ */
+#room-list-screen {
+  position:fixed; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:18px; padding:28px 20px;
+  background:var(--bg); z-index:300; overflow-y:auto;
+}
+.room-card {
+  background:var(--surface); border-radius:18px 14px 20px 16px;
+  border:1.5px solid var(--ink-line); padding:16px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; transition:transform .15s, border-color .18s;
+  box-shadow:0 4px 0 rgba(90,75,62,.1);
+}
+.room-card:active { transform:scale(.97); }
+.room-card-info { display:flex; flex-direction:column; gap:4px; }
+.room-card-code { font-family:'Gaegu',cursive; font-size:16px; font-weight:700; }
+.room-card-role { font-size:12px; color:var(--muted); }
+.room-card-role.left  { color:var(--left); }
+.room-card-role.right { color:var(--right); }
+.room-card-role.guest { color:#9C8FD0; }
+.room-card-arrow { font-size:18px; color:var(--muted); }
+
 /* ══ AUTH ══ */
 #auth-screen {
   position:fixed; inset:0;
@@ -434,8 +457,14 @@ input[type=text]:focus { border-color:var(--accent); }
 </head>
 <body>
 
+<!-- ══ 로딩 ══ -->
+<div id="loading-screen" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:400;flex-direction:column;gap:16px;">
+  <div style="font-size:40px;animation:blink 1.5s infinite">👁</div>
+  <div style="font-family:'Gaegu',cursive;font-size:16px;color:var(--muted);">불러오는 중...</div>
+</div>
+
 <!-- ══ AUTH ══ -->
-<div id="auth-screen">
+<div id="auth-screen" style="display:none">
   <div class="logo">👁<br><span class="lo">식단</span> <span class="ro">감시당하기</span></div>
   <p class="sub">로그인하고 감시를 시작해봐요</p>
   <div class="setup-card">
@@ -458,6 +487,14 @@ input[type=text]:focus { border-color:var(--accent); }
     <div class="err-msg" id="auth-err"></div>
     <button class="start-btn" id="auth-btn" onclick="doAuth()">로그인 👁</button>
   </div>
+</div>
+
+<!-- ══ 방 리스트 ══ -->
+<div id="room-list-screen" style="display:none">
+  <div class="logo">👁<br><span class="lo">내</span> <span class="ro">방 목록</span></div>
+  <p class="sub">입장할 방을 골라요</p>
+  <div id="room-list-cards" style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;"></div>
+  <button class="start-btn" style="max-width:360px;width:100%;margin-top:4px;" onclick="goToSetup()">＋ 새 방 만들기</button>
 </div>
 
 <!-- ══ SETUP ══ -->
@@ -512,6 +549,7 @@ input[type=text]:focus { border-color:var(--accent); }
         <div class="notif-badge" id="notif-badge"></div>
       </div>
       <div class="hdr-chip" onclick="openSettingPanel()">⚙️ 설정</div>
+      <div class="hdr-chip" onclick="goToRoomList()">🚪 방 이동</div>
       <div class="hdr-chip" onclick="doLogout()">로그아웃</div>
     </div>
   </div>
@@ -698,6 +736,60 @@ var CLOUDINARY_CLOUD  = 'dqnt3ybt8';
 var CLOUDINARY_PRESET = 'diet_watch_unsigned';
 var VAPID_KEY = 'BDX_fg1_9bL-jteAwQYCz9vrnJw8CEc__FH_3g4XSPY5V3Rvj_t-GKg-saevPBZpDd1pKhI-vf3DfLypSXD8lWE';
 
+/* ══ 방 리스트 ══ */
+function showRoomList(rooms) {
+  var screen = document.getElementById('room-list-screen');
+  var container = document.getElementById('room-list-cards');
+  container.innerHTML = '';
+  var roleLabel = { left:'🍊 왼쪽', right:'🫐 오른쪽', guest:'👀 구경' };
+  var roleClass = { left:'left', right:'right', guest:'guest' };
+  Object.keys(rooms).forEach(function(code) {
+    var role = rooms[code].role || 'guest';
+    var card = document.createElement('div');
+    card.className = 'room-card';
+    card.innerHTML =
+      '<div class="room-card-info">' +
+        '<div class="room-card-code">🚪 ' + escStr(code) + '</div>' +
+        '<div class="room-card-role ' + roleClass[role] + '">' + (roleLabel[role]||role) + '</div>' +
+      '</div>' +
+      '<div class="room-card-arrow">›</div>';
+    card.onclick = function() { enterRoom(code, role); };
+    container.appendChild(card);
+  });
+  screen.style.display = 'flex';
+}
+
+function enterRoom(code, role) {
+  var s = JSON.parse(localStorage.getItem(SAVE_KEY)) || {};
+  roomId = code;
+  mySide = role;
+  myName = s.name || '';
+  var sleepTime = s.sleepTime || '24:00';
+  var wakeTime  = s.wakeTime  || '07:30';
+  // 저장된 프로필 이름이 없으면 Firebase에서 가져옴
+  function proceed() {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(Object.assign(s, {
+      room:roomId, side:mySide, autoLogin:true
+    })));
+    document.getElementById('room-list-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp(sleepTime, wakeTime);
+  }
+  if (!myName && currentUid) {
+    db.ref('users/' + currentUid + '/profile/name').once('value', function(snap) {
+      myName = snap.val() || '';
+      proceed();
+    });
+  } else {
+    proceed();
+  }
+}
+
+function goToSetup() {
+  document.getElementById('room-list-screen').style.display = 'none';
+  document.getElementById('setup').style.display = 'flex';
+}
+
 /* ══ AUTH ══ */
 var auth;
 function initFirebase() {
@@ -757,8 +849,20 @@ function authErrMsg(code) {
 }
 
 function onAuthSuccess(user) {
+  currentUid = user.uid;
   document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('setup').style.display = 'flex';
+  // 내 방 목록 확인 → 있으면 방 리스트, 없으면 setup(방 개설)
+  db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
+    var rooms = snap.val();
+    if (rooms && Object.keys(rooms).length > 0) {
+      showRoomList(rooms);
+    } else {
+      document.getElementById('setup').style.display = 'flex';
+    }
+  }).catch(function() {
+    // 권한 에러 등 → setup으로 폴백
+    document.getElementById('setup').style.display = 'flex';
+  });
 }
 
 var WARNING_MSGS = [
@@ -781,6 +885,7 @@ var TIME_SLOTS = [
 var mySide = null, myName = '', roomId = '';
 var selFile = null, busy = false, db;
 var SAVE_KEY = 'diet_watch_v1';
+var currentUid = null;
 var currentMealKey = null, currentMealSide = null, currentMealUrl = null;
 var cachedNames = {};
 var reactionsCache = {};
@@ -851,6 +956,15 @@ function parseTimeInput(raw) {
   return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
 }
 
+function goToRoomList() {
+  document.getElementById('app').style.display = 'none';
+  if (currentUid) {
+    db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
+      showRoomList(snap.val() || {});
+    });
+  }
+}
+
 function doLogout() {
   localStorage.removeItem(SAVE_KEY);
   if (firebase.auth) firebase.auth().signOut();
@@ -869,11 +983,37 @@ function startApp() {
   try {
     initFirebase();
   } catch(e) { document.getElementById('err-msg').textContent='Firebase 오류: '+e.message; return; }
+  var errEl = document.getElementById('err-msg');
+  var btn   = document.getElementById('btn-start');
+  // guest는 자리 제한 없음, left/right는 이미 사용 중인지 확인
+  if (mySide !== 'guest') {
+    btn.disabled = true;
+    db.ref('rooms/'+roomId+'/names/'+mySide).once('value', function(snap) {
+      if (snap.val() && snap.val() !== myName) {
+        errEl.textContent = '이미 ' + (mySide==='left'?'왼쪽':'오른쪽') + ' 자리가 사용 중이에요';
+        btn.disabled = false;
+        return;
+      }
+      doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw);
+    });
+    return;
+  }
+  doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw);
+}
+
+function doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw) {
+  var errEl = document.getElementById('err-msg');
+  var btn   = document.getElementById('btn-start');
+  btn.disabled = false;
   localStorage.setItem(SAVE_KEY, JSON.stringify({
     room:roomId, name:myName, side:mySide,
     sleepTime:sleepTime, wakeTime:wakeTime,
     sleepRaw:sleepRaw, wakeRaw:wakeRaw, autoLogin:true
   }));
+  // users/{uid}/rooms/{방코드} 에 역할 저장
+  if (currentUid) {
+    db.ref('users/' + currentUid + '/rooms/' + roomId).set({ role: mySide });
+  }
   document.getElementById('setup').style.display = 'none';
   document.getElementById('app').style.display   = 'flex';
   initApp(sleepTime, wakeTime);
@@ -1913,13 +2053,27 @@ function initApp(sleepTime,wakeTime) {
 
 /* ══ 자동 로그인 ══ */
 (function(){
+  function hideLoading() {
+    var el = document.getElementById('loading-screen');
+    if (el) el.style.display = 'none';
+  }
+  // 이전 JS 실행 흔적 초기화
+  ['auth-screen','setup','room-list-screen','app'].forEach(function(id){
+    document.getElementById(id).style.display = 'none';
+  });
   initFirebase();
+  var authResolved = false;
+  var fallback = setTimeout(function() {
+    if (!authResolved) { hideLoading(); document.getElementById('auth-screen').style.display = 'flex'; }
+  }, 3000);
   auth.onAuthStateChanged(function(user) {
+    authResolved = true;
+    clearTimeout(fallback);
+    hideLoading();
     if (user) {
-      // 로그인 상태 → setup 화면으로
+      currentUid = user.uid;
       document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('setup').style.display = 'flex';
-      // setup 폼에 저장된 값 복원
+      // setup 폼 복원 (방 개설 화면용)
       try {
         var s = JSON.parse(localStorage.getItem(SAVE_KEY));
         if (s) {
@@ -1928,11 +2082,22 @@ function initApp(sleepTime,wakeTime) {
           document.getElementById('i-sleep').value = s.sleepRaw|| '';
           document.getElementById('i-wake').value  = s.wakeRaw || '';
           if (s.side) pickSide(s.side);
-          if (s.autoLogin && s.room && s.name && s.side) setTimeout(startApp, 80);
         }
       } catch(e){}
+      // 방 목록 확인
+      db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
+        var rooms = snap.val();
+        if (rooms && Object.keys(rooms).length > 0) {
+          showRoomList(rooms);
+        } else {
+          document.getElementById('setup').style.display = 'flex';
+        }
+      }).catch(function() {
+        document.getElementById('setup').style.display = 'flex';
+      });
+    } else {
+      document.getElementById('auth-screen').style.display = 'flex';
     }
-    // 비로그인 상태: auth-screen이 기본으로 보이므로 아무것도 안 해도 됨
   });
 })();
 </script>
