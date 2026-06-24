@@ -1317,7 +1317,7 @@ function fmtDate(ts) {
 }
 
 /* ── 사람별 그리드 블록 (날짜 레이블 포함) ── */
-function makeSideBlock(sideMeals, side, countUnit) {
+function makeSideBlock(sideMeals, side, countUnit, showWorkoutBadge) {
   var name=cachedNames[side]||(side==='left'?'왼쪽':'오른쪽');
   var color=side==='left'?'var(--left)':'var(--right)';
 
@@ -1348,7 +1348,7 @@ function makeSideBlock(sideMeals, side, countUnit) {
     var img=document.createElement('img');
     img.src=meal.url; img.loading='lazy';
     thumb.appendChild(img);
-    if (meal.type==='workout') {
+    if (meal.type==='workout' && showWorkoutBadge !== false) {
       var wb=document.createElement('span');
       wb.className='workout-badge'; wb.textContent='🏃';
       thumb.appendChild(wb);
@@ -1453,7 +1453,7 @@ function renderTimeslotView(meals) {
     ['left','right'].forEach(function(side) {
       var sideMeals=filtered.filter(function(m){ return m.side===side; });
       if (!sideMeals.length) { inner.appendChild(document.createElement('div')); return; }
-      inner.appendChild(makeSideBlock(sideMeals, side, '개'));
+      inner.appendChild(makeSideBlock(sideMeals, side, '개', !isWorkoutTab));
     });
     body.appendChild(inner);
   }
