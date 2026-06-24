@@ -234,7 +234,7 @@ input[type=text]:focus { border-color:var(--accent); }
 .fab:active { transform:translateY(3px); box-shadow:0 2px 0 var(--ink-line); }
 .fab-workout { background:#5BAD8F; }
 .fab-workout:active { background:#4a9a7d; }
-.fab-missed { background:#e8a838; font-size:13px; padding:11px 14px; border-radius:20px 24px 18px 22px; }
+.fab-missed { background:#e8a838; }
 .fab-missed:active { background:#d4952a; }
 /* 수동입력 뱃지 */
 .missed-badge {
@@ -700,8 +700,8 @@ input[type=text]:focus { border-color:var(--accent); }
 
   <div class="fab-group" id="fab-group">
     <button class="fab fab-workout" id="fab-workout-btn" onclick="openModal('workout')">🏃 운동했어요</button>
-    <button class="fab fab-missed" id="fab-missed-btn" onclick="openMissedModal()">❗ 깜빡했어요</button>
     <button class="fab fab-meal" id="fab-btn" onclick="openModal('meal')">📸 지금 먹어요</button>
+    <button class="fab fab-missed" id="fab-missed-btn" onclick="openMissedModal()">❗ 깜빡했어요</button>
   </div>
 </div>
 
@@ -725,6 +725,10 @@ input[type=text]:focus { border-color:var(--accent); }
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">깜빡했어요 ❗</div>
+    <div class="who-grid" style="gap:8px">
+      <button class="who-btn active" id="missed-type-meal" onclick="setMissedType('meal')" style="border-color:var(--accent)">🍽 식단</button>
+      <button class="who-btn" id="missed-type-workout" onclick="setMissedType('workout')">🏃 운동</button>
+    </div>
     <div class="prev-box" id="missed-prevbox" onclick="triggerMissedFile()">
       <span id="missed-prev-icon">📷</span>
       <input type="file" id="missed-fileinput" accept="image/*" capture="environment" style="display:none">
@@ -1324,7 +1328,7 @@ function renderTimeline(meals) {
       // 수동입력 뱃지
       if (m.missed) {
         var mb=document.createElement('span');
-        mb.className='missed-badge'; mb.textContent='수동입력';
+        mb.className='missed-badge'; mb.textContent='❗';
         card.appendChild(mb);
       }
 
@@ -1855,10 +1859,20 @@ function doPost() {
 function donePost(btn){ busy=false; btn.innerHTML='올리기'; btn.disabled=false; selFile=null; closeModal(); }
 
 /* ══ 깜빡했어요 ══ */
-var missedFile=null;
+var missedFile=null, missedType='meal';
+function setMissedType(t) {
+  missedType=t;
+  var isMeal=t==='meal';
+  var mb=document.getElementById('missed-type-meal');
+  var wb=document.getElementById('missed-type-workout');
+  if(mb){ mb.classList.toggle('active',isMeal); mb.style.borderColor=isMeal?'var(--accent)':''; }
+  if(wb){ wb.classList.toggle('active',!isMeal); wb.style.borderColor=!isMeal?'#5BAD8F':''; }
+  document.getElementById('missed-notetxt').placeholder=isMeal?'메모 (필수 — 예: 점심 파스타)':'메모 (필수 — 예: 30분 런닝)';
+}
 function openMissedModal() {
   if (mySide==='guest') { showToast('👀 구경 모드에서는 사진을 올릴 수 없어요'); return; }
-  missedFile=null;
+  missedFile=null; missedType='meal';
+  setMissedType('meal');
   document.getElementById('missed-notetxt').value='';
   /* datetime-local max = 현재 시각 */
   var now=new Date();
@@ -1915,7 +1929,7 @@ function doPostMissed() {
       var writes=targets.map(function(code){
         var role=allRooms[code]?allRooms[code].role:mySide;
         return db.ref('rooms/'+code+'/meals')
-          .push({side:role,url:url,ts:ts,menu:memo,type:'meal',missed:true,v:2})
+          .push({side:role,url:url,ts:ts,menu:memo,type:missedType,missed:true,v:2})
           .then(function(ref){ return db.ref('rooms/'+code+'/meals/'+ref.key+'/key').set(ref.key); })
           .catch(function(e){ console.warn('방 '+code+' 깜빡 업로드 실패',e); return null; });
       });
