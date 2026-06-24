@@ -234,6 +234,15 @@ input[type=text]:focus { border-color:var(--accent); }
 .fab:active { transform:translateY(3px); box-shadow:0 2px 0 var(--ink-line); }
 .fab-workout { background:#5BAD8F; }
 .fab-workout:active { background:#4a9a7d; }
+.fab-missed { background:#e8a838; font-size:13px; padding:11px 14px; border-radius:20px 24px 18px 22px; }
+.fab-missed:active { background:#d4952a; }
+/* 수동입력 뱃지 */
+.missed-badge {
+  position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
+  font-size:9px; background:rgba(232,168,56,.9); color:#fff;
+  border-radius:4px; padding:1px 4px; pointer-events:none; z-index:3;
+  font-family:'Gowun Dodum',sans-serif; white-space:nowrap; letter-spacing:.2px;
+}
 /* 운동 카드 테이프 색 */
 .mcrd.workout-card::before { background:rgba(91,173,143,.45) !important; }
 /* 운동 뱃지 */
@@ -691,6 +700,7 @@ input[type=text]:focus { border-color:var(--accent); }
 
   <div class="fab-group" id="fab-group">
     <button class="fab fab-workout" id="fab-workout-btn" onclick="openModal('workout')">🏃 운동했어요</button>
+    <button class="fab fab-missed" id="fab-missed-btn" onclick="openMissedModal()">❗ 깜빡했어요</button>
     <button class="fab fab-meal" id="fab-btn" onclick="openModal('meal')">📸 지금 먹어요</button>
   </div>
 </div>
@@ -707,6 +717,25 @@ input[type=text]:focus { border-color:var(--accent); }
     <input type="text" id="notetxt" placeholder="메뉴명 (예: 된장찌개 + 공기밥)" maxlength="30">
     <button class="modal-post" id="postbtn" onclick="doPost()">올리기</button>
     <button class="modal-cancel" onclick="closeModal()">취소</button>
+  </div>
+</div>
+
+<!-- ══ 깜빡했어요 MODAL ══ -->
+<div class="backdrop" id="missed-backdrop">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">깜빡했어요 ❗</div>
+    <div class="prev-box" id="missed-prevbox" onclick="triggerMissedFile()">
+      <span id="missed-prev-icon">📷</span>
+      <input type="file" id="missed-fileinput" accept="image/*" capture="environment" style="display:none">
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:-6px 0 2px;text-align:center">사진은 선택사항이에요</div>
+    <input type="text" id="missed-notetxt" placeholder="메모 (필수 — 예: 점심 파스타)" maxlength="30">
+    <div class="lbl" style="font-size:12px;margin-bottom:2px">언제 먹었어요?</div>
+    <input type="datetime-local" id="missed-datetime" style="width:100%;padding:10px 12px;border:1.3px solid var(--ink-line);border-radius:12px 16px 13px 15px;background:var(--surface);font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--text);box-sizing:border-box">
+    <div style="font-size:11px;color:var(--muted);margin-top:-4px">과거 시각도 입력 가능해요</div>
+    <button class="modal-post" id="missed-postbtn" onclick="doPostMissed()">올리기</button>
+    <button class="modal-cancel" onclick="closeMissedModal()">취소</button>
   </div>
 </div>
 
@@ -1292,6 +1321,12 @@ function renderTimeline(meals) {
         badge.className='workout-badge'; badge.textContent='🏃';
         card.appendChild(badge);
       }
+      // 수동입력 뱃지
+      if (m.missed) {
+        var mb=document.createElement('span');
+        mb.className='missed-badge'; mb.textContent='수동입력';
+        card.appendChild(mb);
+      }
 
       if (m.v===2) {
         var hhmm=new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
@@ -1818,6 +1853,93 @@ function doPost() {
   });
 }
 function donePost(btn){ busy=false; btn.innerHTML='올리기'; btn.disabled=false; selFile=null; closeModal(); }
+
+/* ══ 깜빡했어요 ══ */
+var missedFile=null;
+function openMissedModal() {
+  if (mySide==='guest') { showToast('👀 구경 모드에서는 사진을 올릴 수 없어요'); return; }
+  missedFile=null;
+  document.getElementById('missed-notetxt').value='';
+  /* datetime-local max = 현재 시각 */
+  var now=new Date();
+  var pad=function(n){return String(n).padStart(2,'0');};
+  var localNow=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':'+pad(now.getMinutes());
+  var dtInput=document.getElementById('missed-datetime');
+  dtInput.max=localNow; dtInput.value='';
+  var pb=document.getElementById('missed-prevbox');
+  pb.innerHTML='<span id="missed-prev-icon">📷</span><input type="file" id="missed-fileinput" accept="image/*" capture="environment" style="display:none">';
+  document.getElementById('missed-fileinput').onchange=missedFileChosen;
+  document.getElementById('missed-backdrop').classList.add('open');
+}
+function closeMissedModal() { document.getElementById('missed-backdrop').classList.remove('open'); }
+document.getElementById('missed-backdrop').addEventListener('click',function(e){ if(e.target===this) closeMissedModal(); });
+function triggerMissedFile() { document.getElementById('missed-fileinput').click(); }
+function missedFileChosen(e) {
+  var f=e.target.files[0]; if(!f) return;
+  missedFile=f;
+  var r=new FileReader();
+  r.onload=function(ev){
+    var pb=document.getElementById('missed-prevbox');
+    var icon=document.getElementById('missed-prev-icon');
+    if(icon) icon.style.display='none';
+    var img=pb.querySelector('img');
+    if(!img){ img=document.createElement('img'); pb.appendChild(img); }
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+function doPostMissed() {
+  var memo=document.getElementById('missed-notetxt').value.trim();
+  var dtVal=document.getElementById('missed-datetime').value;
+  if(!memo) { showToast('메모를 입력해주세요'); return; }
+  if(!dtVal) { showToast('시간을 입력해주세요'); return; }
+  var ts=new Date(dtVal).getTime();
+  if(isNaN(ts)||ts>Date.now()) { showToast('올바른 과거 시각을 입력해주세요'); return; }
+  if(busy) return;
+  busy=true;
+  var btn=document.getElementById('missed-postbtn');
+  btn.innerHTML='<span class="spin"></span> 올리는 중...'; btn.disabled=true;
+
+  function pushMissed(url) {
+    var roomsRef=currentUid
+      ? db.ref('users/'+currentUid+'/rooms').once('value')
+      : Promise.resolve(null);
+    roomsRef.then(function(snap){
+      var allRooms={};
+      if(snap&&snap.val()) allRooms=snap.val();
+      if(!allRooms[roomId]) allRooms[roomId]={role:mySide};
+      var targets=Object.keys(allRooms).filter(function(code){
+        return (allRooms[code].role||'guest')!=='guest';
+      });
+      if(!targets.length) targets=[roomId];
+      var writes=targets.map(function(code){
+        var role=allRooms[code]?allRooms[code].role:mySide;
+        return db.ref('rooms/'+code+'/meals')
+          .push({side:role,url:url,ts:ts,menu:memo,type:'meal',missed:true,v:2})
+          .then(function(ref){ return db.ref('rooms/'+code+'/meals/'+ref.key+'/key').set(ref.key); })
+          .catch(function(e){ console.warn('방 '+code+' 깜빡 업로드 실패',e); return null; });
+      });
+      Promise.all(writes).then(function(){
+        if(targets.length>1) showToast('✅ '+targets.length+'개 방에 기록됐어요');
+        else showToast('✅ 기록됐어요!');
+        busy=false; btn.innerHTML='올리기'; btn.disabled=false; missedFile=null; closeMissedModal();
+      }).catch(function(e){ alert('올리기 실패: '+e.message); busy=false; btn.innerHTML='올리기'; btn.disabled=false; });
+    }).catch(function(e){ alert('올리기 실패: '+e.message); busy=false; btn.innerHTML='올리기'; btn.disabled=false; });
+  }
+
+  if(missedFile) {
+    resizeImage(missedFile,function(dataUrl){
+      if(!dataUrl){ pushMissed(''); return; }
+      var fd=new FormData(); fd.append('file',dataUrl); fd.append('upload_preset',CLOUDINARY_PRESET);
+      fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
+      .then(function(r){ return r.json(); })
+      .then(function(data){ pushMissed(data.secure_url||''); })
+      .catch(function(e){ alert('이미지 올리기 실패: '+e.message); busy=false; btn.innerHTML='올리기'; btn.disabled=false; });
+    });
+  } else {
+    pushMissed('');
+  }
+}
 
 /* ══ 설정 패널 ══ */
 function openSettingPanel() {
