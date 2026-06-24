@@ -183,6 +183,19 @@ input[type=text]:focus { border-color:var(--accent); }
 }
 .mrow.ml .mcrd::before { background:rgba(255,148,102,.45); transform:translateX(-50%) rotate(-4deg); }
 .mrow.mr .mcrd::before { background:rgba(98,195,232,.45); transform:translateX(-50%) rotate(4deg); }
+/* 댓글 있는 카드: 테이프 노란색으로 */
+.mrow.ml .mcrd.has-comment::before { background:rgba(255,210,60,.75); }
+.mrow.mr .mcrd.has-comment::before { background:rgba(255,210,60,.75); }
+/* 💬 댓글 뱃지 */
+.comment-badge {
+  position:absolute; top:5px; left:5px;
+  font-size:10px; font-family:'Gaegu',cursive; font-weight:700;
+  background:rgba(255,255,255,.88); border-radius:10px;
+  padding:1px 5px; line-height:1.6;
+  box-shadow:0 1px 3px rgba(0,0,0,.18);
+  pointer-events:none; z-index:3; color:var(--text);
+  white-space:nowrap;
+}
 .mrow.ml .mcrd { justify-self:end; margin-right:14px; transform:rotate(-1.5deg); border-color:var(--accent); }
 .mrow.mr .mcrd { justify-self:start; margin-left:14px; transform:rotate(1.5deg); border-color:var(--other); }
 .mrow.ml .mcrd:active, .mrow.mr .mcrd:active { transform:scale(.96); }
@@ -1238,13 +1251,26 @@ function updateAllCardBars() {
     }
     // 👎 뱃지 추가/제거
     var hasDislike=!!(dislikeCache[key]&&dislikeCache[key].by);
-    var existing=card.querySelector('.dislike-badge');
-    if (hasDislike && !existing) {
-      var badge=document.createElement('span');
-      badge.className='dislike-badge'; badge.textContent='👎';
-      card.appendChild(badge);
-    } else if (!hasDislike && existing) {
-      existing.remove();
+    var existingDislike=card.querySelector('.dislike-badge');
+    if (hasDislike && !existingDislike) {
+      var dbadge=document.createElement('span');
+      dbadge.className='dislike-badge'; dbadge.textContent='👎';
+      card.appendChild(dbadge);
+    } else if (!hasDislike && existingDislike) {
+      existingDislike.remove();
+    }
+    // 댓글 테이프 색 + 💬 뱃지
+    var commentCount=commentsCache[key]?Object.keys(commentsCache[key]).length:0;
+    card.classList.toggle('has-comment', commentCount>0);
+    var existingCbadge=card.querySelector('.comment-badge');
+    if (commentCount>0 && !existingCbadge) {
+      var cbadge=document.createElement('span');
+      cbadge.className='comment-badge'; cbadge.textContent='💬 '+commentCount;
+      card.appendChild(cbadge);
+    } else if (commentCount>0 && existingCbadge) {
+      existingCbadge.textContent='💬 '+commentCount;
+    } else if (commentCount===0 && existingCbadge) {
+      existingCbadge.remove();
     }
   });
 }
