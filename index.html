@@ -55,14 +55,14 @@ body { overflow:hidden; min-height:100dvh; overflow-x:hidden; }
 .setup-card { background:var(--surface); border-radius:28px 24px 30px 26px; border:1.5px solid var(--ink-line); padding:22px 20px; width:100%; max-width:360px; display:flex; flex-direction:column; gap:15px; box-shadow:0 6px 0 rgba(90,75,62,.1); }
 .field { display:flex; flex-direction:column; gap:6px; }
 .lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
-input[type=text], input[type=email], input[type=password] {
+input[type=text], input[type=email], input[type=password], input[type=number] {
   width:100%; background:var(--surface2);
   border:1.3px solid var(--ink-line); border-radius:13px 11px 14px 12px;
   color:var(--text); font-family:'Gowun Dodum',sans-serif;
   font-size:16px; padding:14px 16px; outline:none;
   transition:border-color .2s; -webkit-appearance:none; box-sizing:border-box;
 }
-input[type=text]:focus, input[type=email]:focus, input[type=password]:focus { border-color:var(--accent); }
+input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus { border-color:var(--accent); }
 .who-grid, .time-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .who-btn {
   padding:14px 8px; border-radius:14px 18px 13px 16px;
@@ -270,10 +270,10 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus { bo
 }
 .fab {
   background:var(--accent); color:#fff; border:1.8px solid var(--ink-line); border-radius:24px 28px 22px 26px;
-  padding:13px 20px; font-family:'Gaegu',cursive; font-weight:700;
-  font-size:15px; letter-spacing:.5px; cursor:pointer;
+  padding:11px 14px; font-family:'Gaegu',cursive; font-weight:700;
+  font-size:13px; letter-spacing:.3px; cursor:pointer;
   box-shadow:0 5px 0 var(--ink-line);
-  display:flex; align-items:center; gap:6px;
+  display:flex; align-items:center; gap:5px;
   transition:transform .15s, box-shadow .15s; white-space:nowrap;
 }
 .fab:active { transform:translateY(3px); box-shadow:0 2px 0 var(--ink-line); }
@@ -410,12 +410,12 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus { bo
 .invoice-card { background:var(--surface2); border-radius:20px 16px 22px 18px; border:1.3px solid var(--line); padding:16px; margin-bottom:12px; }
 .invoice-title { font-family:'Gaegu',cursive; font-size:14px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
 .invoice-total { font-family:'Gaegu',cursive; font-size:22px; margin-bottom:8px; }
-.invoice-list { display:flex; flex-direction:column; gap:5px; max-height:140px; overflow-y:auto; }
-.invoice-item { display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:4px 0; border-bottom:1px solid var(--line); }
+.invoice-list { display:flex; flex-direction:column; gap:0; max-height:200px; overflow-y:auto; background:var(--surface2); border:1.3px solid var(--line); border-radius:14px 10px 16px 12px; padding:4px 12px; }
+.invoice-item { display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:8px 0; border-bottom:1px solid var(--line); }
 .invoice-item:last-child { border-bottom:none; }
 .invoice-item .iv-date { color:var(--muted); }
 .invoice-item .iv-amount { font-family:'Gaegu',cursive; }
-.invoice-empty { font-size:12px; color:var(--muted); text-align:center; padding:12px 0; }
+.invoice-empty { font-size:12px; color:var(--muted); text-align:center; padding:14px 0; }
 .invoice-settle-hint { font-size:11px; color:var(--muted); text-align:center; margin-top:8px; }
 
 /* 달력 */
@@ -2156,13 +2156,17 @@ function openInvoiceScreen() {
   document.getElementById('inv-pane-my').style.display='';
   document.getElementById('inv-pane-other').style.display='none';
 
-  /* 데이터 로드 후 두 패널 모두 렌더 */
-  db.ref('rooms/'+roomId+'/judgments').once('value',function(snap){
-    var allJ=snap.val()||{};
-    renderInvoicePane('my', mySide, allJ, 'var(--accent)');
-    renderInvoicePane('other', otherSide, allJ, 'var(--other)');
-    buildInvoiceCalendar('my', mySide, allJ);
-    buildInvoiceCalendar('other', otherSide, allJ);
+  /* meals 실시간 데이터로 판정 재계산 (삭제 즉시 반영) */
+  db.ref('rooms/'+roomId+'/settings').once('value',function(snapS){
+    var settings=snapS.val()||{};
+    db.ref('rooms/'+roomId+'/meals').once('value',function(snapM){
+      var mealArr=Object.values(snapM.val()||{});
+      var allJ=computeJudgmentsFromMeals(mealArr, settings);
+      renderInvoicePane('my', mySide, allJ, 'var(--accent)');
+      renderInvoicePane('other', otherSide, allJ, 'var(--other)');
+      buildInvoiceCalendar('my', mySide, allJ);
+      buildInvoiceCalendar('other', otherSide, allJ);
+    });
   });
 
   document.getElementById('invoice-screen').style.display='flex';
@@ -2182,6 +2186,41 @@ function switchInvTab(tab) {
 }
 
 /* judgments 기반 청구서 내역 렌더 */
+function computeJudgmentsFromMeals(mealArr, settings) {
+  var allJ = {};
+  var today = new Date(); today.setHours(0,0,0,0);
+  /* 날짜+사이드별로 그룹핑 */
+  var byDaySide = {};
+  mealArr.forEach(function(m) {
+    if (!m.ts || !m.side) return;
+    var dayStart = new Date(m.ts); dayStart.setHours(0,0,0,0);
+    if (dayStart >= today) return;
+    var dk = dayStart.toISOString().slice(0,10);
+    if (!byDaySide[dk]) byDaySide[dk] = {left:[],right:[]};
+    if (byDaySide[dk][m.side]) byDaySide[dk][m.side].push(m);
+  });
+  /* 사이드별 판정 */
+  Object.keys(byDaySide).forEach(function(dk) {
+    allJ[dk] = {};
+    ['left','right'].forEach(function(side) {
+      var meals = byDaySide[dk][side] || [];
+      if (!meals.length) return;
+      var st = ((settings[side]||{}).sleepTime) || '24:00';
+      var sm = timeToMinutes(st), cm = sm - 240;
+      var dayStart = new Date(dk+'T00:00:00');
+      var dayEnd = new Date(dayStart.getTime() + 86399999);
+      var cTs = new Date(dayStart); cTs.setHours(Math.floor(cm/60), cm%60, 0, 0);
+      var isClean = !meals.some(function(m) {
+        return (!m.type||m.type==='meal') && m.ts>=cTs.getTime() && m.ts<=dayEnd.getTime();
+      });
+      var hasWorkout = meals.some(function(m) { return m.type==='workout'; });
+      var noDislike = !meals.some(function(m) { return (!m.type||m.type==='meal') && m.dislike && m.dislike.by; });
+      allJ[dk][side] = {isClean:isClean, hasWorkout:hasWorkout, noDislike:noDislike, isPerfect:isClean&&hasWorkout&&noDislike};
+    });
+  });
+  return allJ;
+}
+
 function renderInvoicePane(paneId, invoiceSide, allJ, color) {
   var now=new Date();
   var y=now.getFullYear(), mo=now.getMonth();
