@@ -714,6 +714,7 @@ input[type=text]:focus { border-color:var(--accent); }
   <div class="gallery-subtabs" id="gallery-subtabs">
     <button class="gallery-tab active" id="gtab-monthly" onclick="setGalleryTab('monthly')">📅 월별 식단</button>
     <button class="gallery-tab" id="gtab-timeslot" onclick="setGalleryTab('timeslot')">🕐 시간대별 식단</button>
+    <button class="gallery-tab" id="gtab-workout" onclick="setGalleryTab('workout')">🏃 운동</button>
   </div>
   <!-- 시간대별 서브탭 -->
   <div class="timeslot-subtabs" id="timeslot-subtabs"></div>
@@ -1515,6 +1516,12 @@ function setGalleryTab(tab) {
     if (currentTimeslot==='🏃운동') currentTimeslot=null;
     setViewMode('timeslot');
     document.getElementById('gtab-timeslot').classList.add('active');
+    document.getElementById('gtab-workout').classList.remove('active');
+  } else if (tab==='workout') {
+    selectTimeslot('🏃운동');
+    setViewMode('timeslot');
+    document.getElementById('gtab-timeslot').classList.remove('active');
+    document.getElementById('gtab-workout').classList.add('active');
   }
 }
 
