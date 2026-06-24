@@ -123,10 +123,13 @@ input[type=text]:focus { border-color:var(--accent); }
 }
 .notif-badge.show { display:flex; }
 /* ══ TIMELINE ══ */
-.tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:180px; -webkit-overflow-scrolling:touch; }
-.tl-wrap::before {
+#views-container {
+  flex:1; position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+#views-container::before {
   content:'';
-  position:fixed;
+  position:absolute;
   left:50%; top:0; bottom:0;
   width:0;
   border-left:2px dashed #B8A494;
@@ -134,6 +137,7 @@ input[type=text]:focus { border-color:var(--accent); }
   pointer-events:none;
   z-index:0;
 }
+.tl-wrap { flex:1; overflow-y:auto; position:relative; padding-bottom:180px; -webkit-overflow-scrolling:touch; }
 .tl-line { display:none; }
 .empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:100px 32px; color:var(--muted); text-align:center; }
 .empty-eye { font-size:48px; animation:blink 3.5s infinite; }
@@ -411,12 +415,53 @@ input[type=text]:focus { border-color:var(--accent); }
 .load-more-btn { display:block; margin:20px auto 0; padding:10px 28px; border:1.3px solid var(--ink-line); border-radius:16px 20px 14px 18px; background:var(--surface); color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:13px; cursor:pointer; transition:all .18s; }
 .load-more-btn:active { border-color:var(--accent); color:var(--accent); }
 .load-more-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+/* ══ AUTH ══ */
+#auth-screen {
+  position:fixed; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:22px; padding:28px 20px;
+  background:var(--bg); z-index:300; overflow-y:auto;
+}
+.auth-tabs { display:flex; gap:0; border:1.3px solid var(--ink-line); border-radius:14px 18px 13px 16px; overflow:hidden; }
+.auth-tab {
+  flex:1; padding:10px 8px; border:none; background:var(--surface);
+  color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:14px;
+  cursor:pointer; transition:all .18s;
+}
+.auth-tab.active { background:var(--accent); color:#fff; font-weight:700; }
 </style>
 </head>
 <body>
 
+<!-- ══ AUTH ══ -->
+<div id="auth-screen">
+  <div class="logo">👁<br><span class="lo">식단</span> <span class="ro">감시당하기</span></div>
+  <p class="sub">로그인하고 감시를 시작해봐요</p>
+  <div class="setup-card">
+    <div id="auth-tabs" class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">로그인</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">회원가입</button>
+    </div>
+    <div class="field" id="auth-name-field" style="display:none">
+      <div class="lbl">이름 / 닉네임</div>
+      <input type="text" id="auth-name" placeholder="예: 소현" maxlength="10" autocomplete="off">
+    </div>
+    <div class="field">
+      <div class="lbl">이메일</div>
+      <input type="email" id="auth-email" placeholder="example@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <div class="lbl">비밀번호</div>
+      <input type="password" id="auth-pw" placeholder="6자 이상" autocomplete="current-password">
+    </div>
+    <div class="err-msg" id="auth-err"></div>
+    <button class="start-btn" id="auth-btn" onclick="doAuth()">로그인 👁</button>
+  </div>
+</div>
+
 <!-- ══ SETUP ══ -->
-<div id="setup">
+<div id="setup" style="display:none">
   <div class="logo">👁<br><span class="lo">식단</span> <span class="ro">감시당하기</span></div>
   <p class="sub">오늘 뭐 먹었는지 서로 감시해요<br>사진에 시간 + 메뉴명이 자동으로 찍혀요</p>
   <div class="setup-card">
@@ -480,6 +525,7 @@ input[type=text]:focus { border-color:var(--accent); }
   <!-- [CHANGE] 시간대별 서브탭: timeslot 모드일 때만 표시 -->
   <div class="timeslot-subtabs" id="timeslot-subtabs"></div>
 
+  <div id="views-container">
   <div class="tl-wrap" id="tl-wrap">
     <div class="tl-line"></div>
     <div class="empty" id="emptystate">
@@ -500,6 +546,7 @@ input[type=text]:focus { border-color:var(--accent); }
     <div class="timeslot-count" id="timeslot-count"></div>
     <div class="timeslot-body" id="timeslot-body"></div>
     <button class="load-more-btn" id="timeslot-load-more" onclick="loadMoreMeals()">이전 3개월 더 보기</button>
+  </div>
   </div>
 
   <button class="fab" id="fab-btn" onclick="openModal()">📸 지금 먹어요</button>
@@ -634,6 +681,7 @@ input[type=text]:focus { border-color:var(--accent); }
 <!-- Firebase compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
 /* ══ CONFIG ══ */
@@ -649,6 +697,69 @@ var FIREBASE_CONFIG = {
 var CLOUDINARY_CLOUD  = 'dqnt3ybt8';
 var CLOUDINARY_PRESET = 'diet_watch_unsigned';
 var VAPID_KEY = 'BDX_fg1_9bL-jteAwQYCz9vrnJw8CEc__FH_3g4XSPY5V3Rvj_t-GKg-saevPBZpDd1pKhI-vf3DfLypSXD8lWE';
+
+/* ══ AUTH ══ */
+var auth;
+function initFirebase() {
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  auth = firebase.auth();
+  db   = firebase.database();
+}
+
+function switchAuthTab(tab) {
+  var isSignup = tab === 'signup';
+  document.getElementById('tab-login').classList.toggle('active', !isSignup);
+  document.getElementById('tab-signup').classList.toggle('active', isSignup);
+  document.getElementById('auth-name-field').style.display = isSignup ? '' : 'none';
+  document.getElementById('auth-btn').textContent = isSignup ? '회원가입 👁' : '로그인 👁';
+  document.getElementById('auth-err').textContent = '';
+}
+
+function doAuth() {
+  initFirebase();
+  var isSignup = document.getElementById('tab-signup').classList.contains('active');
+  var email = document.getElementById('auth-email').value.trim();
+  var pw    = document.getElementById('auth-pw').value;
+  var name  = document.getElementById('auth-name').value.trim();
+  var errEl = document.getElementById('auth-err');
+  var btn   = document.getElementById('auth-btn');
+  if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해줘요'; return; }
+  if (isSignup && !name) { errEl.textContent = '이름을 입력해줘요'; return; }
+  btn.disabled = true;
+  errEl.textContent = '';
+
+  if (isSignup) {
+    auth.createUserWithEmailAndPassword(email, pw)
+      .then(function(cred) {
+        return db.ref('users/' + cred.user.uid + '/profile').set({ name: name, email: email })
+          .then(function() { return cred; });
+      })
+      .then(function(cred) { onAuthSuccess(cred.user); })
+      .catch(function(e) { errEl.textContent = authErrMsg(e.code); btn.disabled = false; });
+  } else {
+    auth.signInWithEmailAndPassword(email, pw)
+      .then(function(cred) { onAuthSuccess(cred.user); })
+      .catch(function(e) { errEl.textContent = authErrMsg(e.code); btn.disabled = false; });
+  }
+}
+
+function authErrMsg(code) {
+  var map = {
+    'auth/email-already-in-use':'이미 사용 중인 이메일이에요',
+    'auth/invalid-email':'이메일 형식이 맞지 않아요',
+    'auth/weak-password':'비밀번호는 6자 이상이어야 해요',
+    'auth/user-not-found':'등록되지 않은 이메일이에요',
+    'auth/wrong-password':'비밀번호가 틀렸어요',
+    'auth/invalid-credential':'이메일 또는 비밀번호가 틀렸어요',
+    'auth/too-many-requests':'잠시 후 다시 시도해줘요'
+  };
+  return map[code] || '오류가 발생했어요 (' + code + ')';
+}
+
+function onAuthSuccess(user) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('setup').style.display = 'flex';
+}
 
 var WARNING_MSGS = [
   '🔫 %s 그만 드세요','🚨 %s 오늘 몇 번째예요','👀 %s 이러다 큰일 나요',
@@ -740,7 +851,11 @@ function parseTimeInput(raw) {
   return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
 }
 
-function doLogout() { localStorage.removeItem(SAVE_KEY); location.reload(); }
+function doLogout() {
+  localStorage.removeItem(SAVE_KEY);
+  if (firebase.auth) firebase.auth().signOut();
+  location.reload();
+}
 
 function startApp() {
   document.getElementById('err-msg').textContent = '';
@@ -752,8 +867,7 @@ function startApp() {
   var wakeTime  = parseTimeInput(wakeRaw)  || '07:30';
   if (!roomId||!myName||!mySide) return;
   try {
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.database();
+    initFirebase();
   } catch(e) { document.getElementById('err-msg').textContent='Firebase 오류: '+e.message; return; }
   localStorage.setItem(SAVE_KEY, JSON.stringify({
     room:roomId, name:myName, side:mySide,
@@ -1799,16 +1913,27 @@ function initApp(sleepTime,wakeTime) {
 
 /* ══ 자동 로그인 ══ */
 (function(){
-  try {
-    var s=JSON.parse(localStorage.getItem(SAVE_KEY));
-    if(!s) return;
-    document.getElementById('i-room').value=s.room||'';
-    document.getElementById('i-name').value=s.name||'';
-    document.getElementById('i-sleep').value=s.sleepRaw||'';
-    document.getElementById('i-wake').value=s.wakeRaw||'';
-    if(s.side) pickSide(s.side);
-    if(s.autoLogin&&s.room&&s.name&&s.side) setTimeout(startApp,80);
-  } catch(e){}
+  initFirebase();
+  auth.onAuthStateChanged(function(user) {
+    if (user) {
+      // 로그인 상태 → setup 화면으로
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('setup').style.display = 'flex';
+      // setup 폼에 저장된 값 복원
+      try {
+        var s = JSON.parse(localStorage.getItem(SAVE_KEY));
+        if (s) {
+          document.getElementById('i-room').value  = s.room    || '';
+          document.getElementById('i-name').value  = s.name    || '';
+          document.getElementById('i-sleep').value = s.sleepRaw|| '';
+          document.getElementById('i-wake').value  = s.wakeRaw || '';
+          if (s.side) pickSide(s.side);
+          if (s.autoLogin && s.room && s.name && s.side) setTimeout(startApp, 80);
+        }
+      } catch(e){}
+    }
+    // 비로그인 상태: auth-screen이 기본으로 보이므로 아무것도 안 해도 됨
+  });
 })();
 </script>
 </body>
