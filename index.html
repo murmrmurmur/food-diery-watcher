@@ -770,17 +770,6 @@ input[type=text]:focus { border-color:var(--accent); }
 
     <div class="invoice-settle-hint">💡 매월 1일에 전월 청구서가 확정됩니다</div>
 
-    <div class="streak-row" style="margin-top:14px">
-      <div class="streak-card">
-        <div class="streak-num lc" id="cp-left-streak">0</div>
-        <div class="streak-lbl" id="cp-ls-name">왼쪽 연속</div>
-      </div>
-      <div class="streak-card">
-        <div class="streak-num rc" id="cp-right-streak">0</div>
-        <div class="streak-lbl" id="cp-rs-name">오른쪽 연속</div>
-      </div>
-    </div>
-
     <div class="inv-section-lbl">이번달 클린데이 달력</div>
     <div class="cal-month-title" id="cp-cal-month"></div>
     <div class="clean-calendar" id="cp-calendar"></div>
@@ -788,9 +777,12 @@ input[type=text]:focus { border-color:var(--accent); }
     <div class="inv-section-lbl">상금 안내</div>
     <div class="bonus-list">
       <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+500원 청구</span></div>
-      <div class="bonus-item"><span>3일 연속 클린</span><span class="bv">+500원 보너스</span></div>
-      <div class="bonus-item"><span>7일 연속 클린</span><span class="bv">+1,500원 보너스</span></div>
-      <div class="bonus-item"><span>커플 동시 클린</span><span class="bv">각 +500원 보너스</span></div>
+      <div class="bonus-item"><span>운동한 날</span><span class="bv">+1,000원 청구</span></div>
+      <div class="bonus-item"><span>👎 받은 날</span><span class="bv">+500원 (나한테)</span></div>
+      <div class="bonus-item"><span>퍼펙트 데이 🏆</span><span class="bv">+1,000원 추가</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">
+      퍼펙트 데이 = 야식 없음 + 운동 + 👎 없음 모두 충족
     </div>
 
   </div>
@@ -1817,14 +1809,7 @@ function openCoinPanel() { openInvoiceScreen(); }
 
 function openInvoiceScreen() {
   /* 스트릭 */
-  db.ref('rooms/'+roomId+'/streaks').once('value',function(snap){
-    var s=snap.val()||{};
-    document.getElementById('cp-left-streak').textContent=s.left||0;
-    document.getElementById('cp-right-streak').textContent=s.right||0;
-    var lsn=document.getElementById('cp-ls-name'), rsn=document.getElementById('cp-rs-name');
-    if(lsn) lsn.textContent=(cachedNames['left']||'왼쪽')+' 연속';
-    if(rsn) rsn.textContent=(cachedNames['right']||'오른쪽')+' 연속';
-  });
+  /* streak 표시 제거됨 */
 
   var otherSide=mySide==='left'?'right':'left';
 
@@ -1840,21 +1825,10 @@ function openInvoiceScreen() {
   if (myTitleEl) myTitleEl.textContent=myName2+'의 청구서';
   if (otherTitleEl) otherTitleEl.textContent=otherName+'의 청구서';
 
-  /* 청구서 계산 */
-  var leftData={}, rightData={};
-  function buildInvoices() {
-    var otherCleans=mySide==='left'?rightData:leftData;
-    var myCleans=mySide==='left'?leftData:rightData;
-    renderInvoice('my-invoice', myCleans, 'var(--accent)');
-    renderInvoice('other-invoice', otherCleans, 'var(--other)');
-  }
-  db.ref('rooms/'+roomId+'/cleanDays/left').once('value',function(snap){
-    leftData=snap.val()||{};
-    db.ref('rooms/'+roomId+'/cleanDays/right').once('value',function(snap2){
-      rightData=snap2.val()||{};
-      buildInvoices();
-    });
-  });
+  /* 청구서 계산 (judgments 기반) */
+  var otherSide2=mySide==='left'?'right':'left';
+  renderInvoice('my-invoice', mySide, 'var(--accent)');
+  renderInvoice('other-invoice', otherSide2, 'var(--other)');
 
   /* 목표금액 뱃지 */
   db.ref('rooms/'+roomId+'/settings/goalAmount').once('value',function(snap){
@@ -1872,41 +1846,49 @@ function closeInvoiceScreen() {
 }
 function closeCoinPanel() { closeInvoiceScreen(); }
 
-function renderInvoice(idPrefix, cleanData, color) {
+/* renderInvoice: judgments 기반으로 청구서 항목 렌더
+   invoiceSide = 이 청구서의 주인공 side (그 side가 상대방에게 청구하는 내역) */
+function renderInvoice(idPrefix, invoiceSide, color) {
   var now=new Date();
   var y=now.getFullYear(), mo=now.getMonth();
   var prefix=y+'-'+String(mo+1).padStart(2,'0');
   var days=new Date(y,mo+1,0).getDate();
-
-  var items=[];
-  var total=0;
-  for (var d=1;d<=days;d++) {
-    var dk=prefix+'-'+String(d).padStart(2,'0');
-    if (cleanData[dk]===true) {
-      /* 기본 500원 (보너스는 addCoin에서 처리, 여기서는 기본만 표시) */
-      var amt=500;
-      items.push({date:dk, amount:amt});
-      total+=amt;
-    }
-  }
-
   var totalEl=document.getElementById(idPrefix+'-total');
   var listEl=document.getElementById(idPrefix+'-list');
-  if (totalEl) { totalEl.textContent=total.toLocaleString()+'원'; totalEl.style.color=color; }
-  if (!listEl) return;
-  if (!items.length) {
-    listEl.innerHTML='<div class="invoice-empty">이번달 클린데이 없음</div>';
-    return;
-  }
-  listEl.innerHTML='';
-  items.forEach(function(item) {
-    var d=new Date(item.date);
-    var dow=['일','월','화','수','목','금','토'][d.getDay()];
-    var mo2=d.getMonth()+1, day=d.getDate();
-    var el=document.createElement('div');
-    el.className='invoice-item';
-    el.innerHTML='<span class="iv-date">'+mo2+'/'+day+' ('+dow+') 클린</span><span class="iv-amount" style="color:'+color+'">+'+item.amount.toLocaleString()+'원</span>';
-    listEl.appendChild(el);
+
+  db.ref('rooms/'+roomId+'/judgments').once('value',function(snap){
+    var allJ=snap.val()||{};
+    var items=[], total=0;
+
+    for (var d=1;d<=days;d++) {
+      var dk=prefix+'-'+String(d).padStart(2,'0');
+      var j=(allJ[dk]||{})[invoiceSide];
+      if(!j) continue;
+      var parts=[], amt=0;
+      if(j.isClean){ amt+=500; parts.push('야식없음 +500'); }
+      if(j.hasWorkout){ amt+=1000; parts.push('운동 +1000'); }
+      if(!j.noDislike){ amt+=500; parts.push('👎받음 +500'); }
+      if(j.isPerfect){ amt+=1000; parts.push('퍼펙트 +1000'); }
+      if(amt>0){ items.push({date:dk, amount:amt, parts:parts}); total+=amt; }
+    }
+
+    if(totalEl){ totalEl.textContent=total.toLocaleString()+'원'; totalEl.style.color=color; }
+    if(!listEl) return;
+    if(!items.length){
+      listEl.innerHTML='<div class="invoice-empty">이번달 기록 없음</div>';
+      return;
+    }
+    listEl.innerHTML='';
+    items.forEach(function(item){
+      var dt=new Date(item.date);
+      var dow=['일','월','화','수','목','금','토'][dt.getDay()];
+      var mo2=dt.getMonth()+1, day=dt.getDate();
+      var el=document.createElement('div');
+      el.className='invoice-item';
+      el.innerHTML='<span class="iv-date">'+mo2+'/'+day+' ('+dow+')</span>'
+        +'<span class="iv-amount" style="color:'+color+'">+'+item.amount.toLocaleString()+'원</span>';
+      listEl.appendChild(el);
+    });
   });
 }
 
@@ -2067,36 +2049,66 @@ function scheduleJudgeAtWakeTime(wakeTime){
 }
 
 function judgeYesterday(){
-  if (mySide==='guest') return; // 구경꾼은 본인 클린데이 판정 대상이 아님
+  if (mySide==='guest') return;
   var yest=new Date(); yest.setDate(yest.getDate()-1);
   var dk=yest.toISOString().slice(0,10);
   var judgeKey='diet_judge_'+roomId+'_'+mySide+'_'+dk;
   if(localStorage.getItem(judgeKey)) return;
-  db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).once('value',function(snap){
-    if(snap.val()!==null&&localStorage.getItem(judgeKey)){ return; }
-    if(snap.val()!==null){ localStorage.setItem(judgeKey,'1'); return; }
-    db.ref('rooms/'+roomId+'/settings/'+mySide).once('value',function(snap2){
-      var st=(snap2.val()||{}).sleepTime||'24:00';
+
+  /* 이미 판정 기록이 있으면 skip */
+  db.ref('rooms/'+roomId+'/judgments/'+dk+'/'+mySide).once('value',function(snapJ){
+    if(snapJ.val()!==null){ localStorage.setItem(judgeKey,'1'); return; }
+
+    db.ref('rooms/'+roomId+'/settings/'+mySide).once('value',function(snapSet){
+      var st=(snapSet.val()||{}).sleepTime||'24:00';
       var sm=timeToMinutes(st), cm=sm-240;
       var cTs=new Date(yest); cTs.setHours(Math.floor(cm/60),cm%60,0,0);
+      var dayStart=new Date(yest); dayStart.setHours(0,0,0,0);
       var dEnd=new Date(yest); dEnd.setHours(23,59,59,999);
-      db.ref('rooms/'+roomId+'/meals').once('value',function(snap3){
-        var meals=snap3.val()||{};
-        var late=Object.values(meals).some(function(m){ return m.side===mySide&&m.ts>=cTs.getTime()&&m.ts<=dEnd.getTime(); });
-        var isClean=!late;
+
+      db.ref('rooms/'+roomId+'/meals').once('value',function(snapM){
+        var meals=snapM.val()||{};
+        var mealArr=Object.values(meals);
+
+        /* 1) 야식 여부: 취침 4시간 전 ~ 자정 사이 식단 기록 */
+        var lateNight=mealArr.some(function(m){
+          return m.side===mySide && (!m.type||m.type==='meal') && m.ts>=cTs.getTime() && m.ts<=dEnd.getTime();
+        });
+        var isClean=!lateNight;
+
+        /* 2) 운동 여부: 어제 type='workout' 기록 */
+        var hasWorkout=mealArr.some(function(m){
+          return m.side===mySide && m.type==='workout' && m.ts>=dayStart.getTime() && m.ts<=dEnd.getTime();
+        });
+
+        /* 3) 내 사진에 👎 있는지 */
+        var myMeals=mealArr.filter(function(m){
+          return m.side===mySide && (!m.type||m.type==='meal') && m.ts>=dayStart.getTime() && m.ts<=dEnd.getTime();
+        });
+        var hasDislike=myMeals.some(function(m){ return m.dislike && m.dislike.by; });
+        var noDislike=!hasDislike;
+
+        /* 4) 퍼펙트: 세 조건 모두 */
+        var isPerfect=isClean && hasWorkout && noDislike;
+
+        /* DB 저장 */
+        var judgment={isClean:isClean, hasWorkout:hasWorkout, noDislike:noDislike, isPerfect:isPerfect, ts:Date.now()};
+        db.ref('rooms/'+roomId+'/judgments/'+dk+'/'+mySide).set(judgment);
         db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(isClean);
         localStorage.setItem(judgeKey,'1');
-        if(isClean){
-          addCoin(dk);
-          db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snapSt){
-            var st2=snapSt.val()||0;
-            var bonusWon=st2%7===0?1500:st2%3===0?500:0, totalWon=500+bonusWon;
-            var msg='✨ 어제 클린데이! 상대방 청구서에 +'+totalWon.toLocaleString()+'원 💰';
-            if(bonusWon>0) msg+=' ('+bonusWon.toLocaleString()+'원 보너스!)';
-            showToast(msg);
-          });
+
+        addCoin(dk, judgment);
+
+        /* 토스트 */
+        var parts=[];
+        if(isClean) parts.push('야식없음 +500');
+        if(hasWorkout) parts.push('운동 +1000');
+        if(hasDislike) parts.push('👎받음 +500');
+        if(isPerfect) parts.push('퍼펙트 +1000');
+        var total=(isClean?500:0)+(hasWorkout?1000:0)+(hasDislike?500:0)+(isPerfect?1000:0);
+        if(total>0){
+          showToast('✨ 어제 정산 +'+total.toLocaleString()+'원 💰'+(parts.length?' ('+parts.join(', ')+')':''));
         } else {
-          db.ref('rooms/'+roomId+'/streaks/'+mySide).set(0);
           showToast('😅 어제 야식이 있었네요. 오늘은 참아봐요!');
         }
       });
@@ -2104,28 +2116,32 @@ function judgeYesterday(){
   });
 }
 
-function addCoin(dk){
-  /* [CHANGE] 코인은 상대방 계정에 적립 (내가 성공 → 상대방이 내는 구조) */
+function addCoin(dk, j){
   var otherSide=mySide==='left'?'right':'left';
-  db.ref('rooms/'+roomId+'/coins/'+otherSide).once('value',function(snap){
-    var cur=snap.val()||0;
-    db.ref('rooms/'+roomId+'/streaks/'+mySide).once('value',function(snap2){
-      var ns=(snap2.val()||0)+1;
-      var bonusWon=ns%7===0?1500:ns%3===0?500:0;
-      var earnedWon=500+bonusWon;
-      db.ref('rooms/'+roomId+'/coins/'+otherSide).set(cur+earnedWon);
-      db.ref('rooms/'+roomId+'/streaks/'+mySide).set(ns);
-      /* 커플 동시 클린 보너스 */
-      db.ref('rooms/'+roomId+'/cleanDays/'+otherSide+'/'+dk).once('value',function(snap3){
-        if(snap3.val()===true){
-          db.ref('rooms/'+roomId+'/coins/'+mySide).once('value',function(snapNow){
-            db.ref('rooms/'+roomId+'/coins/'+mySide).set((snapNow.val()||0)+500);
-            updateCoinDisplay();
-          });
-        } else { updateCoinDisplay(); }
+  /* 내가 성공할수록 상대방이 내야 할 금액 */
+  var toOther=(j.isClean?500:0)+(j.hasWorkout?1000:0)+(j.isPerfect?1000:0);
+  /* 상대방이 내 사진에 👎 → 나에게 +500 */
+  var toMe=j.noDislike?0:500;
+
+  function done(){ updateCoinDisplay(); }
+  var pending=0;
+  if(toOther>0){
+    pending++;
+    db.ref('rooms/'+roomId+'/coins/'+otherSide).once('value',function(snap){
+      db.ref('rooms/'+roomId+'/coins/'+otherSide).set((snap.val()||0)+toOther,function(){
+        if(--pending===0) done();
       });
     });
-  });
+  }
+  if(toMe>0){
+    pending++;
+    db.ref('rooms/'+roomId+'/coins/'+mySide).once('value',function(snap){
+      db.ref('rooms/'+roomId+'/coins/'+mySide).set((snap.val()||0)+toMe,function(){
+        if(--pending===0) done();
+      });
+    });
+  }
+  if(pending===0) done();
 }
 
 function updateCoinDisplay(){
