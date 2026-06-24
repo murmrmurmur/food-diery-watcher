@@ -809,7 +809,7 @@ input[type=text]:focus { border-color:var(--accent); }
       <div class="inv-cal-legend">
         <span class="inv-legend-item"><span class="cal-dot dot-clean" style="display:inline-block"></span>야식없음</span>
         <span class="inv-legend-item"><span class="cal-dot dot-workout" style="display:inline-block"></span>운동</span>
-        <span class="inv-legend-item"><span class="cal-dot dot-dislike" style="display:inline-block"></span>👎받음</span>
+        <span class="inv-legend-item"><span class="cal-dot dot-dislike" style="display:inline-block"></span>👎없음</span>
       </div>
       <div class="cal-month-title" id="inv-cal-month-my"></div>
       <div class="clean-calendar" id="inv-calendar-my"></div>
@@ -825,7 +825,7 @@ input[type=text]:focus { border-color:var(--accent); }
       <div class="inv-cal-legend">
         <span class="inv-legend-item"><span class="cal-dot dot-clean" style="display:inline-block"></span>야식없음</span>
         <span class="inv-legend-item"><span class="cal-dot dot-workout" style="display:inline-block"></span>운동</span>
-        <span class="inv-legend-item"><span class="cal-dot dot-dislike" style="display:inline-block"></span>👎받음</span>
+        <span class="inv-legend-item"><span class="cal-dot dot-dislike" style="display:inline-block"></span>👎없음</span>
       </div>
       <div class="cal-month-title" id="inv-cal-month-other"></div>
       <div class="clean-calendar" id="inv-calendar-other"></div>
@@ -2010,7 +2010,7 @@ function buildInvoiceCalendar(paneId, side, allJ) {
     if(j && d<=today){
       if(j.isClean){ var dot=document.createElement('div'); dot.className='cal-dot dot-clean'; dots.appendChild(dot); }
       if(j.hasWorkout){ var dot=document.createElement('div'); dot.className='cal-dot dot-workout'; dots.appendChild(dot); }
-      if(!j.noDislike){ var dot=document.createElement('div'); dot.className='cal-dot dot-dislike'; dots.appendChild(dot); }
+      if(j.noDislike){ var dot=document.createElement('div'); dot.className='cal-dot dot-dislike'; dots.appendChild(dot); }
     }
     cell.appendChild(dots); cal.appendChild(cell);
   }
