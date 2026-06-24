@@ -270,10 +270,10 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 }
 .fab {
   background:var(--accent); color:#fff; border:1.8px solid var(--ink-line); border-radius:24px 28px 22px 26px;
-  padding:11px 14px; font-family:'Gaegu',cursive; font-weight:700;
-  font-size:13px; letter-spacing:.3px; cursor:pointer;
-  box-shadow:0 5px 0 var(--ink-line);
-  display:flex; align-items:center; gap:5px;
+  padding:9px 11px; font-family:'Gaegu',cursive; font-weight:700;
+  font-size:12px; letter-spacing:0px; cursor:pointer;
+  box-shadow:0 4px 0 var(--ink-line);
+  display:flex; align-items:center; gap:4px;
   transition:transform .15s, box-shadow .15s; white-space:nowrap;
 }
 .fab:active { transform:translateY(3px); box-shadow:0 2px 0 var(--ink-line); }
@@ -1834,16 +1834,34 @@ function deleteMeal() {
   if (!currentMealKey||currentMealSide!==mySide) return;
   if (!confirm('이 사진을 삭제할까요?')) return;
   var key=currentMealKey;
+  var url=currentMealUrl;
   closeViewer();
   delete mealsCache[key];
-  Promise.all([
-    db.ref('rooms/'+roomId+'/meals/'+key).remove(),
-    db.ref('rooms/'+roomId+'/reactions/'+key).remove(),
-    db.ref('rooms/'+roomId+'/comments/'+key).remove()
-  ]).then(function() {
-    rejudgeCleanDay(new Date());
-    var yest=new Date(); yest.setDate(yest.getDate()-1);
-    rejudgeCleanDay(yest);
+
+  /* 현재 방 삭제 */
+  function deleteFromRoom(code, mealKey) {
+    return Promise.all([
+      db.ref('rooms/'+code+'/meals/'+mealKey).remove(),
+      db.ref('rooms/'+code+'/reactions/'+mealKey).remove(),
+      db.ref('rooms/'+code+'/comments/'+mealKey).remove()
+    ]);
+  }
+
+  /* 다른 방에서 같은 URL 매칭 후 삭제 */
+  db.ref('users/'+currentUid+'/rooms').once('value',function(snapRooms){
+    var allRooms=snapRooms.val()||{};
+    var otherCodes=Object.keys(allRooms).filter(function(c){ return c!==roomId && (allRooms[c].role||'guest')!=='guest'; });
+    var deletes=[deleteFromRoom(roomId, key)];
+    otherCodes.forEach(function(code){
+      db.ref('rooms/'+code+'/meals').orderByChild('url').equalTo(url).once('value',function(snap){
+        snap.forEach(function(c){ deleteFromRoom(code, c.key); });
+      });
+    });
+    Promise.all(deletes).then(function(){
+      rejudgeCleanDay(new Date());
+      var yest=new Date(); yest.setDate(yest.getDate()-1);
+      rejudgeCleanDay(yest);
+    });
   });
 }
 
