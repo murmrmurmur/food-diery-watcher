@@ -48,6 +48,13 @@ body { overflow:hidden; min-height:100dvh; overflow-x:hidden; }
   gap:22px; padding:28px 20px;
   background:var(--bg); z-index:200; overflow-y:auto;
 }
+#setup-cancel-btn {
+  position:absolute; top:16px; left:16px;
+  background:none; border:1.5px solid var(--ink-line); border-radius:50%;
+  width:36px; height:36px; font-size:18px; cursor:pointer;
+  display:none; align-items:center; justify-content:center;
+  color:var(--muted); line-height:1;
+}
 .logo { font-family:'Gaegu',cursive; font-size:clamp(26px,7vw,44px); text-align:center; line-height:1.25; }
 .logo .lo { color:var(--left); }
 .logo .ro { color:var(--right); }
@@ -666,6 +673,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 
 <!-- ══ SETUP ══ -->
 <div id="setup" style="display:none">
+  <button id="setup-cancel-btn" onclick="cancelSetup()">✕</button>
   <div class="logo">👁<br><span class="lo">식단</span> <span class="ro">감시당하기</span></div>
   <p class="sub">오늘 뭐 먹었는지 서로 감시해요<br>사진에 시간 + 메뉴명이 자동으로 찍혀요</p>
   <div class="setup-card">
@@ -1050,6 +1058,12 @@ function enterRoom(code, role) {
 function goToSetup() {
   document.getElementById('room-list-screen').style.display = 'none';
   document.getElementById('setup').style.display = 'flex';
+  var btn = document.getElementById('setup-cancel-btn');
+  btn.style.display = 'flex';
+}
+function cancelSetup() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('room-list-screen').style.display = 'flex';
 }
 
 /* ══ AUTH ══ */
