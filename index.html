@@ -1149,6 +1149,18 @@ var reactionsCache = {};
 var commentsCache  = {};
 var dislikeCache   = {};
 var mealsCache = {};
+var _activeListeners = []; // { ref, event, cb }
+
+function trackOn(ref, event, cb) {
+  ref.on(event, cb);
+  _activeListeners.push({ref:ref, event:event, cb:cb});
+  return cb;
+}
+
+function detachRoomListeners() {
+  _activeListeners.forEach(function(l) { l.ref.off(l.event, l.cb); });
+  _activeListeners = [];
+}
 var unreadNotifs = [];
 var NOTIF_KEY = 'diet_notifs_v1';
 var cachedGoalPrice = 20000;
@@ -2589,6 +2601,10 @@ function sendPushToOther(title,body) {
 
 /* ══ initApp ══ */
 function initApp(sleepTime,wakeTime) {
+  // 이전 방 리스너 해제 + 캐시 초기화
+  detachRoomListeners();
+  cachedNames={}; reactionsCache={}; commentsCache={}; dislikeCache={}; mealsCache={};
+  realtimeMeals=[]; historicalMeals=[]; hasMoreHistory=true;
   var isGuest = (mySide==='guest');
   var accentColor, accentGlow, accentTint, otherColor, otherGlow, otherTint;
   if (mySide==='right') {
@@ -2626,19 +2642,18 @@ function initApp(sleepTime,wakeTime) {
     db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime:sleepTime,wakeTime:wakeTime});
   }
 
-  db.ref('rooms/'+roomId+'/names').on('value',function(snap){
+  trackOn(db.ref('rooms/'+roomId+'/names'), 'value', function(snap){
     var v=snap.val()||{};
     cachedNames=v;
     document.getElementById('dn-left').textContent=(v.left||'왼쪽')+(mySide==='left'?' (나)':'');
     document.getElementById('dn-right').textContent=(v.right||'오른쪽')+(mySide==='right'?' (나)':'');
   });
 
-  db.ref('rooms/'+roomId+'/reactions').on('value',function(snap){ reactionsCache=snap.val()||{}; updateAllCardBars(); });
-  db.ref('rooms/'+roomId+'/comments').on('value',function(snap){ commentsCache=snap.val()||{}; updateAllCardBars(); });
+  trackOn(db.ref('rooms/'+roomId+'/reactions'), 'value', function(snap){ reactionsCache=snap.val()||{}; updateAllCardBars(); });
+  trackOn(db.ref('rooms/'+roomId+'/comments'), 'value', function(snap){ commentsCache=snap.val()||{}; updateAllCardBars(); });
 
-  realtimeMeals=[]; historicalMeals=[]; hasMoreHistory=true;
   var recentCutoff=Date.now()-THREE_MONTHS_MS;
-  db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(recentCutoff).on('value',function(snap){
+  trackOn(db.ref('rooms/'+roomId+'/meals').orderByChild('ts').startAt(recentCutoff), 'value', function(snap){
     mealsCache={};
     historicalMeals.forEach(function(m){ mealsCache[m.key]=m; });
     realtimeMeals=[];
@@ -2700,7 +2715,7 @@ function initApp(sleepTime,wakeTime) {
     });
     realtimeReady=true;
   });
-  db.ref('rooms/'+roomId+'/comments').on('child_changed',function(snap){
+  trackOn(db.ref('rooms/'+roomId+'/comments'), 'child_changed', function(snap){
     if(!realtimeReady) return;
     var mealKey=snap.key, mealComments=snap.val()||{};
     Object.keys(mealComments).forEach(function(ck){
