@@ -1849,6 +1849,9 @@ function deleteMeal() {
   var url=currentMealUrl;
   closeViewer();
   delete mealsCache[key];
+  realtimeMeals  = realtimeMeals.filter(function(m){ return m.key !== key; });
+  historicalMeals = historicalMeals.filter(function(m){ return m.key !== key; });
+  refreshViews();
 
   /* 현재 방 삭제 */
   function deleteFromRoom(code, mealKey) {
