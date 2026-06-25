@@ -1518,14 +1518,12 @@ function setViewMode(mode) {
   /* 시간대별 서브탭은 timeslot 모드일 때만 */
   var subtabs=document.getElementById('timeslot-subtabs');
   if (subtabs) subtabs.classList.toggle('visible', mode==='timeslot');
-  /* gallery-tab active 동기화 */
-  if (mode==='monthly') {
-    document.getElementById('gtab-monthly').classList.add('active');
-    document.getElementById('gtab-timeslot').classList.remove('active');
-  } else if (mode==='timeslot') {
-    document.getElementById('gtab-monthly').classList.remove('active');
-    document.getElementById('gtab-timeslot').classList.add('active');
-  }
+  /* gallery-tab active 동기화 — 세 탭 전부 초기화 후 하나만 활성 */
+  ['monthly','timeslot','workout'].forEach(function(t){
+    document.getElementById('gtab-'+t).classList.remove('active');
+  });
+  if (mode==='monthly') document.getElementById('gtab-monthly').classList.add('active');
+  else if (mode==='timeslot') document.getElementById('gtab-timeslot').classList.add('active');
   refreshViews();
 }
 
