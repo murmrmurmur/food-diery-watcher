@@ -979,6 +979,7 @@ var FIREBASE_CONFIG = {
 };
 var CLOUDINARY_CLOUD  = 'dqnt3ybt8';
 var CLOUDINARY_PRESET = 'diet_watch_unsigned';
+var FORGOT_IMG = './assets/forgot.png';
 var VAPID_KEY = 'BDX_fg1_9bL-jteAwQYCz9vrnJw8CEc__FH_3g4XSPY5V3Rvj_t-GKg-saevPBZpDd1pKhI-vf3DfLypSXD8lWE';
 
 /* ══ 방 리스트 ══ */
@@ -2095,7 +2096,7 @@ function doPostMissed() {
       .catch(function(e){ alert('이미지 올리기 실패: '+e.message); busy=false; btn.innerHTML='올리기'; btn.disabled=false; });
     });
   } else {
-    pushMissed('');
+    pushMissed(FORGOT_IMG);
   }
 }
 
