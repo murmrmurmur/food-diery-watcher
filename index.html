@@ -931,6 +931,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
       퍼펙트 데이 = 야식 없음 + 운동 + 👎 없음 모두 충족
     </div>
     <div class="invoice-settle-hint">💡 매월 1일에 전월 청구서가 확정됩니다</div>
+    <div id="inv-update-note" style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.6"></div>
 
   </div>
 </div>
@@ -2170,6 +2171,15 @@ function openInvoiceScreen() {
     var goalEl=document.getElementById('inv-goal-amt');
     if(goalEl) goalEl.textContent=goal?goal.toLocaleString()+'원':'미설정';
 
+    /* 업데이트 시각 메모 — 두 사람 중 더 늦은 기상시간 기준 */
+    var leftWake=(settings.left||{}).wakeTime||'07:30';
+    var rightWake=(settings.right||{}).wakeTime||'07:30';
+    var laterSide=timeToMinutes(rightWake)>=timeToMinutes(leftWake)?'right':'left';
+    var laterWake=laterSide==='right'?rightWake:leftWake;
+    var laterName=cachedNames[laterSide]||(laterSide==='left'?'왼쪽':'오른쪽');
+    var noteEl=document.getElementById('inv-update-note');
+    if(noteEl) noteEl.textContent='⏰ '+laterName+' (기상 '+laterWake+') 기준으로 매일 업데이트됩니다';
+
     db.ref('rooms/'+roomId+'/meals').once('value',function(snapM){
       var mealArr=Object.values(snapM.val()||{});
       var allJ=computeJudgmentsFromMeals(mealArr, settings);
@@ -2444,12 +2454,21 @@ function formatTimeAgo(ts) {
 
 /* ══ 클린데이 코인 ══ */
 function scheduleJudgeAtWakeTime(wakeTime){
-  var now=new Date(), wm=timeToMinutes(wakeTime||'07:30');
-  var wakeH=Math.floor(wm/60), wakeM=wm%60;
-  var target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),wakeH,wakeM,0,0);
-  if (target<=now) target.setDate(target.getDate()+1);
-  var ms=target.getTime()-now.getTime();
-  setTimeout(function(){ judgeYesterday(); setInterval(judgeYesterday,24*60*60*1000); },ms);
+  if (mySide==='guest') return;
+  /* 상대방 기상시간도 읽어 더 늦은 쪽 기준으로 스케줄 */
+  var otherSide=mySide==='left'?'right':'left';
+  db.ref('rooms/'+roomId+'/settings/'+otherSide).once('value',function(snap){
+    var otherWake=((snap.val()||{}).wakeTime)||'07:30';
+    var myMin=timeToMinutes(wakeTime||'07:30');
+    var otherMin=timeToMinutes(otherWake);
+    var laterMin=Math.max(myMin,otherMin);
+    var now=new Date();
+    var wakeH=Math.floor(laterMin/60), wakeM=laterMin%60;
+    var target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),wakeH,wakeM,0,0);
+    if (target<=now) target.setDate(target.getDate()+1);
+    var ms=target.getTime()-now.getTime();
+    setTimeout(function(){ judgeYesterday(); setInterval(judgeYesterday,24*60*60*1000); },ms);
+  });
 }
 
 function judgeYesterday(){
