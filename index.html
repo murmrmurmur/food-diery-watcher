@@ -55,14 +55,14 @@ body { overflow:hidden; min-height:100dvh; overflow-x:hidden; }
 .setup-card { background:var(--surface); border-radius:28px 24px 30px 26px; border:1.5px solid var(--ink-line); padding:22px 20px; width:100%; max-width:360px; display:flex; flex-direction:column; gap:15px; box-shadow:0 6px 0 rgba(90,75,62,.1); }
 .field { display:flex; flex-direction:column; gap:6px; }
 .lbl { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
-input[type=text], input[type=email], input[type=password], input[type=number] {
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=datetime-local] {
   width:100%; background:var(--surface2);
   border:1.3px solid var(--ink-line); border-radius:13px 11px 14px 12px;
   color:var(--text); font-family:'Gowun Dodum',sans-serif;
   font-size:16px; padding:14px 16px; outline:none;
   transition:border-color .2s; -webkit-appearance:none; box-sizing:border-box;
 }
-input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus { border-color:var(--accent); }
+input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus, input[type=datetime-local]:focus { border-color:var(--accent); }
 .who-grid, .time-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .who-btn {
   padding:14px 8px; border-radius:14px 18px 13px 16px;
@@ -784,7 +784,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <div style="font-size:11px;color:var(--muted);margin:-6px 0 2px;text-align:center">사진은 선택사항이에요</div>
     <input type="text" id="missed-notetxt" placeholder="메모 (필수 — 예: 점심 파스타)" maxlength="30">
     <div class="lbl" style="font-size:12px;margin-bottom:2px">언제 먹었어요?</div>
-    <input type="datetime-local" id="missed-datetime" style="width:100%;padding:10px 12px;border:1.3px solid var(--ink-line);border-radius:12px 16px 13px 15px;background:var(--surface);font-family:'Gowun Dodum',sans-serif;font-size:14px;color:var(--text);box-sizing:border-box">
+    <input type="datetime-local" id="missed-datetime">
     <div style="font-size:11px;color:var(--muted);margin-top:-4px">과거 시각도 입력 가능해요</div>
     <button class="modal-post" id="missed-postbtn" onclick="doPostMissed()">올리기</button>
     <button class="modal-cancel" onclick="closeMissedModal()">취소</button>
