@@ -875,6 +875,11 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <div class="panel-handle"></div>
     <div class="panel-title">⚙️ 설정</div>
     <div class="setting-row">
+      <div class="lbl">방 이름</div>
+      <input type="text" id="s-room-name" placeholder="예: 우리집 다이어트" maxlength="20">
+    </div>
+    <div class="side-menu-divider" style="margin:0 0 14px"></div>
+    <div class="setting-row">
       <div class="lbl">내 이름</div>
       <input type="text" id="s-name" placeholder="이름" maxlength="10">
     </div>
@@ -2204,6 +2209,10 @@ function openSettingPanel() {
   document.getElementById('s-name').value=myName||'';
   document.getElementById('s-sleep').value=s.sleepRaw||'';
   document.getElementById('s-wake').value=s.wakeRaw||'';
+  document.getElementById('s-room-name').value='';
+  db.ref('rooms/'+roomId+'/meta/name').once('value',function(snap){
+    document.getElementById('s-room-name').value=snap.val()||'';
+  });
   var isGuest = mySide==='guest';
   ['setting-sleep-row','setting-wake-row','setting-time-hint','setting-save-btn'].forEach(function(id){
     document.getElementById(id).style.display = isGuest ? 'none' : '';
@@ -2226,6 +2235,13 @@ function saveSettings() {
   var saved=JSON.parse(localStorage.getItem(SAVE_KEY))||{};
   Object.assign(saved,{sleepTime,wakeTime,sleepRaw,wakeRaw});
   localStorage.setItem(SAVE_KEY,JSON.stringify(saved));
+  /* 방 이름 저장 (구경꾼 포함 누구나) */
+  var newRoomName = document.getElementById('s-room-name').value.trim();
+  if (newRoomName) {
+    db.ref('rooms/'+roomId+'/meta/name').set(newRoomName);
+    var hdrEl = document.getElementById('hdr-room-name');
+    if (hdrEl) hdrEl.textContent = newRoomName;
+  }
   if (mySide!=='guest') {
     db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime,wakeTime});
     /* goalAmount 저장 (공유값 — 두 사람 공통) */
