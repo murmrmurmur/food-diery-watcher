@@ -96,6 +96,13 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 .start-btn:active { transform:translateY(3px); box-shadow:0 2px 0 var(--ink-line); }
 .start-btn:disabled { opacity:.34; cursor:not-allowed; transform:none; box-shadow:0 5px 0 rgba(90,75,62,.3); }
 .err-msg { font-size:12px; color:#ff5252; text-align:center; min-height:16px; }
+.setup-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.setup-tab { background:none; border:1.5px solid var(--ink-line); border-radius:14px 18px 13px 16px; padding:10px; font-family:'Gaegu',cursive; font-size:15px; cursor:pointer; color:var(--muted); transition:all .18s; }
+.setup-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.code-display { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1.3px solid var(--ink-line); border-radius:13px 11px 14px 12px; padding:14px 16px; }
+.code-display .code-val { flex:1; font-family:'Gaegu',cursive; font-size:20px; letter-spacing:3px; color:var(--text); }
+.copy-btn { background:none; border:1.3px solid var(--ink-line); border-radius:10px 12px 9px 11px; padding:6px 10px; font-size:12px; font-family:'Gowun Dodum',sans-serif; cursor:pointer; color:var(--muted); white-space:nowrap; transition:all .15s; }
+.copy-btn.copied { background:var(--accent); color:#fff; border-color:var(--accent); }
 
 /* ══ APP ══ */
 #app { display:none; flex-direction:column; height:100dvh; }
@@ -677,10 +684,34 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
   <div class="logo">👁<br><span class="lo">식단</span> <span class="ro">감시당하기</span></div>
   <p class="sub">오늘 뭐 먹었는지 서로 감시해요<br>사진에 시간 + 메뉴명이 자동으로 찍혀요</p>
   <div class="setup-card">
-    <div class="field">
-      <div class="lbl">방 코드</div>
-      <input type="text" id="i-room" placeholder="두 사람 동일하게 입력" maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false">
+    <!-- 모드 탭 -->
+    <div class="setup-tabs">
+      <button class="setup-tab active" id="tab-create" onclick="setSetupMode('create')">＋ 새 방 만들기</button>
+      <button class="setup-tab" id="tab-join" onclick="setSetupMode('join')">🔑 방 참여하기</button>
     </div>
+
+    <!-- 새 방: 랜덤 코드 표시 + 복사 -->
+    <div class="field" id="field-code-display">
+      <div class="lbl">방 코드 <span style="font-size:11px;color:var(--muted)">(자동 생성)</span></div>
+      <div class="code-display">
+        <span class="code-val" id="generated-code">------</span>
+        <button class="copy-btn" id="copy-code-btn" onclick="copyRoomCode()">복사</button>
+      </div>
+      <div class="field-hint">이 코드를 상대방에게 공유하세요</div>
+    </div>
+
+    <!-- 새 방: 방 이름 -->
+    <div class="field" id="field-room-name">
+      <div class="lbl">방 이름</div>
+      <input type="text" id="i-room-name" placeholder="예: 우리집 다이어트" maxlength="20">
+    </div>
+
+    <!-- 방 참여: 코드 직접 입력 -->
+    <div class="field" id="field-room-code" style="display:none">
+      <div class="lbl">방 코드</div>
+      <input type="text" id="i-room" placeholder="상대방에게 받은 코드 입력" maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+
     <div class="field">
       <div class="lbl">나는 누구?</div>
       <div class="who-grid">
@@ -1055,11 +1086,46 @@ function enterRoom(code, role) {
   fetchNameThenSettings();
 }
 
+var setupMode = 'create';
+
+function generateRoomCode() {
+  var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  var code = '';
+  for (var i = 0; i < 7; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function setSetupMode(mode) {
+  setupMode = mode;
+  document.getElementById('tab-create').classList.toggle('active', mode === 'create');
+  document.getElementById('tab-join').classList.toggle('active', mode === 'join');
+  document.getElementById('field-code-display').style.display = mode === 'create' ? '' : 'none';
+  document.getElementById('field-room-name').style.display = mode === 'create' ? '' : 'none';
+  document.getElementById('field-room-code').style.display = mode === 'join' ? '' : 'none';
+  chkValid();
+}
+
+function copyRoomCode() {
+  var code = document.getElementById('generated-code').textContent;
+  var btn = document.getElementById('copy-code-btn');
+  navigator.clipboard.writeText(code).then(function() {
+    btn.textContent = '복사됨 ✓';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = '복사'; btn.classList.remove('copied'); }, 2000);
+  }).catch(function() {
+    showToast('코드: ' + code);
+  });
+}
+
 function goToSetup() {
   document.getElementById('room-list-screen').style.display = 'none';
   document.getElementById('setup').style.display = 'flex';
-  var btn = document.getElementById('setup-cancel-btn');
-  btn.style.display = 'flex';
+  document.getElementById('setup-cancel-btn').style.display = 'flex';
+  // 새 방 만들기 모드로 초기화 + 랜덤 코드 생성
+  setSetupMode('create');
+  document.getElementById('generated-code').textContent = generateRoomCode();
+  document.getElementById('copy-code-btn').textContent = '복사';
+  document.getElementById('copy-code-btn').classList.remove('copied');
 }
 function cancelSetup() {
   document.getElementById('setup').style.display = 'none';
@@ -1228,11 +1294,18 @@ function pickSide(s) {
   chkValid();
 }
 function chkValid() {
-  var r = document.getElementById('i-room').value.trim();
   var n = document.getElementById('i-name').value.trim();
-  document.getElementById('btn-start').disabled = !(r&&n&&mySide);
+  var ok;
+  if (setupMode === 'create') {
+    var rname = document.getElementById('i-room-name').value.trim();
+    ok = !!(rname && n && mySide);
+  } else {
+    var r = document.getElementById('i-room').value.trim();
+    ok = !!(r && n && mySide);
+  }
+  document.getElementById('btn-start').disabled = !ok;
 }
-['i-room','i-name','i-sleep','i-wake'].forEach(function(id){
+['i-room','i-room-name','i-name','i-sleep','i-wake'].forEach(function(id){
   var el = document.getElementById(id);
   if(el) el.addEventListener('input', chkValid);
 });
@@ -1263,7 +1336,11 @@ function doLogout() {
 
 function startApp() {
   document.getElementById('err-msg').textContent = '';
-  roomId = document.getElementById('i-room').value.trim().replace(/\s+/g,'_').toLowerCase();
+  if (setupMode === 'create') {
+    roomId = document.getElementById('generated-code').textContent.trim();
+  } else {
+    roomId = document.getElementById('i-room').value.trim().replace(/\s+/g,'_').toLowerCase();
+  }
   myName = document.getElementById('i-name').value.trim();
   var sleepRaw  = document.getElementById('i-sleep').value.trim();
   var wakeRaw   = document.getElementById('i-wake').value.trim();
@@ -1292,17 +1369,20 @@ function startApp() {
 }
 
 function doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw) {
-  var errEl = document.getElementById('err-msg');
-  var btn   = document.getElementById('btn-start');
+  var btn = document.getElementById('btn-start');
   btn.disabled = false;
   localStorage.setItem(SAVE_KEY, JSON.stringify({
     lastRoom:roomId, lastSide:mySide,
     sleepTime:sleepTime, wakeTime:wakeTime,
     sleepRaw:sleepRaw, wakeRaw:wakeRaw
   }));
-  // users/{uid}/rooms/{방코드} 에 역할 저장
   if (currentUid) {
     db.ref('users/' + currentUid + '/rooms/' + roomId).set({ role: mySide });
+  }
+  // 새 방 만들기일 때 방 이름 저장
+  if (setupMode === 'create') {
+    var roomName = document.getElementById('i-room-name').value.trim();
+    if (roomName) db.ref('rooms/' + roomId + '/meta/name').set(roomName);
   }
   document.getElementById('setup').style.display = 'none';
   document.getElementById('app').style.display   = 'flex';
