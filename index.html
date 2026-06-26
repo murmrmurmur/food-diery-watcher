@@ -886,7 +886,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     </div>
     <div class="side-menu-divider" style="margin:0 0 14px"></div>
     <div class="setting-row">
-      <div class="lbl">내 이름</div>
+      <div class="lbl">이 방에서 쓸 이름</div>
       <input type="text" id="s-name" placeholder="이름" maxlength="10">
     </div>
     <div id="setting-sleep-row" class="setting-row">
@@ -1094,13 +1094,18 @@ function enterRoom(code, role) {
   mySide = role;
   myName = '';
 
-  // 프로필 이름을 항상 Firebase에서 가져와 방 전환 시 이름 잔류 방지
+  // 방별 이름 우선, 없으면 전역 profile/name 폴백
   function fetchNameThenSettings() {
-    var nameRef = currentUid
+    var profileRef = currentUid
       ? db.ref('users/' + currentUid + '/profile/name').once('value')
       : Promise.resolve({ val: function(){ return ''; } });
-    nameRef.then(function(snap) {
-      myName = (snap && snap.val()) || '';
+    var roomNameRef = (currentUid && mySide !== 'guest')
+      ? db.ref('rooms/' + roomId + '/names/' + mySide).once('value')
+      : Promise.resolve({ val: function(){ return ''; } });
+    Promise.all([profileRef, roomNameRef]).then(function(snaps) {
+      var profileName = (snaps[0] && snaps[0].val()) || '';
+      var roomName    = (snaps[1] && snaps[1].val()) || '';
+      myName = roomName || profileName;
       // 방별 sleepTime/wakeTime을 Firebase에서 읽고, 없으면 localStorage → 기본값
       if (mySide !== 'guest') {
         db.ref('rooms/' + roomId + '/settings/' + mySide).once('value', function(snapSet) {
@@ -2323,11 +2328,10 @@ function saveSettings() {
     if (!isNaN(goalAmt) && goalAmt>=0) {
       db.ref('rooms/'+roomId+'/settings/goalAmount').set(goalAmt);
     }
-    /* 이름 변경 */
+    /* 이름 변경 — 방별 이름만 업데이트 */
     if (newName && newName!==myName) {
       myName=newName;
       db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
-      if (currentUid) db.ref('users/'+currentUid+'/profile/name').set(myName);
     }
   }
   closeSettingPanel(); showNotifToast('✅ 설정이 저장됐어요');
