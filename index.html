@@ -162,6 +162,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 .side-menu-item .smi-icon { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
 .side-menu-divider { height:1px; background:var(--line); margin:4px 20px; }
 .hdr-title { font-family:'Gaegu',cursive; font-size:20px; letter-spacing:.5px; font-weight:700; }
+.hdr-room-name { font-size:11px; color:var(--muted); margin-top:1px; font-family:'Gowun Dodum',sans-serif; }
 .hdr-names { display:flex; gap:8px; align-items:center; }
 .n-badge { display:flex; align-items:center; gap:5px; font-size:11px; }
 .n-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
@@ -741,7 +742,10 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 <div id="app">
   <div class="hdr">
     <div class="hdr-row1">
-      <div class="hdr-title">👁 식단 감시당하기</div>
+      <div>
+        <div class="hdr-title">👁 식단 감시당하기</div>
+        <div class="hdr-room-name" id="hdr-room-name"></div>
+      </div>
       <div class="hdr-names">
         <div class="n-badge"><div class="n-dot l"></div><span id="dn-left">—</span></div>
         <div class="hdr-vs">vs</div>
@@ -2755,6 +2759,12 @@ function initApp(sleepTime,wakeTime) {
     fab.style.background=accentColor;
     fab.style.boxShadow='0 5px 0 var(--ink-line)';
   }
+
+  // 방 이름 헤더에 표시 (없으면 방 코드로 폴백)
+  db.ref('rooms/'+roomId+'/meta/name').once('value', function(snap) {
+    var el = document.getElementById('hdr-room-name');
+    if (el) el.textContent = snap.val() || roomId;
+  });
 
   if (!isGuest) {
     db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
