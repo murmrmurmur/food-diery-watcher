@@ -163,6 +163,8 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 .side-menu-divider { height:1px; background:var(--line); margin:4px 20px; }
 .hdr-title { font-family:'Gaegu',cursive; font-size:20px; letter-spacing:.5px; font-weight:700; }
 .hdr-room-name { font-size:15px; color:var(--text); font-family:'Gaegu',cursive; font-weight:700; flex:1; }
+.guest-badge { display:inline-block; background:#9C8FD0; color:#fff; font-size:11px; font-family:'Gowun Dodum',sans-serif; padding:2px 8px; border-radius:10px 12px 9px 11px; margin-left:6px; vertical-align:middle; }
+.hdr-guests { font-size:11px; color:var(--muted); font-family:'Gowun Dodum',sans-serif; padding:2px 0 4px; }
 .hdr-names { display:flex; gap:8px; align-items:center; }
 .n-badge { display:flex; align-items:center; gap:5px; font-size:11px; }
 .n-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
@@ -750,7 +752,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 <div id="app">
   <div class="hdr">
     <div class="hdr-row1">
-      <div class="hdr-title">👁 식단 감시당하기</div>
+      <div class="hdr-title">👁 식단 감시당하기<span class="guest-badge" id="my-guest-badge" style="display:none">👀 구경중</span></div>
       <div class="hdr-names">
         <div class="n-badge"><div class="n-dot l"></div><span id="dn-left">—</span></div>
         <div class="hdr-vs">vs</div>
@@ -764,6 +766,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
       <button class="hdr-nav-btn" id="vbtn-gallery" onclick="setViewMode('gallery')">모아보기</button>
       <button class="hdr-nav-btn" id="vbtn-invoice" onclick="openInvoiceScreen()">💰 <span id="my-coin-amt">0원</span></button>
     </div>
+    <div class="hdr-guests" id="hdr-guests" style="display:none"></div>
   </div>
 
   <!-- 모아보기 서브탭 -->
@@ -2845,10 +2848,18 @@ function initApp(sleepTime,wakeTime) {
   document.documentElement.style.setProperty('--other-tint',otherTint);
   var fabGroup=document.getElementById('fab-group');
   var fab=document.getElementById('fab-btn');
+  // 구경중 배지
+  var myGuestBadge = document.getElementById('my-guest-badge');
+  if (myGuestBadge) myGuestBadge.style.display = isGuest ? 'inline-block' : 'none';
+
   if (isGuest) {
     // 구경꾼: FAB 전체 숨김
     if (fabGroup) fabGroup.style.display='none';
     document.body.classList.add('guest-mode');
+    // 구경꾼 진입 기록
+    if (currentUid) {
+      db.ref('rooms/'+roomId+'/guests/'+currentUid).set({ name: myName||'구경꾼' });
+    }
   } else {
     // 방 전환 시 이전 guest 상태 초기화
     if (fabGroup) fabGroup.style.display='';
@@ -2856,6 +2867,16 @@ function initApp(sleepTime,wakeTime) {
     fab.style.background=accentColor;
     fab.style.boxShadow='0 5px 0 var(--ink-line)';
   }
+
+  // 구경꾼 목록 리스너
+  trackOn(db.ref('rooms/'+roomId+'/guests'), 'value', function(snap) {
+    var guests = snap.val() || {};
+    var names = Object.values(guests).map(function(g){ return g.name||'구경꾼'; });
+    var el = document.getElementById('hdr-guests');
+    if (!el) return;
+    if (names.length === 0) { el.style.display='none'; el.textContent=''; }
+    else { el.style.display=''; el.textContent='👀 구경중: '+names.join(', ')+'  ('+names.length+'명)'; }
+  });
 
   // 방 이름 헤더에 표시 (없으면 방 코드로 폴백)
   db.ref('rooms/'+roomId+'/meta/name').once('value', function(snap) {
