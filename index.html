@@ -902,7 +902,9 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     </div>
     <div id="setting-time-hint" class="field-hint" style="margin-bottom:12px">숫자만 — 예) 자정=2400, 오전7시반=0730</div>
     <div id="setting-goal-row" class="setting-row">
-      <div class="lbl">공동 목표금액</div>
+      <div class="lbl">공동 목표 내용</div>
+      <input type="text" id="s-goal-label" placeholder="예: 쿠우쿠우 가기" maxlength="20">
+      <div class="lbl" style="margin-top:6px">공동 목표금액</div>
       <input type="number" id="s-goal" placeholder="예: 30000" min="0" step="1000" inputmode="numeric">
     </div>
     <div id="setting-goal-hint" class="setting-goal-hint">두 사람 합산 모금 목표금액 (한 명이 바꾸면 공유돼요)</div>
@@ -925,7 +927,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <!-- 공동 목표 + 진행바 -->
     <div class="inv-goal-section">
       <div class="inv-goal-row">
-        <span class="inv-goal-lbl">공동 목표금액</span>
+        <span class="inv-goal-lbl">공동 목표 <span id="inv-goal-label" style="color:var(--accent);font-weight:700"></span></span>
         <span class="inv-goal-amt" id="inv-goal-amt">미설정</span>
       </div>
       <div class="inv-progress-wrap" id="inv-progress-wrap" style="display:none">
@@ -2322,10 +2324,22 @@ function openSettingPanel() {
   /* 구분선도 구경꾼일 때 숨김 */
   var divider = document.querySelector('#setting-panel .side-menu-divider');
   if (divider) divider.style.display = isGuest ? 'none' : '';
-  /* goalAmount 로드 */
+  /* goal 로드 (amount+label) */
   document.getElementById('s-goal').value='';
-  db.ref('rooms/'+roomId+'/settings/goalAmount').once('value',function(snap){
-    var v=snap.val(); if(v) document.getElementById('s-goal').value=v;
+  document.getElementById('s-goal-label').value='';
+  db.ref('rooms/'+roomId+'/settings/goal').once('value',function(snap){
+    var v=snap.val();
+    if(!v) {
+      // 구버전 숫자값 폴백
+      db.ref('rooms/'+roomId+'/settings/goalAmount').once('value',function(s2){
+        if(s2.val()) document.getElementById('s-goal').value=s2.val();
+      });
+    } else if(typeof v==='object') {
+      if(v.amount) document.getElementById('s-goal').value=v.amount;
+      if(v.label)  document.getElementById('s-goal-label').value=v.label;
+    } else {
+      document.getElementById('s-goal').value=v;
+    }
   });
   document.getElementById('setting-panel').classList.add('open');
 }
@@ -2349,11 +2363,12 @@ function saveSettings() {
   }
   if (mySide!=='guest') {
     db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime,wakeTime});
-    /* goalAmount 저장 (공유값 — 두 사람 공통) */
+    /* goal 저장 (amount + label, 공유값) */
     var goalRaw=document.getElementById('s-goal').value.trim();
     var goalAmt=parseInt(goalRaw,10);
+    var goalLabel=document.getElementById('s-goal-label').value.trim();
     if (!isNaN(goalAmt) && goalAmt>=0) {
-      db.ref('rooms/'+roomId+'/settings/goalAmount').set(goalAmt);
+      db.ref('rooms/'+roomId+'/settings/goal').set({amount:goalAmt, label:goalLabel});
     }
     /* 이름 변경 — 방별 이름만 업데이트 */
     if (newName && newName!==myName) {
@@ -2390,9 +2405,13 @@ function openInvoiceScreen() {
   /* meals + settings 실시간 재계산 → 합산금액/진행바/내역 모두 동기화 */
   db.ref('rooms/'+roomId+'/settings').once('value',function(snapS){
     var settings=snapS.val()||{};
-    var goal=Number(settings.goalAmount)||0;
+    var goalObj=settings.goal||{};
+    var goal=typeof goalObj==='object' ? (Number(goalObj.amount)||0) : (Number(goalObj)||Number(settings.goalAmount)||0);
+    var goalLabel=typeof goalObj==='object' ? (goalObj.label||'') : '';
     var goalEl=document.getElementById('inv-goal-amt');
+    var goalLabelEl=document.getElementById('inv-goal-label');
     if(goalEl) goalEl.textContent=goal?goal.toLocaleString()+'원':'미설정';
+    if(goalLabelEl) goalLabelEl.textContent=goalLabel?'— '+goalLabel:'';
 
     /* 업데이트 시각 메모 — 두 사람 중 더 늦은 기상시간 기준 */
     var leftWake=(settings.left||{}).wakeTime||'07:30';
