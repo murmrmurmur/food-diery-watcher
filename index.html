@@ -353,6 +353,14 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 .modal-post { background:var(--accent); color:#fff; border:1.8px solid var(--ink-line); border-radius:16px 20px 14px 18px; padding:16px; font-family:'Gaegu',cursive; font-weight:700; font-size:18px; letter-spacing:1px; cursor:pointer; box-shadow:0 4px 0 var(--ink-line); }
 .modal-post:disabled { opacity:.4; cursor:not-allowed; box-shadow:0 4px 0 rgba(90,75,62,.3); }
 .modal-cancel { background:none; border:none; color:var(--muted); font-family:'Gowun Dodum',sans-serif; font-size:14px; cursor:pointer; text-align:center; }
+.smi-leave { color:#E8793A; }
+.smi-delete { color:#E85252; }
+.confirm-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:300; display:flex; align-items:center; justify-content:center; padding:20px; }
+.confirm-modal { background:var(--surface); border-radius:24px 20px 26px 22px; border:1.5px solid var(--ink-line); padding:24px 20px 20px; max-width:320px; width:100%; display:flex; flex-direction:column; gap:14px; box-shadow:0 8px 0 rgba(90,75,62,.12); }
+.confirm-modal-title { font-family:'Gaegu',cursive; font-size:18px; font-weight:700; text-align:center; }
+.confirm-modal-desc { font-size:13px; color:var(--muted); text-align:center; line-height:1.7; }
+.confirm-btn-danger { background:#E85252; color:#fff; border:1.8px solid var(--ink-line); border-radius:14px 18px 13px 16px; padding:14px; font-family:'Gaegu',cursive; font-weight:700; font-size:16px; cursor:pointer; box-shadow:0 4px 0 var(--ink-line); }
+.confirm-btn-leave { background:#E8793A; color:#fff; border:1.8px solid var(--ink-line); border-radius:14px 18px 13px 16px; padding:14px; font-family:'Gaegu',cursive; font-weight:700; font-size:16px; cursor:pointer; box-shadow:0 4px 0 var(--ink-line); }
 .spin { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:sp .65s linear infinite; vertical-align:middle; margin-right:6px; }
 @keyframes sp { to{transform:rotate(360deg)} }
 
@@ -1001,9 +1009,36 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <button class="side-menu-item" onclick="closeSideMenu();goToRoomList()">
       <span class="smi-icon">🚪</span>다른 방으로 이동
     </button>
+    <button class="side-menu-item smi-leave" onclick="closeSideMenu();confirmLeaveRoom()">
+      <span class="smi-icon">🏃</span>이 방 나가기
+    </button>
+    <button class="side-menu-item smi-delete" onclick="closeSideMenu();confirmDeleteRoom()">
+      <span class="smi-icon">🗑️</span>이 방 삭제
+    </button>
+    <div class="side-menu-divider"></div>
     <button class="side-menu-item" onclick="closeSideMenu();doLogout()">
       <span class="smi-icon">🚶</span>로그아웃
     </button>
+  </div>
+</div>
+
+<!-- ══ 방 나가기 확인 모달 ══ -->
+<div class="confirm-modal-overlay" id="leave-room-modal" style="display:none">
+  <div class="confirm-modal">
+    <div class="confirm-modal-title">이 방을 나갈까요? 🏃</div>
+    <div class="confirm-modal-desc">내 방 목록에서만 제거돼요.<br>방과 상대방 데이터는 그대로 남아요.</div>
+    <button class="confirm-btn-leave" onclick="doLeaveRoom()">나가기</button>
+    <button class="modal-cancel" onclick="document.getElementById('leave-room-modal').style.display='none'">취소</button>
+  </div>
+</div>
+
+<!-- ══ 방 삭제 확인 모달 ══ -->
+<div class="confirm-modal-overlay" id="delete-room-modal" style="display:none">
+  <div class="confirm-modal">
+    <div class="confirm-modal-title">이 방을 삭제할까요? 🗑️</div>
+    <div class="confirm-modal-desc">방의 모든 사진·기록이 영구 삭제돼요.<br>되돌릴 수 없어요!</div>
+    <button class="confirm-btn-danger" onclick="doDeleteRoom()">정말 삭제할게요</button>
+    <button class="modal-cancel" onclick="document.getElementById('delete-room-modal').style.display='none'">취소</button>
   </div>
 </div>
 
@@ -1339,6 +1374,46 @@ function doLogout() {
   localStorage.removeItem(SAVE_KEY);
   if (firebase.auth) firebase.auth().signOut();
   location.reload();
+}
+
+function confirmLeaveRoom() {
+  document.getElementById('leave-room-modal').style.display = 'flex';
+}
+function confirmDeleteRoom() {
+  document.getElementById('delete-room-modal').style.display = 'flex';
+}
+
+function doLeaveRoom() {
+  document.getElementById('leave-room-modal').style.display = 'none';
+  if (!currentUid) return;
+  db.ref('users/' + currentUid + '/rooms/' + roomId).remove().then(function() {
+    detachRoomListeners();
+    document.getElementById('app').style.display = 'none';
+    db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
+      showRoomList(snap.val() || {});
+    });
+  }).catch(function(e) { showToast('오류: ' + e.message); });
+}
+
+function doDeleteRoom() {
+  document.getElementById('delete-room-modal').style.display = 'none';
+  detachRoomListeners();
+  var deletes = [
+    db.ref('rooms/' + roomId).remove(),
+  ];
+  if (currentUid) {
+    deletes.push(db.ref('users/' + currentUid + '/rooms/' + roomId).remove());
+  }
+  Promise.all(deletes).then(function() {
+    document.getElementById('app').style.display = 'none';
+    if (currentUid) {
+      db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
+        showRoomList(snap.val() || {});
+      });
+    } else {
+      showRoomList({});
+    }
+  }).catch(function(e) { showToast('삭제 오류: ' + e.message); });
 }
 
 function startApp() {
