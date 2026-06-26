@@ -919,6 +919,9 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
   </div>
   <div class="inv-body">
 
+    <!-- 목표 슬로건 -->
+    <div style="font-family:'Gaegu',cursive;font-size:17px;font-weight:700;text-align:center;margin-bottom:14px;color:var(--text)">🎯 목표 금액을 함께 모아요!</div>
+
     <!-- 공동 목표 + 진행바 -->
     <div class="inv-goal-section">
       <div class="inv-goal-row">
@@ -939,7 +942,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 
     <!-- 안내 -->
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
-      내가 야식을 참거나, 운동을 하거나, 건강한 식단을 먹으면<br>→ 상대방 청구서에 기록돼요
+      내가 야식을 참거나, 운동을 하거나, 건강한 식단을 먹으면<br>→ 상대방이 돈을 내요
     </div>
 
     <!-- 탭 토글 -->
@@ -1079,12 +1082,18 @@ function showRoomList(rooms) {
     var role = rooms[code].role || 'guest';
     var card = document.createElement('div');
     card.className = 'room-card' + (code === lastRoom ? ' room-card-last' : '');
-    card.innerHTML =
-      '<div class="room-card-info">' +
-        '<div class="room-card-code">🚪 ' + escStr(code) + (code === lastRoom ? ' <span class="room-last-badge">최근</span>' : '') + '</div>' +
-        '<div class="room-card-role ' + roleClass[role] + '">' + (roleLabel[role]||role) + '</div>' +
-      '</div>' +
-      '<div class="room-card-arrow">›</div>';
+    var isLast = code === lastRoom;
+    function renderCard(roomName) {
+      var displayName = roomName ? escStr(roomName) : escStr(code);
+      card.innerHTML =
+        '<div class="room-card-info">' +
+          '<div class="room-card-code">🚪 ' + displayName + (isLast ? ' <span class="room-last-badge">최근</span>' : '') + '</div>' +
+          '<div class="room-card-role ' + roleClass[role] + '">' + (roleLabel[role]||role) + '</div>' +
+        '</div>' +
+        '<div class="room-card-arrow">›</div>';
+    }
+    renderCard('');
+    db.ref('rooms/'+code+'/meta/name').once('value', function(snap) { renderCard(snap.val()||''); });
     card.onclick = function() { enterRoom(code, role); };
     container.appendChild(card);
   });
@@ -1370,6 +1379,9 @@ function parseTimeInput(raw) {
 }
 
 function goToRoomList() {
+  if (mySide === 'guest' && currentUid && roomId) {
+    db.ref('rooms/' + roomId + '/guests/' + currentUid).remove();
+  }
   document.getElementById('app').style.display = 'none';
   if (currentUid) {
     db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
@@ -2073,7 +2085,7 @@ function deleteMeal() {
 }
 
 function rejudgeCleanDay(dateObj) {
-  var dk=dateObj.toISOString().slice(0,10);
+  var dk=dateObj.toLocaleDateString('sv-SE');
   db.ref('rooms/'+roomId+'/settings/'+mySide).once('value',function(snap){
     var st=(snap.val()||{}).sleepTime||'24:00';
     var sm=timeToMinutes(st), cm=sm-240;
@@ -2302,6 +2314,14 @@ function openSettingPanel() {
   ['setting-sleep-row','setting-wake-row','setting-time-hint','setting-save-btn'].forEach(function(id){
     document.getElementById(id).style.display = isGuest ? 'none' : '';
   });
+  /* 구경꾼: 방이름·공동목표금액 숨김 */
+  var guestHideIds = ['setting-goal-row','setting-goal-hint'];
+  var roomNameRow = document.getElementById('s-room-name') && document.getElementById('s-room-name').closest('.setting-row');
+  guestHideIds.forEach(function(id){ document.getElementById(id).style.display = isGuest ? 'none' : ''; });
+  if (roomNameRow) roomNameRow.style.display = isGuest ? 'none' : '';
+  /* 구분선도 구경꾼일 때 숨김 */
+  var divider = document.querySelector('#setting-panel .side-menu-divider');
+  if (divider) divider.style.display = isGuest ? 'none' : '';
   /* goalAmount 로드 */
   document.getElementById('s-goal').value='';
   db.ref('rooms/'+roomId+'/settings/goalAmount').once('value',function(snap){
@@ -2438,7 +2458,7 @@ function computeJudgmentsFromMeals(mealArr, settings) {
     if (!m.ts || !m.side) return;
     var dayStart = new Date(m.ts); dayStart.setHours(0,0,0,0);
     if (dayStart >= today) return;
-    var dk = dayStart.toISOString().slice(0,10);
+    var dk = dayStart.toLocaleDateString('sv-SE');
     if (!byDaySide[dk]) byDaySide[dk] = {left:[],right:[]};
     if (byDaySide[dk][m.side]) byDaySide[dk][m.side].push(m);
   });
@@ -2562,6 +2582,7 @@ function buildInvoiceCalendar(paneId, side, allJ) {
 
 /* ══ 시간 경고 말풍선 ══ */
 function timeToMinutes(str){ var p=(str||'24:00').split(':'); return parseInt(p[0])*60+parseInt(p[1]||0); }
+function toLocalDateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 var _warnSleepTime='24:00', _warnWakeTime='07:30';
 function checkTimeWarning(sleepTime,wakeTime){
   _warnSleepTime=sleepTime; _warnWakeTime=wakeTime;
@@ -2677,7 +2698,7 @@ function scheduleJudgeAtWakeTime(wakeTime){
 function judgeYesterday(){
   if (mySide==='guest') return;
   var yest=new Date(); yest.setDate(yest.getDate()-1);
-  var dk=yest.toISOString().slice(0,10);
+  var dk=yest.toLocaleDateString('sv-SE');
   var judgeKey='diet_judge_'+roomId+'_'+mySide+'_'+dk;
   if(localStorage.getItem(judgeKey)) return;
 
@@ -2875,7 +2896,7 @@ function initApp(sleepTime,wakeTime) {
     var el = document.getElementById('hdr-guests');
     if (!el) return;
     if (names.length === 0) { el.style.display='none'; el.textContent=''; }
-    else { el.style.display=''; el.textContent='👀 구경중: '+names.join(', ')+'  ('+names.length+'명)'; }
+    else { el.style.display=''; el.textContent='👀 구경중 ('+names.length+'명): '+names.join(', '); }
   });
 
   // 방 이름 헤더에 표시 (없으면 방 코드로 폴백)
