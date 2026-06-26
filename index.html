@@ -1994,7 +1994,7 @@ function loadViewerData(mealKey) {
     list.forEach(function(c){
       var side=c.side||(cachedNames.left===c.name?'left':'right');
       var color=side==='left'?'var(--left)':'var(--right)';
-      var isMine=c.name===myName&&c.side===mySide;
+      var isMine=(currentUid&&c.uid===currentUid)||(c.name===myName&&c.side===mySide);
       var div=document.createElement('div');
       div.className='iv-comment';
       div.innerHTML='<div class="cv-name-row">'
@@ -2017,7 +2017,7 @@ function postComment() {
   var input=document.getElementById('iv-comment-input');
   var text=input.value.trim();
   if (!text||!currentMealKey) return;
-  db.ref('rooms/'+roomId+'/comments/'+currentMealKey).push({name:myName,side:mySide,text:text,ts:Date.now()})
+  db.ref('rooms/'+roomId+'/comments/'+currentMealKey).push({name:myName,side:mySide,text:text,ts:Date.now(),uid:currentUid||null})
     .then(function(){ input.value=''; loadViewerData(currentMealKey); sendPushToOther('💬 '+myName+'이 댓글을 달았어요',text); });
 }
 
