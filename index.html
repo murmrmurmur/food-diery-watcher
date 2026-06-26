@@ -1387,9 +1387,6 @@ function parseTimeInput(raw) {
 }
 
 function goToRoomList() {
-  if (mySide === 'guest' && currentUid && roomId) {
-    db.ref('rooms/' + roomId + '/guests/' + currentUid).remove();
-  }
   document.getElementById('app').style.display = 'none';
   if (currentUid) {
     db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
@@ -1414,7 +1411,9 @@ function confirmDeleteRoom() {
 function doLeaveRoom() {
   document.getElementById('leave-room-modal').style.display = 'none';
   if (!currentUid) return;
-  db.ref('users/' + currentUid + '/rooms/' + roomId).remove().then(function() {
+  var removes = [db.ref('users/' + currentUid + '/rooms/' + roomId).remove()];
+  if (mySide === 'guest') removes.push(db.ref('rooms/' + roomId + '/guests/' + currentUid).remove());
+  Promise.all(removes).then(function() {
     detachRoomListeners();
     document.getElementById('app').style.display = 'none';
     db.ref('users/' + currentUid + '/rooms').once('value', function(snap) {
