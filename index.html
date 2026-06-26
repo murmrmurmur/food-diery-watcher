@@ -1466,6 +1466,10 @@ function doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw) {
   if (currentUid) {
     db.ref('users/' + currentUid + '/rooms/' + roomId).set({ role: mySide });
   }
+  // 처음 방 개설·참여 시 내 이름 저장 (이후 방 전환 시엔 덮어쓰지 않음)
+  if (mySide !== 'guest' && myName) {
+    db.ref('rooms/' + roomId + '/names/' + mySide).set(myName);
+  }
   // 새 방 만들기일 때 방 이름 저장
   if (setupMode === 'create') {
     var roomName = document.getElementById('i-room-name').value.trim();
@@ -2860,7 +2864,6 @@ function initApp(sleepTime,wakeTime) {
   });
 
   if (!isGuest) {
-    db.ref('rooms/'+roomId+'/names/'+mySide).set(myName);
     db.ref('rooms/'+roomId+'/settings/'+mySide).set({sleepTime:sleepTime,wakeTime:wakeTime});
   }
 
