@@ -904,6 +904,12 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <div id="setting-goal-row" class="setting-row">
       <div class="lbl">공동 목표 내용</div>
       <input type="text" id="s-goal-label" placeholder="예: 쿠우쿠우 가기" maxlength="20">
+      <div class="lbl" style="margin-top:6px">목표 기간 (개월)</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" id="s-goal-months" placeholder="예: 3" min="1" max="24" inputmode="numeric" style="flex:1">
+        <button onclick="suggestGoalAmount()" style="flex-shrink:0;background:var(--surface2);border:1.3px solid var(--ink-line);border-radius:12px 14px 11px 13px;padding:10px 12px;font-family:'Gaegu',cursive;font-size:14px;cursor:pointer;white-space:nowrap">💡 제안</button>
+      </div>
+      <div id="s-goal-suggest" style="display:none;font-size:11px;color:var(--muted);line-height:1.6;margin-top:4px;padding:8px 10px;background:var(--surface2);border-radius:10px 12px 9px 11px;border:1px solid var(--line)"></div>
       <div class="lbl" style="margin-top:6px">공동 목표금액</div>
       <input type="number" id="s-goal" placeholder="예: 30000" min="0" step="1000" inputmode="numeric">
     </div>
@@ -2345,6 +2351,32 @@ function openSettingPanel() {
 }
 function closeSettingPanel() { document.getElementById('setting-panel').classList.remove('open'); }
 document.getElementById('setting-panel').addEventListener('click',function(e){ if(e.target===this) closeSettingPanel(); });
+function suggestGoalAmount() {
+  var months = parseInt(document.getElementById('s-goal-months').value) || 0;
+  var box = document.getElementById('s-goal-suggest');
+  if (months < 1 || months > 24) {
+    box.style.display = 'block';
+    box.textContent = '1~24개월 사이로 입력해주세요.';
+    return;
+  }
+  var days = months * 30;
+  // 보수적 기본값: 야식참기 0.7일/일, 운동 0.4일/일, perfect day 0.15일/일
+  var lateNight = Math.round(days * 0.7 * 500);
+  var exercise  = Math.round(days * 0.4 * 1000);
+  var perfect   = Math.round(days * 0.15 * 1000);
+  var total = lateNight + exercise + perfect;
+  // 천원 단위 반올림
+  total = Math.round(total / 1000) * 1000;
+  document.getElementById('s-goal').value = total;
+  box.style.display = 'block';
+  box.innerHTML =
+    '📅 ' + months + '개월 ≈ ' + days + '일 기준<br>' +
+    '야식참기 ' + Math.round(days*0.7) + '일 × 500 = ' + lateNight.toLocaleString() + '원<br>' +
+    '운동 ' + Math.round(days*0.4) + '일 × 1,000 = ' + exercise.toLocaleString() + '원<br>' +
+    '완벽한날 ' + Math.round(days*0.15) + '일 × 1,000 = ' + perfect.toLocaleString() + '원<br>' +
+    '<b>→ 약 ' + total.toLocaleString() + '원</b> 을 목표금액에 채웠어요!';
+}
+
 function saveSettings() {
   var newName=document.getElementById('s-name').value.trim();
   var sleepRaw=document.getElementById('s-sleep').value.trim();
