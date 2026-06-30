@@ -1519,6 +1519,14 @@ function doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw) {
 
 function escStr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+/* 마지막 글자 받침 유무에 따라 이/가, 은/는 등 조사 선택 */
+function josa(word, withBatchim, withoutBatchim) {
+  var s=String(word||'');
+  var code=s.charCodeAt(s.length-1);
+  if (code<0xAC00||code>0xD7A3) return withoutBatchim;
+  return ((code-0xAC00)%28!==0) ? withBatchim : withoutBatchim;
+}
+
 function getTimeslot(ts) {
   var h = new Date(ts).getHours();
   if (h >= 6  && h < 9 ) return '아침';
@@ -2432,8 +2440,8 @@ function openInvoiceScreen() {
   /* 탭 레이블에 이름 반영 */
   var tabMy=document.getElementById('inv-tab-my');
   var tabOther=document.getElementById('inv-tab-other');
-  if(tabMy) tabMy.textContent=myName2+'이 내야 할 돈';
-  if(tabOther) tabOther.textContent=otherName+'이 내야 할 돈';
+  if(tabMy) tabMy.textContent=myName2+josa(myName2,'이','가')+' 내야 할 돈';
+  if(tabOther) tabOther.textContent=otherName+josa(otherName,'이','가')+' 내야 할 돈';
 
   /* 기본 탭: 내 청구서 */
   _invTab='my';
@@ -2484,11 +2492,12 @@ function openInvoiceScreen() {
         progressWrap.style.display='none';
       }
 
-      /* 내가 낼 금액 = 상대방의 클린데이 실적 / 상대방이 낼 금액 = 나의 클린데이 실적 */
-      renderInvoicePane('my', otherSide, allJ, 'var(--accent)');
-      renderInvoicePane('other', mySide, allJ, 'var(--other)');
-      buildInvoiceCalendar('my', otherSide, allJ);
-      buildInvoiceCalendar('other', mySide, allJ);
+      /* {side}이 내야 할 돈 = 상대방의 클린/운동/퍼펙트 실적 청구 + {side} 본인이 받은 👎 청구
+         달력은 그 사람 본인의 기록을 보여줌 */
+      renderInvoicePane('my', mySide, otherSide, allJ, myName2, otherName, 'var(--accent)');
+      renderInvoicePane('other', otherSide, mySide, allJ, otherName, myName2, 'var(--other)');
+      buildInvoiceCalendar('my', mySide, allJ);
+      buildInvoiceCalendar('other', otherSide, allJ);
     });
   });
 
@@ -2563,7 +2572,7 @@ function computeTotalFromAllJ(allJ) {
   return total;
 }
 
-function renderInvoicePane(paneId, invoiceSide, allJ, color) {
+function renderInvoicePane(paneId, chargedSide, benefitSide, allJ, chargedName, benefitName, color) {
   var now=new Date();
   var y=now.getFullYear(), mo=now.getMonth();
   var prefix=y+'-'+String(mo+1).padStart(2,'0');
@@ -2574,13 +2583,15 @@ function renderInvoicePane(paneId, invoiceSide, allJ, color) {
   var items=[], total=0;
   for (var d=1;d<=days;d++) {
     var dk=prefix+'-'+String(d).padStart(2,'0');
-    var j=(allJ[dk]||{})[invoiceSide];
-    if(!j) continue;
+    var jBenefit=(allJ[dk]||{})[benefitSide];
+    var jSelf=(allJ[dk]||{})[chargedSide];
     var parts=[], amt=0;
-    if(j.isClean){ amt+=500; parts.push('야식없음 +500'); }
-    if(j.hasWorkout){ amt+=1000; parts.push('운동 +1,000'); }
-    if(j.dislikeCount>0){ amt+=j.dislikeCount*500; parts.push('👎'+j.dislikeCount+'개 +'+(j.dislikeCount*500).toLocaleString()); }
-    if(j.isPerfect){ amt+=1000; parts.push('퍼펙트 +1,000'); }
+    if(jBenefit){
+      if(jBenefit.isClean){ amt+=500; parts.push(benefitName+' 야식없음 +500'); }
+      if(jBenefit.hasWorkout){ amt+=1000; parts.push(benefitName+' 운동 +1,000'); }
+      if(jBenefit.isPerfect){ amt+=1000; parts.push(benefitName+' 퍼펙트 +1,000'); }
+    }
+    if(jSelf && jSelf.dislikeCount>0){ amt+=jSelf.dislikeCount*500; parts.push(chargedName+' 식단 👎'+jSelf.dislikeCount+'개 +'+(jSelf.dislikeCount*500).toLocaleString()); }
     if(amt>0){ items.push({date:dk, amount:amt, parts:parts}); total+=amt; }
   }
 
