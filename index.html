@@ -835,7 +835,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     </div>
     <div class="prev-box" id="missed-prevbox" onclick="triggerMissedFile()">
       <span id="missed-prev-icon">📷</span>
-      <input type="file" id="missed-fileinput" accept="image/*" capture="environment" style="display:none">
+      <input type="file" id="missed-fileinput" accept="image/*" style="display:none">
     </div>
     <div style="font-size:11px;color:var(--muted);margin:-6px 0 2px;text-align:center">사진은 선택사항이에요</div>
     <input type="text" id="missed-notetxt" placeholder="메모 (필수 — 예: 점심 파스타)" maxlength="30">
@@ -944,7 +944,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 
     <!-- 안내 -->
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
-      내가 야식을 참거나, 운동을 하거나, 건강한 식단을 먹으면<br>→ 상대방이 돈을 내요
+      내가 야식을 참거나, 운동을 하면 → 상대방에게 청구돼요<br>내 식단이 상대방으로부터 👎을 받으면 → 나에게 청구돼요
     </div>
 
     <!-- 탭 토글 -->
@@ -956,7 +956,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <!-- 내 청구서 패널 -->
     <div id="inv-pane-my" class="inv-pane">
       <div class="inv-pane-total" id="inv-my-total" style="color:var(--accent)">0원</div>
-      <div class="inv-pane-hint">(상대방이 나한테 낼 금액)</div>
+      <div class="inv-pane-hint">(내가 낼 금액)</div>
       <div class="inv-section-lbl">이번달 달력</div>
       <div class="inv-cal-legend">
         <span class="inv-legend-item"><span class="cal-dot dot-clean" style="display:inline-block"></span>야식없음</span>
@@ -972,7 +972,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <!-- 상대방 청구서 패널 -->
     <div id="inv-pane-other" class="inv-pane" style="display:none">
       <div class="inv-pane-total" id="inv-other-total" style="color:var(--other)">0원</div>
-      <div class="inv-pane-hint">(내가 상대방한테 낼 금액)</div>
+      <div class="inv-pane-hint">(상대방이 낼 금액)</div>
       <div class="inv-section-lbl">이번달 달력</div>
       <div class="inv-cal-legend">
         <span class="inv-legend-item"><span class="cal-dot dot-clean" style="display:inline-block"></span>야식없음</span>
@@ -990,7 +990,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <div class="bonus-list">
       <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+500원 청구</span></div>
       <div class="bonus-item"><span>운동한 날</span><span class="bv">+1,000원 청구</span></div>
-      <div class="bonus-item"><span>👎 받은 날</span><span class="bv">+500원 (나한테)</span></div>
+      <div class="bonus-item"><span>👎 받은 개수</span><span class="bv">개당 +500원 (나한테)</span></div>
       <div class="bonus-item"><span>퍼펙트 데이 🏆</span><span class="bv">+1,000원 추가</span></div>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;margin-bottom:6px">
@@ -1085,17 +1085,38 @@ function showRoomList(rooms) {
     var card = document.createElement('div');
     card.className = 'room-card' + (code === lastRoom ? ' room-card-last' : '');
     var isLast = code === lastRoom;
+    var hasNew = false;
     function renderCard(roomName) {
       var displayName = roomName ? escStr(roomName) : escStr(code);
       card.innerHTML =
         '<div class="room-card-info">' +
-          '<div class="room-card-code">🚪 ' + displayName + (isLast ? ' <span class="room-last-badge">최근</span>' : '') + '</div>' +
+          '<div class="room-card-code">🚪 ' + displayName + (hasNew ? ' <span class="room-last-badge">NEW</span>' : '') + '</div>' +
           '<div class="room-card-role ' + roleClass[role] + '">' + (roleLabel[role]||role) + '</div>' +
         '</div>' +
         '<div class="room-card-arrow">›</div>';
     }
     renderCard('');
     db.ref('rooms/'+code+'/meta/name').once('value', function(snap) { renderCard(snap.val()||''); });
+
+    /* 새 글/댓글 여부: 마지막 방문 시각 이후 작성된 (남이 쓴) 항목이 있는지 */
+    var lastVisitTs = parseInt(localStorage.getItem('diet_lastvisit_'+code+'_'+role) || '0');
+    db.ref('rooms/'+code+'/meals').once('value', function(snapM) {
+      var meals = snapM.val() || {};
+      Object.keys(meals).forEach(function(mealKey) {
+        var m = meals[mealKey];
+        if (m.side !== role && (m.ts||0) > lastVisitTs) hasNew = true;
+        db.ref('rooms/'+code+'/comments/'+mealKey).once('value', function(snapC) {
+          var comments = snapC.val() || {};
+          Object.keys(comments).forEach(function(ck) {
+            var c = comments[ck];
+            if (c.uid !== currentUid && (c.ts||0) > lastVisitTs) hasNew = true;
+          });
+          renderCard('');
+          db.ref('rooms/'+code+'/meta/name').once('value', function(snap2) { renderCard(snap2.val()||''); });
+        });
+      });
+    });
+
     card.onclick = function() { enterRoom(code, role); };
     container.appendChild(card);
   });
@@ -2007,7 +2028,15 @@ function loadViewerData(mealKey) {
     list.forEach(function(c){
       var side=c.side||(cachedNames.left===c.name?'left':'right');
       var color=side==='left'?'var(--left)':'var(--right)';
-      var isMine=(currentUid&&c.uid===currentUid)||(c.name===myName&&c.side===mySide);
+      var isMine;
+      if (currentUid && c.uid) {
+        isMine = (c.uid === currentUid);
+      } else if (mySide !== 'guest') {
+        /* uid 없는 과거 댓글: 1:1 방에서는 side만으로 작성자가 유일하게 특정됨 (이름 변경과 무관) */
+        isMine = (c.side === mySide);
+      } else {
+        isMine = (c.name === myName && c.side === mySide);
+      }
       var div=document.createElement('div');
       div.className='iv-comment';
       div.innerHTML='<div class="cv-name-row">'
@@ -2193,7 +2222,12 @@ function doPost() {
         });
         return Promise.all(writes).then(function(){
           var menuTxt=menuText?' ('+menuText+')':'';
-          sendPushToOther('👁 '+myName+'이(가) 먹었어요!',menuText?myName+menuTxt+' 먹음':myName+'이 식사 사진을 올렸어요');
+          var isWorkoutPost=currentPostType==='workout';
+          var pushTitle=isWorkoutPost?('🏃 '+myName+'이(가) 운동했어요!'):('👁 '+myName+'이(가) 먹었어요!');
+          var pushBody=isWorkoutPost
+            ? (menuText?myName+menuTxt+' 운동함':myName+'이 운동 기록을 올렸어요')
+            : (menuText?myName+menuTxt+' 먹음':myName+'이 식사 사진을 올렸어요');
+          sendPushToOther(pushTitle,pushBody);
           if(targets.length>1) showToast('✅ '+targets.length+'개 방에 기록됐어요');
           donePost(btn);
         });
@@ -2227,7 +2261,7 @@ function openMissedModal() {
   var dtInput=document.getElementById('missed-datetime');
   dtInput.max=localNow; dtInput.value='';
   var pb=document.getElementById('missed-prevbox');
-  pb.innerHTML='<span id="missed-prev-icon">📷</span><input type="file" id="missed-fileinput" accept="image/*" capture="environment" style="display:none">';
+  pb.innerHTML='<span id="missed-prev-icon">📷</span><input type="file" id="missed-fileinput" accept="image/*" style="display:none">';
   document.getElementById('missed-fileinput').onchange=missedFileChosen;
   document.getElementById('missed-backdrop').classList.add('open');
 }
@@ -2280,6 +2314,13 @@ function doPostMissed() {
           .catch(function(e){ console.warn('방 '+code+' 깜빡 업로드 실패',e); return null; });
       });
       Promise.all(writes).then(function(){
+        var isWorkoutMissed=missedType==='workout';
+        var menuTxt=memo?' ('+memo+')':'';
+        var pushTitle=isWorkoutMissed?('🏃 '+myName+'이(가) 운동했어요!'):('👁 '+myName+'이(가) 먹었어요!');
+        var pushBody=isWorkoutMissed
+          ? (memo?myName+menuTxt+' 운동함 (깜빡했어요)':myName+'이 깜빡한 운동 기록을 올렸어요')
+          : (memo?myName+menuTxt+' 먹음 (깜빡했어요)':myName+'이 깜빡한 식사를 기록했어요');
+        sendPushToOther(pushTitle,pushBody);
         if(targets.length>1) showToast('✅ '+targets.length+'개 방에 기록됐어요');
         else showToast('✅ 기록됐어요!');
         busy=false; btn.innerHTML='올리기'; btn.disabled=false; missedFile=null; closeMissedModal();
@@ -2391,8 +2432,8 @@ function openInvoiceScreen() {
   /* 탭 레이블에 이름 반영 */
   var tabMy=document.getElementById('inv-tab-my');
   var tabOther=document.getElementById('inv-tab-other');
-  if(tabMy) tabMy.textContent=myName2+'의 청구서';
-  if(tabOther) tabOther.textContent=otherName+'의 청구서';
+  if(tabMy) tabMy.textContent=myName2+'이 내야 할 돈';
+  if(tabOther) tabOther.textContent=otherName+'이 내야 할 돈';
 
   /* 기본 탭: 내 청구서 */
   _invTab='my';
@@ -2443,10 +2484,11 @@ function openInvoiceScreen() {
         progressWrap.style.display='none';
       }
 
-      renderInvoicePane('my', mySide, allJ, 'var(--accent)');
-      renderInvoicePane('other', otherSide, allJ, 'var(--other)');
-      buildInvoiceCalendar('my', mySide, allJ);
-      buildInvoiceCalendar('other', otherSide, allJ);
+      /* 내가 낼 금액 = 상대방의 클린데이 실적 / 상대방이 낼 금액 = 나의 클린데이 실적 */
+      renderInvoicePane('my', otherSide, allJ, 'var(--accent)');
+      renderInvoicePane('other', mySide, allJ, 'var(--other)');
+      buildInvoiceCalendar('my', otherSide, allJ);
+      buildInvoiceCalendar('other', mySide, allJ);
     });
   });
 
@@ -2495,8 +2537,9 @@ function computeJudgmentsFromMeals(mealArr, settings) {
         return (!m.type||m.type==='meal') && m.ts>=cTs.getTime() && m.ts<=dayEnd.getTime();
       });
       var hasWorkout = meals.some(function(m) { return m.type==='workout'; });
-      var noDislike = !meals.some(function(m) { return (!m.type||m.type==='meal') && m.dislike && m.dislike.by; });
-      allJ[dk][side] = {isClean:isClean, hasWorkout:hasWorkout, noDislike:noDislike, isPerfect:isClean&&hasWorkout&&noDislike};
+      var dislikeCount = meals.filter(function(m) { return (!m.type||m.type==='meal') && m.dislike && m.dislike.by; }).length;
+      var noDislike = dislikeCount===0;
+      allJ[dk][side] = {isClean:isClean, hasWorkout:hasWorkout, noDislike:noDislike, dislikeCount:dislikeCount, isPerfect:isClean&&hasWorkout&&noDislike};
     });
   });
   return allJ;
@@ -2513,7 +2556,7 @@ function computeTotalFromAllJ(allJ) {
       var j=(allJ[dk]||{})[side]; if(!j) continue;
       if(j.isClean) total+=500;
       if(j.hasWorkout) total+=1000;
-      if(!j.noDislike) total+=500;
+      total+=(j.dislikeCount||0)*500;
       if(j.isPerfect) total+=1000;
     }
   });
@@ -2536,7 +2579,7 @@ function renderInvoicePane(paneId, invoiceSide, allJ, color) {
     var parts=[], amt=0;
     if(j.isClean){ amt+=500; parts.push('야식없음 +500'); }
     if(j.hasWorkout){ amt+=1000; parts.push('운동 +1,000'); }
-    if(!j.noDislike){ amt+=500; parts.push('👎받음 +500'); }
+    if(j.dislikeCount>0){ amt+=j.dislikeCount*500; parts.push('👎'+j.dislikeCount+'개 +'+(j.dislikeCount*500).toLocaleString()); }
     if(j.isPerfect){ amt+=1000; parts.push('퍼펙트 +1,000'); }
     if(amt>0){ items.push({date:dk, amount:amt, parts:parts}); total+=amt; }
   }
@@ -2750,14 +2793,14 @@ function judgeYesterday(){
         var myMeals=mealArr.filter(function(m){
           return m.side===mySide && (!m.type||m.type==='meal') && m.ts>=dayStart.getTime() && m.ts<=dEnd.getTime();
         });
-        var hasDislike=myMeals.some(function(m){ return m.dislike && m.dislike.by; });
-        var noDislike=!hasDislike;
+        var dislikeCount=myMeals.filter(function(m){ return m.dislike && m.dislike.by; }).length;
+        var noDislike=dislikeCount===0;
 
         /* 4) 퍼펙트: 세 조건 모두 */
         var isPerfect=isClean && hasWorkout && noDislike;
 
         /* DB 저장 */
-        var judgment={isClean:isClean, hasWorkout:hasWorkout, noDislike:noDislike, isPerfect:isPerfect, ts:Date.now()};
+        var judgment={isClean:isClean, hasWorkout:hasWorkout, noDislike:noDislike, dislikeCount:dislikeCount, isPerfect:isPerfect, ts:Date.now()};
         db.ref('rooms/'+roomId+'/judgments/'+dk+'/'+mySide).set(judgment);
         db.ref('rooms/'+roomId+'/cleanDays/'+mySide+'/'+dk).set(isClean);
         localStorage.setItem(judgeKey,'1');
@@ -2768,9 +2811,9 @@ function judgeYesterday(){
         var parts=[];
         if(isClean) parts.push('야식없음 +500');
         if(hasWorkout) parts.push('운동 +1000');
-        if(hasDislike) parts.push('👎받음 +500');
+        if(dislikeCount>0) parts.push('👎'+dislikeCount+'개 +'+(dislikeCount*500));
         if(isPerfect) parts.push('퍼펙트 +1000');
-        var total=(isClean?500:0)+(hasWorkout?1000:0)+(hasDislike?500:0)+(isPerfect?1000:0);
+        var total=(isClean?500:0)+(hasWorkout?1000:0)+(dislikeCount*500)+(isPerfect?1000:0);
         if(total>0){
           showToast('✨ 어제 정산 +'+total.toLocaleString()+'원 💰'+(parts.length?' ('+parts.join(', ')+')':''));
         } else {
@@ -2785,8 +2828,8 @@ function addCoin(dk, j){
   var otherSide=mySide==='left'?'right':'left';
   /* 내가 성공할수록 상대방이 내야 할 금액 */
   var toOther=(j.isClean?500:0)+(j.hasWorkout?1000:0)+(j.isPerfect?1000:0);
-  /* 상대방이 내 사진에 👎 → 나에게 +500 */
-  var toMe=j.noDislike?0:500;
+  /* 상대방이 내 사진에 👎 → 받은 개수만큼 나에게 +500 */
+  var toMe=(j.dislikeCount||0)*500;
 
   function done(){ updateCoinDisplay(); }
   var pending=0;
