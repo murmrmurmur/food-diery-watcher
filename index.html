@@ -988,10 +988,10 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <!-- 상금 안내 (공통) -->
     <div class="inv-section-lbl" style="margin-top:8px">상금 안내</div>
     <div class="bonus-list">
-      <div class="bonus-item"><span>야식 없는 날</span><span class="bv">+500원 청구</span></div>
-      <div class="bonus-item"><span>운동한 날</span><span class="bv">+1,000원 청구</span></div>
-      <div class="bonus-item"><span>👎 받은 개수</span><span class="bv">개당 +500원 (나한테)</span></div>
-      <div class="bonus-item"><span>퍼펙트 데이 🏆</span><span class="bv">+1,000원 추가</span></div>
+      <div class="bonus-item"><span>야식 없는 날 (상대에게 청구)</span><span class="bv">+500원</span></div>
+      <div class="bonus-item"><span>운동한 날 (상대에게 청구)</span><span class="bv">+1,000원</span></div>
+      <div class="bonus-item"><span>👎 받은 개수 (나에게 청구)</span><span class="bv">개당 +500원</span></div>
+      <div class="bonus-item"><span>퍼펙트 데이 🏆 (상대에게 청구)</span><span class="bv">+1,000원 추가</span></div>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;margin-bottom:6px">
       퍼펙트 데이 = 야식 없음 + 운동 + 👎 없음 모두 충족
@@ -1518,14 +1518,6 @@ function doEnterSetup(sleepTime, wakeTime, sleepRaw, wakeRaw) {
 }
 
 function escStr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-/* 마지막 글자 받침 유무에 따라 이/가, 은/는 등 조사 선택 */
-function josa(word, withBatchim, withoutBatchim) {
-  var s=String(word||'');
-  var code=s.charCodeAt(s.length-1);
-  if (code<0xAC00||code>0xD7A3) return withoutBatchim;
-  return ((code-0xAC00)%28!==0) ? withBatchim : withoutBatchim;
-}
 
 function getTimeslot(ts) {
   var h = new Date(ts).getHours();
@@ -2440,8 +2432,8 @@ function openInvoiceScreen() {
   /* 탭 레이블에 이름 반영 */
   var tabMy=document.getElementById('inv-tab-my');
   var tabOther=document.getElementById('inv-tab-other');
-  if(tabMy) tabMy.textContent=myName2+josa(myName2,'이','가')+' 내야 할 돈';
-  if(tabOther) tabOther.textContent=otherName+josa(otherName,'이','가')+' 내야 할 돈';
+  if(tabMy) tabMy.textContent=myName2+'의 청구서';
+  if(tabOther) tabOther.textContent=otherName+'의 청구서';
 
   /* 기본 탭: 내 청구서 */
   _invTab='my';
@@ -2606,7 +2598,7 @@ function renderInvoicePane(paneId, chargedSide, benefitSide, allJ, chargedName, 
     var el=document.createElement('div');
     el.className='invoice-item';
     el.innerHTML='<span class="iv-date">'+mo2+'/'+day+' ('+dow+')<br>'
-      +'<span style="font-size:10px;color:var(--muted)">'+item.parts.join(' · ')+'</span></span>'
+      +'<span style="font-size:10px;color:var(--muted);display:block">'+item.parts.map(function(p){ return '<span style="display:block">'+p+'</span>'; }).join('')+'</span></span>'
       +'<span class="iv-amount" style="color:'+color+'">+'+item.amount.toLocaleString()+'원</span>';
     listEl.appendChild(el);
   });
