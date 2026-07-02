@@ -4,8 +4,8 @@
     {
       "name": "식단감시",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "3131"],
-      "port": 3131
+      "runtimeArgs": ["-m", "http.server", "3132"],
+      "port": 3132
     }
   ]
 }

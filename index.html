@@ -645,6 +645,40 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 .inv-legend-item { display:flex; align-items:center; gap:3px; font-size:11px; color:var(--muted); }
 /* 설정 패널 goalAmount 행 */
 .setting-goal-hint { font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
+/* 청구서 월 이동 */
+.inv-month-nav { display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:12px; }
+.inv-month-btn {
+  border:1.3px solid var(--ink-line); border-radius:10px; background:var(--surface);
+  color:var(--text); font-size:15px; width:30px; height:30px; line-height:1;
+  cursor:pointer; flex-shrink:0;
+}
+.inv-month-btn:disabled { opacity:.35; cursor:default; }
+.inv-month-label { font-family:'Gaegu',cursive; font-size:15px; min-width:96px; text-align:center; }
+/* 목표 달성 축하 */
+#confetti-container { position:fixed; inset:0; pointer-events:none; z-index:500; overflow:hidden; }
+.confetti-piece {
+  position:absolute; top:-12px; width:8px; height:14px; opacity:.9; border-radius:2px;
+  animation:confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  0%   { transform:translateY(0) rotate(0deg); opacity:1; }
+  100% { transform:translateY(112vh) rotate(360deg); opacity:.85; }
+}
+.goal-celebrate-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:501;
+  display:none; align-items:center; justify-content:center;
+}
+.goal-celebrate-card {
+  background:var(--surface); border:1.5px solid var(--ink-line);
+  border-radius:22px 16px 24px 18px; padding:30px 26px; text-align:center; max-width:280px;
+}
+.goal-celebrate-title { font-family:'Gaegu',cursive; font-size:26px; margin-bottom:10px; }
+.goal-celebrate-amt { font-family:'Gaegu',cursive; font-size:19px; color:var(--accent); margin-bottom:18px; }
+.goal-celebrate-btn {
+  border:1.3px solid var(--ink-line); border-radius:12px 16px 13px 15px;
+  background:var(--accent); color:#fff; font-family:'Gowun Dodum',sans-serif;
+  font-size:13px; padding:9px 22px; cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -953,11 +987,18 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
       <button id="inv-tab-other" class="inv-tab" onclick="switchInvTab('other')">상대방 청구서</button>
     </div>
 
+    <!-- 월 이동 -->
+    <div class="inv-month-nav">
+      <button class="inv-month-btn" id="inv-month-prev-btn" onclick="invChangeMonth(-1)">‹</button>
+      <span class="inv-month-label" id="inv-month-label"></span>
+      <button class="inv-month-btn" id="inv-month-next-btn" onclick="invChangeMonth(1)">›</button>
+    </div>
+
     <!-- 내 청구서 패널 -->
     <div id="inv-pane-my" class="inv-pane">
       <div class="inv-pane-total" id="inv-my-total" style="color:var(--accent)">0원</div>
       <div class="inv-pane-hint">(내가 낼 금액)</div>
-      <div class="inv-section-lbl">이번달 달력</div>
+      <div class="inv-section-lbl">달력</div>
       <div class="inv-cal-legend">
         <span class="inv-legend-item"><span class="cal-dot dot-clean" style="display:inline-block"></span>야식없음</span>
         <span class="inv-legend-item"><span class="cal-dot dot-workout" style="display:inline-block"></span>운동</span>
@@ -966,14 +1007,14 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
       <div class="cal-month-title" id="inv-cal-month-my"></div>
       <div class="clean-calendar" id="inv-calendar-my"></div>
       <div class="inv-section-lbl">청구 내역</div>
-      <div class="invoice-list" id="inv-list-my"><div class="invoice-empty">이번달 기록 없음</div></div>
+      <div class="invoice-list" id="inv-list-my"><div class="invoice-empty">기록 없음</div></div>
     </div>
 
     <!-- 상대방 청구서 패널 -->
     <div id="inv-pane-other" class="inv-pane" style="display:none">
       <div class="inv-pane-total" id="inv-other-total" style="color:var(--other)">0원</div>
       <div class="inv-pane-hint">(상대방이 낼 금액)</div>
-      <div class="inv-section-lbl">이번달 달력</div>
+      <div class="inv-section-lbl">달력</div>
       <div class="inv-cal-legend">
         <span class="inv-legend-item"><span class="cal-dot dot-clean" style="display:inline-block"></span>야식없음</span>
         <span class="inv-legend-item"><span class="cal-dot dot-workout" style="display:inline-block"></span>운동</span>
@@ -982,7 +1023,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
       <div class="cal-month-title" id="inv-cal-month-other"></div>
       <div class="clean-calendar" id="inv-calendar-other"></div>
       <div class="inv-section-lbl">청구 내역</div>
-      <div class="invoice-list" id="inv-list-other"><div class="invoice-empty">이번달 기록 없음</div></div>
+      <div class="invoice-list" id="inv-list-other"><div class="invoice-empty">기록 없음</div></div>
     </div>
 
     <!-- 상금 안내 (공통) -->
@@ -996,9 +1037,19 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
     <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;margin-bottom:6px">
       퍼펙트 데이 = 야식 없음 + 운동 + 👎 없음 모두 충족
     </div>
-    <div class="invoice-settle-hint">💡 매월 1일에 전월 청구서가 확정됩니다</div>
+    <div class="invoice-settle-hint">💡 청구서는 리셋되지 않고 목표 금액을 달성할 때까지 계속 쌓여요</div>
     <div id="inv-update-note" style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.6"></div>
 
+  </div>
+</div>
+
+<!-- ══ 목표 달성 축하 ══ -->
+<div id="confetti-container"></div>
+<div class="goal-celebrate-overlay" id="goal-celebrate-modal">
+  <div class="goal-celebrate-card">
+    <div class="goal-celebrate-title">🎉 목표 달성!</div>
+    <div class="goal-celebrate-amt" id="goal-celebrate-amt"></div>
+    <button class="goal-celebrate-btn" onclick="closeGoalCelebrate()">확인</button>
   </div>
 </div>
 
@@ -1596,8 +1647,9 @@ function renderTimeline(meals) {
     tl.appendChild(wrap);
 
     ['left','right'].forEach(function(side) {
-      var sideItems=sorted.filter(function(m){ return m.side===side; });
-      if (sideItems.length>=5) {
+      var sideItems=sorted.filter(function(m){ return m.side===side && m.type!=='workout'; });
+      var hasDislike=sideItems.some(function(m){ return dislikeCache[m.key] && dislikeCache[m.key].by; });
+      if (sideItems.length>=5 && hasDislike) {
         var lastCard=sideItems[sideItems.length-1];
         var warnTop=posMap[lastCard.key]+CARD_H+16;
         var warnEl=document.createElement('div');
@@ -2423,8 +2475,14 @@ function saveSettings() {
 function openCoinPanel() { openInvoiceScreen(); }
 
 var _invTab='my'; // 현재 탭 상태
+var _invViewYear=null, _invViewMonth=null; // 청구서 내역/달력에서 보고 있는 월 (합산금액과 별개)
+var _invCachedAllJ={}, _invCachedNames={};
+var _goalCelebrating=false;
 
 function openInvoiceScreen() {
+  var now0=new Date();
+  _invViewYear=now0.getFullYear(); _invViewMonth=now0.getMonth();
+
   var otherSide=mySide==='left'?'right':'left';
   var myName2=cachedNames[mySide]||(mySide==='left'?'왼쪽':'오른쪽');
   var otherName=cachedNames[otherSide]||(otherSide==='left'?'왼쪽':'오른쪽');
@@ -2462,12 +2520,16 @@ function openInvoiceScreen() {
     var noteEl=document.getElementById('inv-update-note');
     if(noteEl) noteEl.textContent='⏰ '+laterName+' (기상 '+laterWake+') 기준으로 매일 업데이트됩니다';
 
+    var periodStart=settings.periodStart||null;
+
     db.ref('rooms/'+roomId+'/meals').once('value',function(snapM){
       var mealArr=Object.values(snapM.val()||{});
       var allJ=computeJudgmentsFromMeals(mealArr, settings);
+      _invCachedAllJ=allJ;
+      _invCachedNames={my:myName2, other:otherName, mySide:mySide, otherSide:otherSide};
 
-      /* 합산금액 계산 */
-      var total=computeTotalFromAllJ(allJ);
+      /* 합산금액 계산 — 월 리셋 없이 목표 달성 전까지 누적 */
+      var total=computeTotalFromAllJ(allJ, periodStart);
       var totalEl=document.getElementById('inv-total-val');
       if(totalEl) totalEl.textContent=total.toLocaleString()+'원';
 
@@ -2485,11 +2547,10 @@ function openInvoiceScreen() {
       }
 
       /* {side}이 내야 할 돈 = 상대방의 클린/운동/퍼펙트 실적 청구 + {side} 본인이 받은 👎 청구
-         달력은 그 사람 본인의 기록을 보여줌 */
-      renderInvoicePane('my', mySide, otherSide, allJ, myName2, otherName, 'var(--accent)');
-      renderInvoicePane('other', otherSide, mySide, allJ, otherName, myName2, 'var(--other)');
-      buildInvoiceCalendar('my', mySide, allJ);
-      buildInvoiceCalendar('other', otherSide, allJ);
+         달력/내역은 월 이동으로 과거 기록을 조회 (합산금액과는 별개) */
+      renderInvoiceMonth();
+
+      checkGoalAchievement(total, goal, periodStart);
     });
   });
 
@@ -2507,6 +2568,77 @@ function switchInvTab(tab) {
   document.getElementById('inv-tab-other').classList.toggle('active', tab==='other');
   document.getElementById('inv-pane-my').style.display = tab==='my' ? '' : 'none';
   document.getElementById('inv-pane-other').style.display = tab==='other' ? '' : 'none';
+}
+
+/* ══ 청구서 월 이동 (합산금액과 별개, 내역/달력 조회용) ══ */
+function renderInvoiceMonth() {
+  var n=_invCachedNames;
+  if(!n.my) return;
+  var labelEl=document.getElementById('inv-month-label');
+  if(labelEl) labelEl.textContent=_invViewYear+'년 '+(_invViewMonth+1)+'월';
+  var now=new Date();
+  var isCurMonth=(_invViewYear===now.getFullYear() && _invViewMonth===now.getMonth());
+  var nextBtn=document.getElementById('inv-month-next-btn');
+  if(nextBtn) nextBtn.disabled=isCurMonth;
+
+  renderInvoicePane('my', n.mySide, n.otherSide, _invCachedAllJ, n.my, n.other, 'var(--accent)', _invViewYear, _invViewMonth);
+  renderInvoicePane('other', n.otherSide, n.mySide, _invCachedAllJ, n.other, n.my, 'var(--other)', _invViewYear, _invViewMonth);
+  buildInvoiceCalendar('my', n.mySide, _invCachedAllJ, _invViewYear, _invViewMonth);
+  buildInvoiceCalendar('other', n.otherSide, _invCachedAllJ, _invViewYear, _invViewMonth);
+}
+
+function invChangeMonth(delta) {
+  var now=new Date();
+  var next=new Date(_invViewYear, _invViewMonth+delta, 1);
+  if(next.getFullYear()>now.getFullYear() || (next.getFullYear()===now.getFullYear() && next.getMonth()>now.getMonth())) return;
+  _invViewYear=next.getFullYear(); _invViewMonth=next.getMonth();
+  renderInvoiceMonth();
+}
+
+/* ══ 목표 달성 판정 + 축하 ══ */
+function checkGoalAchievement(total, goal, periodStart) {
+  if(!(goal>0) || total<goal || _goalCelebrating) return;
+  _goalCelebrating=true;
+  var newStart=toLocalDateKey(new Date());
+  db.ref('rooms/'+roomId+'/settings/periodStart').transaction(function(cur){
+    if((cur||null) !== (periodStart||null)) return; // 이미 다른 곳에서 정산됨 → 중단
+    return newStart;
+  }, function(err, committed){
+    _goalCelebrating=false;
+    if(!err && committed) celebrateGoalAchieved(goal);
+  });
+}
+
+function celebrateGoalAchieved(goal) {
+  showConfetti();
+  var amtEl=document.getElementById('goal-celebrate-amt');
+  if(amtEl) amtEl.textContent=goal.toLocaleString()+'원 모았어요!';
+  var modal=document.getElementById('goal-celebrate-modal');
+  if(modal) modal.style.display='flex';
+}
+
+function closeGoalCelebrate() {
+  var modal=document.getElementById('goal-celebrate-modal');
+  if(modal) modal.style.display='none';
+  openInvoiceScreen();
+}
+
+function showConfetti() {
+  var container=document.getElementById('confetti-container');
+  if(!container) return;
+  container.innerHTML='';
+  var colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#c780fa','#ff9f45'];
+  for(var i=0;i<80;i++){
+    var p=document.createElement('div');
+    p.className='confetti-piece';
+    p.style.left=(Math.random()*100)+'vw';
+    p.style.background=colors[i%colors.length];
+    p.style.animationDelay=(Math.random()*0.6)+'s';
+    p.style.animationDuration=(2+Math.random()*1.5)+'s';
+    p.style.transform='rotate('+(Math.random()*360)+'deg)';
+    container.appendChild(p);
+  }
+  setTimeout(function(){ container.innerHTML=''; },3600);
 }
 
 /* judgments 기반 청구서 내역 렌더 */
@@ -2546,27 +2678,28 @@ function computeJudgmentsFromMeals(mealArr, settings) {
   return allJ;
 }
 
-function computeTotalFromAllJ(allJ) {
+/* periodStart(YYYY-MM-DD) 이후 전체 기록을 누적 — 월이 바뀌어도 리셋되지 않고
+   목표 금액을 달성했을 때만 checkGoalAchievement()가 periodStart를 오늘로 당겨서 리셋함 */
+function computeTotalFromAllJ(allJ, periodStart) {
   var total=0;
-  var now=new Date(), y=now.getFullYear(), mo=now.getMonth();
-  var prefix=y+'-'+String(mo+1).padStart(2,'0');
-  var days=new Date(y,mo+1,0).getDate();
-  ['left','right'].forEach(function(side){
-    for(var d=1;d<=days;d++){
-      var dk=prefix+'-'+String(d).padStart(2,'0');
-      var j=(allJ[dk]||{})[side]; if(!j) continue;
+  var startKey=periodStart||'0000-01-01';
+  Object.keys(allJ).forEach(function(dk){
+    if(dk<startKey) return;
+    var dayJ=allJ[dk];
+    ['left','right'].forEach(function(side){
+      var j=dayJ[side]; if(!j) return;
       if(j.isClean) total+=500;
       if(j.hasWorkout) total+=1000;
       total+=(j.dislikeCount||0)*500;
       if(j.isPerfect) total+=1000;
-    }
+    });
   });
   return total;
 }
 
-function renderInvoicePane(paneId, chargedSide, benefitSide, allJ, chargedName, benefitName, color) {
+function renderInvoicePane(paneId, chargedSide, benefitSide, allJ, chargedName, benefitName, color, viewYear, viewMonth) {
   var now=new Date();
-  var y=now.getFullYear(), mo=now.getMonth();
+  var y=(viewYear!=null)?viewYear:now.getFullYear(), mo=(viewMonth!=null)?viewMonth:now.getMonth();
   var prefix=y+'-'+String(mo+1).padStart(2,'0');
   var days=new Date(y,mo+1,0).getDate();
   var totalEl=document.getElementById('inv-'+paneId+'-total');
@@ -2589,7 +2722,7 @@ function renderInvoicePane(paneId, chargedSide, benefitSide, allJ, chargedName, 
 
   if(totalEl){ totalEl.textContent=total.toLocaleString()+'원'; }
   if(!listEl) return;
-  if(!items.length){ listEl.innerHTML='<div class="invoice-empty">이번달 기록 없음</div>'; return; }
+  if(!items.length){ listEl.innerHTML='<div class="invoice-empty">기록 없음</div>'; return; }
   listEl.innerHTML='';
   items.forEach(function(item){
     var dt=new Date(item.date);
@@ -2605,13 +2738,15 @@ function renderInvoicePane(paneId, chargedSide, benefitSide, allJ, chargedName, 
 }
 
 /* judgments 기반 달력 (3종 점) */
-function buildInvoiceCalendar(paneId, side, allJ) {
+function buildInvoiceCalendar(paneId, side, allJ, viewYear, viewMonth) {
   var calId='inv-calendar-'+paneId;
   var monthId='inv-cal-month-'+paneId;
   var cal=document.getElementById(calId);
   if(!cal) return;
   var now=new Date();
-  var y=now.getFullYear(), mo=now.getMonth(), today=now.getDate();
+  var y=(viewYear!=null)?viewYear:now.getFullYear(), mo=(viewMonth!=null)?viewMonth:now.getMonth();
+  var isCurMonth=(y===now.getFullYear() && mo===now.getMonth());
+  var todayNum=isCurMonth?now.getDate():null;
   var days=new Date(y,mo+1,0).getDate();
   var monthNames=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   var mEl=document.getElementById(monthId);
@@ -2630,12 +2765,12 @@ function buildInvoiceCalendar(paneId, side, allJ) {
   for (var d=1;d<=days;d++){
     var cell=document.createElement('div'); cell.className='cal-cell';
     var num=document.createElement('div');
-    num.className='cal-num'+(d===today?' today':'')+(d>today?' future':'');
+    num.className='cal-num'+(d===todayNum?' today':'')+(todayNum!==null&&d>todayNum?' future':'');
     num.textContent=d; cell.appendChild(num);
     var dots=document.createElement('div'); dots.className='cal-dots';
     var dk=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var j=(allJ[dk]||{})[side];
-    if(j && d<=today){
+    if(j){
       if(j.isClean){ var dot=document.createElement('div'); dot.className='cal-dot dot-clean'; dots.appendChild(dot); }
       if(j.hasWorkout){ var dot=document.createElement('div'); dot.className='cal-dot dot-workout'; dots.appendChild(dot); }
       if(j.noDislike){ var dot=document.createElement('div'); dot.className='cal-dot dot-dislike'; dots.appendChild(dot); }
@@ -2861,7 +2996,7 @@ function updateCoinDisplay(){
     db.ref('rooms/'+roomId+'/meals').once('value',function(snapM){
       var mealArr=Object.values(snapM.val()||{});
       var allJ=computeJudgmentsFromMeals(mealArr, settings);
-      var total=computeTotalFromAllJ(allJ);
+      var total=computeTotalFromAllJ(allJ, settings.periodStart||null);
       document.getElementById('my-coin-amt').textContent=total.toLocaleString()+'원';
     });
   });
