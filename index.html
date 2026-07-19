@@ -566,9 +566,9 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
   transition:transform .12s; line-height:1.3;
 }
 .quick-btn:active { transform:scale(.95); }
-.quick-meal    { background:#FFE8D8; color:#C96830; }
-.quick-workout { background:#D8EEFF; color:#2A7EAF; }
-.quick-missed  { background:#F0EDF8; color:#6B5CA5; }
+.quick-meal    { background:#FF9466; color:#fff; }
+.quick-workout { background:#5BAD8F; color:#fff; }
+.quick-missed  { background:#e8a838; color:#fff; }
 .room-picker-btn {
   padding:14px 16px; background:var(--bg); border:1.5px solid var(--ink-line);
   border-radius:14px 10px 16px 12px; font-family:'Gaegu',cursive; font-size:16px;
@@ -738,8 +738,8 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
   <div id="room-list-cards" style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;"></div>
   <button class="start-btn" style="max-width:360px;width:100%;margin-top:4px;" onclick="goToSetup()">＋ 새 방 만들기</button>
   <div class="quick-btns" style="width:100%;max-width:360px;display:flex;gap:8px;margin-top:0px;">
-    <button class="quick-btn quick-meal" onclick="quickPostFromList('meal')">📸 지금 먹어요</button>
     <button class="quick-btn quick-workout" onclick="quickPostFromList('workout')">🏃 운동했어요</button>
+    <button class="quick-btn quick-meal" onclick="quickPostFromList('meal')">📸 지금 먹어요</button>
     <button class="quick-btn quick-missed" onclick="quickPostFromList('missed')">❗ 깜빡했어요</button>
   </div>
 </div>
