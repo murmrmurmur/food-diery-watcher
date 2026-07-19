@@ -343,7 +343,7 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 @keyframes bubblePop { from{opacity:0;transform:translateX(-50%) translateY(6px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
 /* ══ 업로드 MODAL ══ */
-.backdrop { position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:50; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s; }
+.backdrop { position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:500; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s; }
 .backdrop.open { opacity:1; pointer-events:all; }
 .modal { background:var(--surface); border-radius:28px 28px 0 0; border-top:1.5px solid var(--ink-line); width:100%; max-width:500px; padding:18px 20px 48px; display:flex; flex-direction:column; gap:14px; transform:translateY(40px); transition:transform .28s cubic-bezier(.4,0,.2,1); max-height:92dvh; overflow-y:auto; }
 .backdrop.open .modal { transform:translateY(0); }
@@ -1200,6 +1200,8 @@ function showRoomList(rooms) {
 function quickPostFromList(type) {
   if (!currentUid) { showToast('로그인 후 사용해주세요'); return; }
   db.ref('users/'+currentUid+'/profile/name').once('value', function(snap) {
+    /* 콜백이 돌아왔을 때 이미 방 안에 들어가 있으면 중단 */
+    if (document.getElementById('room-list-screen').style.display === 'none') return;
     myName = snap.val() || '나';
     mySide = 'left'; /* doPost가 allRooms의 실제 role을 사용하므로 임시값 */
     roomId = '';
