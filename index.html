@@ -744,14 +744,6 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
   </div>
 </div>
 
-<!-- ══ 방 선택 모달 ══ -->
-<div id="room-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border-radius:20px 16px 22px 18px;padding:24px 20px;width:min(320px,90vw);display:flex;flex-direction:column;gap:12px;">
-    <div style="font-family:'Gaegu',cursive;font-size:18px;font-weight:700;text-align:center;">어느 방에 기록할까요?</div>
-    <div id="room-picker-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-    <button onclick="document.getElementById('room-picker-modal').style.display='none'" style="margin-top:4px;background:none;border:1.5px solid var(--ink-line);border-radius:12px;padding:10px;cursor:pointer;font-size:14px;color:var(--muted);">취소</button>
-  </div>
-</div>
 
 <!-- ══ SETUP ══ -->
 <div id="setup" style="display:none">
@@ -1206,35 +1198,14 @@ function showRoomList(rooms) {
 }
 
 function quickPostFromList(type) {
-  var codes = Object.keys(roomListCache).filter(function(c) {
-    return roomListCache[c].role !== 'guest';
+  if (!currentUid) { showToast('로그인 후 사용해주세요'); return; }
+  db.ref('users/'+currentUid+'/profile/name').once('value', function(snap) {
+    myName = snap.val() || '나';
+    mySide = 'left'; /* doPost가 allRooms의 실제 role을 사용하므로 임시값 */
+    roomId = '';
+    if (type === 'missed') openMissedModal();
+    else openModal(type);
   });
-  if (codes.length === 0) { showToast('기록할 수 있는 방이 없어요'); return; }
-  if (codes.length === 1) {
-    quickActionPending = type;
-    enterRoom(codes[0], roomListCache[codes[0]].role);
-    return;
-  }
-  /* 방이 여러 개 → 방 선택 모달 */
-  var picker = document.getElementById('room-picker-modal');
-  var list = document.getElementById('room-picker-list');
-  list.innerHTML = '';
-  codes.forEach(function(code) {
-    var role = roomListCache[code].role;
-    var btn = document.createElement('button');
-    btn.className = 'room-picker-btn';
-    btn.textContent = '🚪 ' + code;
-    db.ref('rooms/'+code+'/meta/name').once('value', function(snap) {
-      if (snap.val()) btn.textContent = '🚪 ' + snap.val();
-    });
-    btn.onclick = function() {
-      picker.style.display = 'none';
-      quickActionPending = type;
-      enterRoom(code, role);
-    };
-    list.appendChild(btn);
-  });
-  picker.style.display = 'flex';
 }
 
 function enterRoom(code, role) {
@@ -1277,14 +1248,6 @@ function enterRoom(code, role) {
     document.getElementById('room-list-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     initApp(sleepTime, wakeTime);
-    if (quickActionPending) {
-      var action = quickActionPending;
-      quickActionPending = null;
-      setTimeout(function() {
-        if (action === 'missed') openMissedModal();
-        else openModal(action);
-      }, 400);
-    }
   }
 
   fetchNameThenSettings();
@@ -1431,7 +1394,6 @@ var TIME_SLOTS = [
 var mySide = null, myName = '', roomId = '';
 var selFile = null, busy = false, db;
 var currentPostType = 'meal';
-var quickActionPending = null; /* 방 목록 빠른기록용: 'meal'|'workout'|'missed' */
 var roomListCache = {}; /* 방 목록 캐시 */
 var SAVE_KEY = 'diet_watch_v1';
 var currentUid = null;
@@ -2330,8 +2292,8 @@ function doPost() {
       return roomsRef.then(function(snap){
         var allRooms={};
         if(snap&&snap.val()) allRooms=snap.val();
-        // 현재 방이 목록에 없는 경우 보정
-        if(!allRooms[roomId]) allRooms[roomId]={role:mySide};
+        // 현재 방이 목록에 없는 경우 보정 (roomId가 빈 문자열이면 추가 안 함)
+        if(roomId && !allRooms[roomId]) allRooms[roomId]={role:mySide};
         // guest 방 제외
         var targets=Object.keys(allRooms).filter(function(code){
           return (allRooms[code].role||'guest')!=='guest';
@@ -2426,11 +2388,11 @@ function doPostMissed() {
     roomsRef.then(function(snap){
       var allRooms={};
       if(snap&&snap.val()) allRooms=snap.val();
-      if(!allRooms[roomId]) allRooms[roomId]={role:mySide};
+      if(roomId && !allRooms[roomId]) allRooms[roomId]={role:mySide};
       var targets=Object.keys(allRooms).filter(function(code){
         return (allRooms[code].role||'guest')!=='guest';
       });
-      if(!targets.length) targets=[roomId];
+      if(!targets.length && roomId) targets=[roomId];
       var writes=targets.map(function(code){
         var role=allRooms[code]?allRooms[code].role:mySide;
         return db.ref('rooms/'+code+'/meals')
