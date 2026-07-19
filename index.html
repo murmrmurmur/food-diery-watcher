@@ -560,6 +560,22 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
 .room-card-role.left  { color:var(--left); }
 .room-card-role.right { color:var(--right); }
 .room-card-role.guest { color:#9C8FD0; }
+.quick-btn {
+  flex:1; padding:10px 4px; border:none; border-radius:14px 10px 16px 12px;
+  font-family:'Gaegu',cursive; font-size:13px; font-weight:700; cursor:pointer;
+  transition:transform .12s; line-height:1.3;
+}
+.quick-btn:active { transform:scale(.95); }
+.quick-meal    { background:#FFE8D8; color:#C96830; }
+.quick-workout { background:#D8EEFF; color:#2A7EAF; }
+.quick-missed  { background:#F0EDF8; color:#6B5CA5; }
+.room-picker-btn {
+  padding:14px 16px; background:var(--bg); border:1.5px solid var(--ink-line);
+  border-radius:14px 10px 16px 12px; font-family:'Gaegu',cursive; font-size:16px;
+  font-weight:700; cursor:pointer; text-align:left;
+  transition:transform .12s, background .12s;
+}
+.room-picker-btn:active { transform:scale(.97); background:var(--surface); }
 .room-card-arrow { font-size:18px; color:var(--muted); }
 .room-card-last { border-color:var(--accent); }
 .room-last-badge { font-family:'Gaegu',cursive; font-size:11px; background:var(--accent); color:#fff; border-radius:6px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
@@ -721,6 +737,20 @@ input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, inp
   <p class="sub">입장할 방을 골라요</p>
   <div id="room-list-cards" style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;"></div>
   <button class="start-btn" style="max-width:360px;width:100%;margin-top:4px;" onclick="goToSetup()">＋ 새 방 만들기</button>
+  <div class="quick-btns" style="width:100%;max-width:360px;display:flex;gap:8px;margin-top:0px;">
+    <button class="quick-btn quick-meal" onclick="quickPostFromList('meal')">📸 지금 먹어요</button>
+    <button class="quick-btn quick-workout" onclick="quickPostFromList('workout')">🏃 운동했어요</button>
+    <button class="quick-btn quick-missed" onclick="quickPostFromList('missed')">❗ 깜빡했어요</button>
+  </div>
+</div>
+
+<!-- ══ 방 선택 모달 ══ -->
+<div id="room-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:20px 16px 22px 18px;padding:24px 20px;width:min(320px,90vw);display:flex;flex-direction:column;gap:12px;">
+    <div style="font-family:'Gaegu',cursive;font-size:18px;font-weight:700;text-align:center;">어느 방에 기록할까요?</div>
+    <div id="room-picker-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <button onclick="document.getElementById('room-picker-modal').style.display='none'" style="margin-top:4px;background:none;border:1.5px solid var(--ink-line);border-radius:12px;padding:10px;cursor:pointer;font-size:14px;color:var(--muted);">취소</button>
+  </div>
 </div>
 
 <!-- ══ SETUP ══ -->
@@ -1124,6 +1154,7 @@ var VAPID_KEY = 'BDX_fg1_9bL-jteAwQYCz9vrnJw8CEc__FH_3g4XSPY5V3Rvj_t-GKg-saevPBZ
 
 /* ══ 방 리스트 ══ */
 function showRoomList(rooms) {
+  roomListCache = rooms || {};
   var screen = document.getElementById('room-list-screen');
   var container = document.getElementById('room-list-cards');
   container.innerHTML = '';
@@ -1174,6 +1205,38 @@ function showRoomList(rooms) {
   screen.style.display = 'flex';
 }
 
+function quickPostFromList(type) {
+  var codes = Object.keys(roomListCache).filter(function(c) {
+    return roomListCache[c].role !== 'guest';
+  });
+  if (codes.length === 0) { showToast('기록할 수 있는 방이 없어요'); return; }
+  if (codes.length === 1) {
+    quickActionPending = type;
+    enterRoom(codes[0], roomListCache[codes[0]].role);
+    return;
+  }
+  /* 방이 여러 개 → 방 선택 모달 */
+  var picker = document.getElementById('room-picker-modal');
+  var list = document.getElementById('room-picker-list');
+  list.innerHTML = '';
+  codes.forEach(function(code) {
+    var role = roomListCache[code].role;
+    var btn = document.createElement('button');
+    btn.className = 'room-picker-btn';
+    btn.textContent = '🚪 ' + code;
+    db.ref('rooms/'+code+'/meta/name').once('value', function(snap) {
+      if (snap.val()) btn.textContent = '🚪 ' + snap.val();
+    });
+    btn.onclick = function() {
+      picker.style.display = 'none';
+      quickActionPending = type;
+      enterRoom(code, role);
+    };
+    list.appendChild(btn);
+  });
+  picker.style.display = 'flex';
+}
+
 function enterRoom(code, role) {
   var s = JSON.parse(localStorage.getItem(SAVE_KEY)) || {};
   roomId = code;
@@ -1214,6 +1277,14 @@ function enterRoom(code, role) {
     document.getElementById('room-list-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     initApp(sleepTime, wakeTime);
+    if (quickActionPending) {
+      var action = quickActionPending;
+      quickActionPending = null;
+      setTimeout(function() {
+        if (action === 'missed') openMissedModal();
+        else openModal(action);
+      }, 400);
+    }
   }
 
   fetchNameThenSettings();
@@ -1360,6 +1431,8 @@ var TIME_SLOTS = [
 var mySide = null, myName = '', roomId = '';
 var selFile = null, busy = false, db;
 var currentPostType = 'meal';
+var quickActionPending = null; /* 방 목록 빠른기록용: 'meal'|'workout'|'missed' */
+var roomListCache = {}; /* 방 목록 캐시 */
 var SAVE_KEY = 'diet_watch_v1';
 var currentUid = null;
 var currentMealKey = null, currentMealSide = null, currentMealUrl = null;
